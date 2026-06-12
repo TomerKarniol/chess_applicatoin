@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#162D4A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>הפרש הקופץ — שלב 4 🐴</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{-webkit-text-size-adjust:100%;}
+:root{
+  --gold:#F4D03F;--gold-dark:#C9A227;--green:#52B788;--blue:#7EC8E3;--orange:#FF6B35;--red:#FF4444;
+  --bg1:#162D4A;--bg2:#0C1E30;--bg3:#060E1A;
+  --cell:58px; /* קבוע — תואם rook/bishop הקנוניים; responsive דרך breakpoints (לא 100vh, שגרם לקפיצות מובייל) */
+}
+body{
+  font-family:'Nunito',sans-serif;
+  direction:rtl;
+  background:radial-gradient(ellipse at 50% 0%,var(--bg1) 0%,var(--bg2) 55%,var(--bg3) 100%);
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  padding:14px 10px calc(28px + env(safe-area-inset-bottom));user-select:none;overflow-x:hidden;
+  overscroll-behavior:none;
+}
+
+/* Stars */
+.star-dot{position:fixed;border-radius:50%;background:#fff;pointer-events:none;
+  animation:twinkle ease-in-out infinite alternate;}
+@keyframes twinkle{from{opacity:.08;transform:scale(.7)}to{opacity:.9;transform:scale(1.3)}}
+
+/* Header */
+.hdr{width:100%;max-width:480px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.stage-badge{
+  font-family:'Fredoka One',cursive;font-size:.85rem;
+  background:rgba(126,200,227,.15);border:1.5px solid rgba(126,200,227,.35);
+  border-radius:50px;padding:3px 14px;color:var(--blue);letter-spacing:.5px;
+}
+.game-title{
+  font-family:'Fredoka One',cursive;
+  font-size:1.7rem;
+  color:#FF6B35;
+  text-shadow:0 0 18px rgba(255,107,53,.8),0 0 40px rgba(255,107,53,.35);
+  white-space:nowrap;
+  flex:1;text-align:center;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* Carrot strip */
+.carrot-strip{
+  display:flex;gap:14px;margin-bottom:10px;align-items:center;
+  animation:fadeUp .4s .15s ease both;
+}
+.carrot-item{
+  font-size:1.5rem;position:relative;transition:all .3s;
+  filter:grayscale(100%) opacity(0.4);
+}
+.carrot-item.collected{
+  filter:none;
+  animation:carrotPop .4s cubic-bezier(.175,.885,.32,1.5) both;
+}
+@keyframes carrotPop{from{transform:scale(0) rotate(-30deg)}to{transform:scale(1) rotate(0)}}
+
+/* Board area */
+.coord-wrap{display:flex;align-items:flex-start;gap:4px;direction:ltr;animation:fadeUp .4s .2s ease both;}
+.rank-labels{display:flex;flex-direction:column;justify-content:space-around;
+  height:calc(var(--cell)*8);padding:0 4px;
+  font-family:'Fredoka One',cursive;font-size:.75rem;font-weight:900;color:#F4D03F;}
+.file-labels{display:flex;justify-content:space-around;
+  width:calc(var(--cell)*8);padding:4px 0;
+  font-family:'Fredoka One',cursive;font-size:.75rem;font-weight:900;color:#F4D03F;}
+.board-outer{
+  position:relative;
+  border:3px solid var(--gold-dark);border-radius:8px;overflow:visible;
+  box-shadow:0 8px 40px rgba(0,0,0,.7),0 0 30px rgba(244,208,63,.12);
+}
+.board{
+  display:grid;
+  grid-template-columns:repeat(8,var(--cell));
+  grid-template-rows:repeat(8,var(--cell));
+  border-radius:6px;overflow:hidden;
+}
+.cell{
+  width:var(--cell);height:var(--cell);
+  position:relative;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:background .15s;touch-action:manipulation;
+}
+.cell.light{background:#C9E4F5;}
+.cell.dark{background:#4A7FA5;}
+.cell.reachable{
+  background:rgba(82,183,136,.38)!important;
+  cursor:pointer;
+  animation:reachPulse 1s ease infinite;
+}
+@keyframes reachPulse{
+  0%,100%{box-shadow:inset 0 0 0 2px rgba(82,183,136,.5);}
+  50%{box-shadow:inset 0 0 0 3px rgba(82,183,136,.9);}
+}
+.cell.reachable:hover{filter:brightness(1.3);}
+.cell.wrong{animation:wrongShake .35s ease both;}
+@keyframes wrongShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.cell.explode{animation:explodeShake .4s ease both;}
+@keyframes explodeShake{
+  0%{transform:scale(1)}20%{transform:scale(1.4) rotate(5deg)}
+  50%{transform:scale(.9) rotate(-5deg)}100%{transform:scale(1) rotate(0)}
+}
+
+/* Carrot on board */
+.board-carrot{
+  position:absolute;font-size:1.5rem;z-index:3;pointer-events:none;
+  transition:transform .3s;
+}
+.board-carrot.pulse{animation:carrotPulse 1.3s ease-in-out infinite alternate;}
+@keyframes carrotPulse{from{transform:scale(1)}to{transform:scale(1.15);filter:drop-shadow(0 0 6px #FF6B35);}}
+
+/* Mine on board */
+.board-mine{
+  position:absolute;font-size:1.4rem;z-index:3;pointer-events:none;
+  animation:mineWarn 2s ease-in-out infinite alternate;
+}
+@keyframes mineWarn{from{opacity:.7;transform:scale(1)}to{opacity:1;transform:scale(1.1);}}
+@keyframes mineAppear{
+  0%{transform:scale(0) rotate(-180deg);opacity:0;filter:brightness(4);}
+  60%{transform:scale(1.35) rotate(10deg);opacity:1;}
+  100%{transform:scale(1) rotate(0);opacity:1;filter:brightness(1);}
+}
+
+/* Level panel (מתחיל/מתקדם) */
+.level-panel{
+  display:flex;flex-direction:column;gap:12px;
+  justify-content:center;align-items:center;
+  margin-right:8px;
+}
+.btn-level{
+  font-family:'Fredoka One',cursive;
+  font-size:1rem;padding:0;border-radius:16px;
+  border:1.5px solid rgba(126,200,227,.25);
+  cursor:pointer;width:78px;height:78px;
+  text-align:center;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:4px;
+  transition:all .22s ease;position:relative;overflow:hidden;
+  touch-action:manipulation;
+  background:linear-gradient(160deg,#1c2e42 0%,#0e1c2b 60%,#091420 100%);
+  color:rgba(126,200,227,.45);
+  box-shadow:0 4px 18px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06),inset 0 -1px 0 rgba(0,0,0,.4);
+}
+.btn-level::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:42%;
+  background:linear-gradient(180deg,rgba(255,255,255,.09) 0%,transparent 100%);
+  border-radius:16px 16px 0 0;pointer-events:none;
+}
+.btn-level:hover{transform:scale(1.07) translateY(-1px);}
+.btn-level:active{transform:scale(.96) translateY(1px);}
+.btn-level.help{color:rgba(82,183,136,.4);border-color:rgba(82,183,136,.15);}
+.btn-level.solo{color:rgba(126,200,227,.4);border-color:rgba(126,200,227,.15);}
+.btn-level.help.active{
+  color:#fff;
+  background:linear-gradient(160deg,#1d3d30 0%,#0f2820 60%,#07160f 100%);
+  border-color:rgba(82,183,136,.8);
+  box-shadow:0 0 0 1px rgba(82,183,136,.3),0 0 22px rgba(82,183,136,.5),0 0 42px rgba(82,183,136,.2),0 6px 20px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.1);
+  text-shadow:0 0 12px rgba(82,183,136,.9);
+}
+.btn-level.solo.active{
+  color:#fff;
+  background:linear-gradient(160deg,#162840 0%,#0b1c30 60%,#060f1e 100%);
+  border-color:rgba(94,184,226,.9);
+  box-shadow:0 0 0 1px rgba(94,184,226,.35),0 0 26px rgba(94,184,226,.6),0 0 50px rgba(94,184,226,.25),0 6px 20px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.1);
+  text-shadow:0 0 14px rgba(126,200,227,1);
+}
+.btn-icon{font-size:1.5rem;line-height:1;}
+.btn-label{font-size:.88rem;line-height:1;letter-spacing:.3px;}
+
+/* Explosion flash on full board */
+.board-flash{
+  position:absolute;inset:0;border-radius:6px;
+  background:rgba(255,100,0,.6);pointer-events:none;z-index:30;
+  animation:boardFlash .5s ease both;
+}
+@keyframes boardFlash{
+  0%{opacity:0} 20%{opacity:1} 100%{opacity:0}
+}
+/* Explosion particle */
+.exp-particle{
+  position:fixed;pointer-events:none;z-index:350;
+  border-radius:50%;
+  animation:expFly linear forwards;
+}
+@keyframes expFly{
+  0%{opacity:1;transform:translate(0,0) scale(1);}
+  100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0);}
+}
+@keyframes screenShake{
+  0%,100%{transform:translateX(0)}
+  15%{transform:translateX(-8px) rotate(-1deg)}
+  30%{transform:translateX(8px) rotate(1deg)}
+  45%{transform:translateX(-6px)}
+  60%{transform:translateX(6px)}
+  75%{transform:translateX(-3px)}
+}
+
+/* Floating knight */
+#floating-knight{
+  position:absolute;font-size:2.3rem;z-index:20;pointer-events:none;
+  color:#fff;
+  filter:drop-shadow(0 0 14px rgba(244,208,63,.9)) drop-shadow(0 2px 4px rgba(0,0,0,.8));
+  transition:left .38s cubic-bezier(.4,0,.2,1), top .38s cubic-bezier(.4,0,.2,1),
+             font-size .5s ease;
+}
+#floating-knight.grow{animation:knightGrow .5s cubic-bezier(.175,.885,.32,1.5) both;}
+@keyframes knightGrow{
+  0%{transform:translate(-50%,-50%) scale(1)}
+  50%{transform:translate(-50%,-50%) scale(1.5) rotate(15deg)}
+  100%{transform:translate(-50%,-50%) scale(1)}
+}
+
+/* X mark */
+.x-mark{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  font-size:1.6rem;color:var(--orange);
+  z-index:6;pointer-events:none;
+  animation:xPop .35s cubic-bezier(.175,.885,.32,1.5) both;
+}
+@keyframes xPop{from{transform:translate(-50%,-50%) scale(0);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
+
+/* Hint bar */
+.hint-bar{
+  direction:rtl; unicode-bidi:bidi-override;
+  font-family:'Fredoka One',cursive;font-size:1.2rem;
+  color:#fff;background:rgba(126,200,227,.1);
+  border:2px solid rgba(126,200,227,.25);
+  padding:7px 22px;border-radius:50px;margin-top:10px;
+  text-align:center;width:fit-content;max-width:430px;
+  animation:fadeUp .4s .25s ease both;
+  transition:background .3s,border-color .3s,color .3s;
+}
+.hint-bar.ok{background:rgba(82,183,136,.15);border-color:rgba(82,183,136,.5);color:#52B788;}
+.hint-bar.bad{background:rgba(255,68,68,.12);border-color:rgba(255,68,68,.4);color:#FF8080;}
+.hint-bar.warn{background:rgba(244,208,63,.12);border-color:rgba(244,208,63,.4);color:var(--gold);}
+
+/* mine-shift board flash */
+.board-outer.mine-shift{animation:mineShiftBoard .7s ease both;}
+@keyframes mineShiftBoard{
+  0%,100%{box-shadow:0 8px 40px rgba(0,0,0,.7),0 0 30px rgba(244,208,63,.12);}
+  35%{box-shadow:0 0 0 4px rgba(255,68,68,.9),0 8px 40px rgba(0,0,0,.7);}
+}
+
+@media (max-width:767px){
+  :root{ --cell:44px; }
+}
+/* הפאנל יורד מתחת ללוח במסכים צרים, לפני שהפריסה לידו הייתה נחתכת (≤540) */
+@media (max-width:540px){
+  .coord-wrap{ flex-wrap:wrap; justify-content:center; gap:4px; }
+  .level-panel{
+    flex-direction:row !important;
+    width:calc(var(--cell)*8);
+    justify-content:center;
+    gap:14px; margin-right:0; margin-top:3px;
+  }
+}
+@media (max-width:479px){
+  :root{ --cell:40px; }
+  body{ padding:8px 8px calc(16px + env(safe-area-inset-bottom)); }
+  .hdr{ margin-bottom:6px; }
+  .carrot-strip{ margin-bottom:6px; }
+  .btn-level{ width:56px; height:56px; }
+  .btn-icon{ font-size:1.2rem; }
+  .btn-label{ font-size:.75rem; }
+  .hint-bar{ font-size:1rem; padding:5px 14px; margin-top:6px; }
+  .game-title{ font-size:2.2rem; }
+}
+
+
+
+/* All-found overlay */
+.af-overlay{
+  position:fixed;inset:0;background:rgba(6,14,26,.92);
+  display:flex;align-items:center;justify-content:center;
+  z-index:400;opacity:0;pointer-events:none;transition:opacity .4s;
+}
+.af-overlay.show{opacity:1;pointer-events:all;}
+.af-card{
+  background:linear-gradient(145deg,#1a3454,#0e2338);
+  border:3px solid var(--gold);border-radius:28px;
+  padding:40px 52px;text-align:center;
+  box-shadow:0 0 80px rgba(244,208,63,.4);
+  animation:cardPop .6s .05s cubic-bezier(.175,.885,.32,1.5) both;
+}
+@keyframes cardPop{from{transform:scale(.5) rotate(-5deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
+.af-emoji{font-size:4rem;margin-bottom:8px;}
+.af-title{font-family:'Fredoka One',cursive;font-size:2rem;color:var(--gold);margin-bottom:6px;}
+.af-sub{font-family:'Fredoka One',cursive;font-size:1.05rem;color:var(--blue);margin-bottom:22px;line-height:1.6;}
+.diamond-badge{
+  font-family:'Fredoka One',cursive;font-size:1.3rem;color:#00E6FF;
+  text-shadow:0 0 18px rgba(0,230,255,.85), 0 0 8px rgba(0,230,255,.6);
+  margin-bottom:16px;letter-spacing:1.5px;
+  animation:diamondPulse 1.6s ease-in-out infinite alternate;
+}
+@keyframes diamondPulse{
+  from{transform:scale(1);text-shadow:0 0 12px rgba(0,230,255,.6);}
+  to  {transform:scale(1.06);text-shadow:0 0 22px rgba(0,230,255,1),0 0 8px rgba(0,230,255,.8);}
+}
+/* Win screen buttons — per UI consistency skill */
+.btn-next{
+  font-family:'Fredoka One',cursive;font-size:1.2rem;
+  padding:12px 34px;border-radius:14px;border:none;
+  cursor:pointer;color:#060E1A;
+  background:linear-gradient(160deg,var(--gold),#c9a320,#9A7B1A);
+  box-shadow:0 4px 18px rgba(244,208,63,.5);
+  transition:transform .15s,box-shadow .15s;
+  display:block;width:100%;margin-bottom:10px;
+  touch-action:manipulation;
+}
+.btn-next:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(244,208,63,.7);}
+.btn-retry{
+  background:transparent;color:rgba(255,255,255,.6);
+  border:1.5px solid rgba(255,255,255,.22);border-radius:14px;
+  padding:9px 26px;font-family:'Fredoka One',cursive;font-size:1rem;
+  cursor:pointer;touch-action:manipulation;
+  transition:color .2s,border-color .2s;display:block;width:100%;
+}
+.btn-retry:hover{color:white;border-color:rgba(255,255,255,.5);}
+
+
+
+/* Confetti */
+.confetti-dot{
+  position:fixed;border-radius:50%;pointer-events:none;
+  animation:confettiFall linear forwards;z-index:300;
+}
+@keyframes confettiFall{
+  from{opacity:1;transform:translateY(0) rotate(0deg);}
+  to{opacity:0;transform:translateY(100vh) rotate(720deg);}
+}
+.btn-mute{
+  background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.2);
+  border-radius:50%;width:36px;height:36px;
+  font-size:1.1rem;cursor:pointer;color:white;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .2s;touch-action:manipulation;flex-shrink:0;
+}
+.btn-mute:hover{background:rgba(255,255,255,.18);}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="hdr">
+  <div class="stage-badge">שלב 4 🐴</div>
+  <div class="game-title">הפרש אוהב גזר!</div>
+  <button class="btn-mute" id="muteBtn" aria-label="השתק" title="השתק">🔊</button>
+</div>
+
+<!-- Carrot strip -->
+<div class="carrot-strip" id="carrot-strip">
+  <span class="carrot-item" id="cs-0">🥕</span>
+  <span class="carrot-item" id="cs-1">🥕</span>
+  <span class="carrot-item" id="cs-2">🥕</span>
+  <span class="carrot-item" id="cs-3">🥕</span>
+  <span class="carrot-item" id="cs-4">🥕</span>
+</div>
+
+<!-- Board -->
+<div class="coord-wrap" id="coord-wrap">
+  <div class="rank-labels" id="rank-labels"></div>
+  <div>
+    <div class="board-outer" id="board-outer">
+      <div class="board" id="board"></div>
+    </div>
+    <div class="file-labels" id="file-labels"></div>
+  </div>
+  <!-- Level buttons -->
+  <div class="level-panel">
+    <button class="btn-level help active" id="btn-help">
+      <span class="btn-icon">💡</span>
+      <span class="btn-label">מתחיל</span>
+    </button>
+    <button class="btn-level solo" id="btn-solo">
+      <span class="btn-icon">🔥</span>
+      <span class="btn-label">מתקדם</span>
+    </button>
+  </div>
+</div>
+
+<!-- Hint bar -->
+<div class="hint-bar" id="hint-bar">🐴 הובל את הפרש לכל הגזרים!</div>
+
+
+<!-- All carrots overlay -->
+<div class="af-overlay" id="af-overlay">
+  <div class="af-card">
+    <div class="af-emoji">🥕🥕🥕🥕🥕</div>
+    <div class="af-title" id="af-title">כל הגזרים נאספו!</div>
+    <div class="af-sub" id="af-sub"></div>
+    <div id="af-stars" style="font-size:2rem;letter-spacing:4px;margin:8px 0;display:none;"></div>
+    <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:280px;margin:0 auto;">
+      <button class="btn-next" id="btn-af-continue">לשלב הבא ←</button>
+      <button class="btn-retry" id="btn-af-retry">נסו שוב 🔄</button>
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+(function(){
+// ── CHESS STATE — מתוך chess-scoring-skill ───────────────
+/* ── KnightState v2.1 — canonical (bishop model) ── */
+const KnightState={
+  STAGE_KEYS:['stage1','stage2','stage3','stage4','final'], // ⚠️ inert בשלב ביניים — לאשר בשלב המסכם + index
+  PERFECT_THRESHOLD:5,                                       // N (5/5) — מיושר לקנון; inert בשלב 4
+  save(stageKey,perfect){
+    try{
+      const d=JSON.parse(localStorage.getItem('chess_knight')||'{}');
+      const prev=d[stageKey]||{};
+      const bestPerfect=!!(prev.bestPerfect || prev.perfect || perfect); // צובר ב-OR + מהגר perfect ישן
+      d[stageKey]={done:true, perfect:!!perfect, lastPerfect:!!perfect, bestPerfect};
+      localStorage.setItem('chess_knight',JSON.stringify(d));
+    }catch(e){}
+  },
+  getModuleStars(){
+    let best=0,last=0;
+    try{
+      const d=JSON.parse(localStorage.getItem('chess_knight')||'{}');
+      this.STAGE_KEYS.forEach(k=>{
+        const s=d[k]; if(!s) return;
+        if(s.bestPerfect) best++;
+        if(s.lastPerfect) last++;
+      });
+    }catch(e){}
+    return {best,last};
+  }
+};
+
+// Stage 4: 5 גזרים
+
+// ══════════════════════════════════════
+// DATA  row=8-rank  col=file(A=0..H=7)
+// ══════════════════════════════════════
+function sq(file, rank){ return {row:8-rank, col:'ABCDEFGH'.indexOf(file)}; }
+
+// ── פרש לבן — cburnett SVG קנוני (מקור: knight-final-exam) ──
+const WHITE_KNIGHT_SVG=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g style="fill:#fff;stroke:#000;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><path d="M22,10c10.5,1,16.5,8,16,29H15c0-9,10-12.5,8-18" style="fill:#fff;stroke:#000"/><path d="M24,18c.38,2.91-5.55,7.37-8,9-3,2-3.18,4.34-5,4-.96-.96,1.41-3.04,0-3-1,0,.19,1.23-1,2-1,0-4,.003-4-5,0-2,6-12,6-12s1.89-1.9,2-3.5c-.73-1-2.5-1-2.5-1.5,1-1,3,3,3,3s1.28-2,3-3c1,0,1,3,1,3"/><path d="M9.5,25.5A.5.5,0,1,1,8.5,25.5.5.5,0,1,1,9.5,25.5z" style="fill:#000;stroke:#000"/><path d="M15,15.5A.5,1.5,0,1,1,14,15.5.5,1.5,0,1,1,15,15.5z" style="fill:#000;stroke:#000" transform="rotate(30,14.5,15.5)"/></g></svg>`;
+function makeKnightImg(){
+  const img=document.createElement('img');
+  img.src='data:image/svg+xml,'+encodeURIComponent(WHITE_KNIGHT_SVG);
+  img.alt='פרש'; img.draggable=false; img.className='knight-img';
+  img.style.cssText='width:42px;height:42px;object-fit:contain;display:block;pointer-events:none;'; // גודל מדויק נקבע מיד ע"י applyKnightScale; הגדילה מונפשת ע"י .grow
+  return img;
+}
+
+const CARROTS = [
+  sq('B',7),  // {row:1,col:1}
+  sq('G',8),  // {row:0,col:6}
+  sq('F',5),  // {row:3,col:5}
+  sq('H',1),  // {row:7,col:7}
+  sq('D',3),  // {row:5,col:3}
+];
+
+// Original mine positions — never mutate
+const ORIG_MINES = [
+  sq('D',6),  // row:2,col:3
+  sq('A',2),  // row:6,col:0  ← קרוב ל-A1
+  sq('B',2),  // row:6,col:1  ← קרוב ל-A1
+  sq('F',3),  // row:5,col:5 — הוזז מ-F2: מפנה את משבצת הגישה היחידה ל-H1 (תיקון מבני, דרך 1)
+  sq('B',1),  // row:7,col:1  ← קרוב ל-A1
+];
+// Indices of the 3 mines closest to START (A2,B2,B1 = indices 1,2,4)
+const CLOSE_IDX = [1, 2, 4];
+// מוקשים נוספים שמופיעים דווקא במתחיל (H5, F7)
+const BEGINNER_EXTRA_MINES = [ sq('H',5), sq('F',7) ];
+
+// Mutable working copy
+let minesArr = ORIG_MINES.map(m=>({...m}));
+let MINES = new Set(minesArr.map(m=>`${m.row},${m.col}`));
+
+function rebuildMinesSet(){ MINES = new Set(minesArr.map(m=>`${m.row},${m.col}`)); }
+
+const START = sq('A',1);  // {row:7, col:0}
+
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+let knightRow = START.row;
+let knightCol = START.col;
+let collectedCount=0;
+let carrots=[];
+let mineHits=0;
+let busy = false;
+let knightScale = 0.75;
+
+// Difficulty & mine-shift
+let difficulty = null;   // 'beginner' | 'advanced'
+let moveCount  = 0;
+let beginnerUsed = false; // יידלק רק אם הילד בחר בפועל במצב 'beginner'
+
+// ══════════════════════════════════════
+// KNIGHT MOVES
+// ══════════════════════════════════════
+function knightMoves(row, col){
+  return [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]]
+    .map(([dr,dc])=>({r:row+dr, c:col+dc}))
+    .filter(({r,c})=>r>=0&&r<8&&c>=0&&c<8);
+}
+function isReachable(r,c){
+  return knightMoves(knightRow,knightCol).some(m=>m.r===r&&m.c===c);
+}
+
+// ══════════════════════════════════════
+// DIFFICULTY
+// ══════════════════════════════════════
+function setDifficulty(diff){
+  difficulty = diff;
+  if(diff === 'beginner') beginnerUsed = true;
+  document.getElementById('btn-help').className = 'btn-level help' + (diff==='beginner'?' active':'');
+  document.getElementById('btn-solo').className = 'btn-level solo' + (diff==='advanced'?' active':'');
+  buildBoard();
+}
+
+// ══════════════════════════════════════
+// MINE SHIFT (מתקדם בלבד)
+// ══════════════════════════════════════
+function shiftMines(count){
+  if(difficulty !== 'advanced') return;
+
+  // מהקרובים המקוריים — מי עדיין על הלוח?
+  const candidates = CLOSE_IDX
+    .map(i=>({i, row:minesArr[i].row, col:minesArr[i].col}))
+    .filter(m=>MINES.has(`${m.row},${m.col}`));
+
+  if(!candidates.length) return;
+
+  // מיון: הרחוק ביותר מהפרש הנוכחי קודם
+  candidates.sort((a,b)=>{
+    const da=Math.abs(a.row-knightRow)+Math.abs(a.col-knightCol);
+    const db=Math.abs(b.row-knightRow)+Math.abs(b.col-knightCol);
+    return db-da;
+  });
+
+  // משבצות שהפרש יכול לנוע אליהן — לא גזר, לא מוקש, לא הפרש
+  let targets = knightMoves(knightRow,knightCol).filter(({r,c})=>{
+    if(r===knightRow&&c===knightCol) return false;
+    if(MINES.has(`${r},${c}`)) return false;
+    if(carrots.some(ca=>!ca.collected&&ca.row===r&&ca.col===c)) return false;
+    return true;
+  });
+
+  // *** קריטי: תמיד לשמור לפחות משבצת נגישה אחת פנויה ***
+  // אם יש רק 1 יעד פנוי — לא מזיזים כלום (הפרש יישאר עם לפחות מסלול אחד)
+  if(targets.length <= 1) return;
+
+  // מספר מוקשים מקסימלי להזזה = targets.length - 1 (שמור תמיד 1 פנוי!)
+  const maxMovable = targets.length - 1;
+
+  // אנימציה: flash אדום על הלוח כהתראה
+  const bo = document.getElementById('board-outer');
+  bo.classList.remove('mine-shift'); void bo.offsetWidth; bo.classList.add('mine-shift');
+  setTimeout(()=>bo.classList.remove('mine-shift'), 700);
+
+  const moved = Math.min(count, candidates.length, maxMovable);
+  for(let i=0; i<moved; i++){
+    const mine = candidates[i];
+    if(!targets.length) break;
+
+    // הסר מהלוח
+    const oldEl = document.getElementById(`mine_${mine.row},${mine.col}`) ||
+                  document.getElementById(`mine_${mine.row}_${mine.col}`);
+    if(oldEl) oldEl.remove();
+    MINES.delete(`${mine.row},${mine.col}`);
+
+    // בחר יעד ואל תשתמש בו שוב (shift מקורי — H1 כבר לא שביר אחרי הזזת F2)
+    const rndIdx = Math.floor(Math.random()*targets.length);
+    const tgt = targets.splice(rndIdx,1)[0];
+
+    // עדכן minesArr
+    minesArr[mine.i].row = tgt.r;
+    minesArr[mine.i].col = tgt.c;
+    MINES.add(`${tgt.r},${tgt.c}`);
+
+    // הוסף ויזואלית עם אנימציית הופעה
+    const cell = document.getElementById(`cell_${tgt.r}_${tgt.c}`);
+    if(cell){
+      const el = document.createElement('div');
+      el.className = 'board-mine';
+      el.id = `mine_${tgt.r}_${tgt.c}`;
+      el.textContent = '💣';
+      el.style.animation = 'mineAppear .55s cubic-bezier(.175,.885,.32,1.5) both, mineWarn 2s .6s ease-in-out infinite alternate';
+      cell.appendChild(el);
+    }
+  }
+
+  // עדכן highlights — רק במוד מתחיל
+  if(difficulty==='beginner') showReachable();
+}
+
+// ══════════════════════════════════════
+// STARS BACKGROUND
+// ══════════════════════════════════════
+(function(){
+  for(let i=0;i<55;i++){
+    const s=document.createElement('div'); s.className='star-dot';
+    const sz=Math.random()*2.3+.6;
+    s.style.cssText=`width:${sz}px;height:${sz}px;top:${Math.random()*100}vh;left:${Math.random()*100}vw;animation-duration:${1.5+Math.random()*2.5}s;animation-delay:${Math.random()*3}s`;
+    document.body.appendChild(s);
+  }
+})();
+
+// ══════════════════════════════════════
+// BUILD BOARD
+// ══════════════════════════════════════
+function buildCoords(){
+  const rl=document.getElementById('rank-labels');
+  const fl=document.getElementById('file-labels');
+  rl.innerHTML=''; fl.innerHTML='';
+  for(let r=0;r<8;r++){const d=document.createElement('div');d.textContent=8-r;rl.appendChild(d);}
+  'ABCDEFGH'.split('').forEach(f=>{const d=document.createElement('div');d.textContent=f;fl.appendChild(d);});
+}
+
+function buildBoard(){
+  knightRow=START.row; knightCol=START.col;
+  collectedCount=0; busy=false; knightScale=0.75;
+  moveCount=0; mineHits=0;
+  minesArr = ORIG_MINES.map(m=>({...m}));
+  // מוד מתחיל: הסר 3 מוקשים קרובים (A2, B2, B1) להקלה
+  if(difficulty==='beginner'){
+    CLOSE_IDX.forEach(i=>{ minesArr[i]={row:-1,col:-1}; }); // מחוץ ללוח = לא פעיל
+    BEGINNER_EXTRA_MINES.forEach(m=>minesArr.push({...m}));  // H5, F7
+  }
+  rebuildMinesSet();
+  carrots = CARROTS.map(c=>({row:c.row,col:c.col,collected:false}));
+  updateCarrotStrip();
+  buildCoords();
+  setHint('🐴 הובילו את הפרש לכל הגזרים — היזהרו מהמוקשים! 💣');
+
+  const boardEl=document.getElementById('board');
+  boardEl.innerHTML='';
+
+  for(let r=0;r<8;r++){
+    for(let c=0;c<8;c++){
+      const cell=document.createElement('div');
+      cell.className='cell '+((r+c)%2===0?'light':'dark');
+      cell.id=`cell_${r}_${c}`;
+      cell.dataset.r=r; cell.dataset.c=c;
+
+      const key=`${r},${c}`;
+
+      // Carrot
+      const carrotIdx = carrots.findIndex(ca=>ca.row===r&&ca.col===c);
+      if(carrotIdx>=0){
+        const el=document.createElement('div');
+        el.className='board-carrot pulse';
+        el.id=`carrot_${r}_${c}`;
+        el.textContent='🥕';
+        cell.appendChild(el);
+      }
+
+      // Mine
+      if(MINES.has(key)){
+        const mine=document.createElement('div');
+        mine.className='board-mine';
+        mine.id=`mine_${r}_${c}`;
+        mine.textContent='💣';
+        cell.appendChild(mine);
+      }
+
+      cell.addEventListener('click',()=>onCellClick(r,c,cell));
+      boardEl.appendChild(cell);
+    }
+  }
+
+  // Floating knight
+  const old=document.getElementById('floating-knight'); if(old) old.remove();
+  const fk=document.createElement('div');
+  fk.id='floating-knight'; fk.appendChild(makeKnightImg());
+  document.getElementById('board-outer').appendChild(fk);
+  applyKnightScale(false);
+  requestAnimationFrame(()=>{
+    positionKnight(knightRow,knightCol,false);
+    requestAnimationFrame(()=>{
+      fk.style.transition='left .38s cubic-bezier(.4,0,.2,1), top .38s cubic-bezier(.4,0,.2,1), font-size .5s ease';
+      if(difficulty==='beginner') showReachable();
+    });
+  });
+
+  
+}
+
+// ══════════════════════════════════════
+// FLOATING KNIGHT
+// ══════════════════════════════════════
+function getCellSize(){
+  // קורא את הגודל המרונדר בפועל מה-DOM — לא breakpoints קשיחים
+  const cell=document.querySelector('.cell');
+  if(cell){ const w=cell.getBoundingClientRect().width; if(w) return w; }
+  const parsed=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--cell'));
+  return parsed||52;
+}
+
+function positionKnight(r,c,animate=true){
+  const fk=document.getElementById('floating-knight'); if(!fk) return;
+  const sz=getCellSize();
+  const left=c*sz+sz/2;
+  const top=r*sz+sz/2;
+  if(!animate){
+    const prev=fk.style.transition;
+    fk.style.transition='none';
+    fk.style.left=left+'px'; fk.style.top=top+'px';
+    fk.style.transform='translate(-50%,-50%)';
+    requestAnimationFrame(()=>fk.style.transition=prev);
+  } else {
+    fk.style.left=left+'px'; fk.style.top=top+'px';
+    fk.style.transform='translate(-50%,-50%)';
+  }
+}
+
+function applyKnightScale(animate=true){
+  const fk=document.getElementById('floating-knight'); if(!fk) return;
+  const basePx=getCellSize();          // מתבסס על גודל התא בפועל → מתכווץ במובייל
+  const newPx=basePx*knightScale;
+  const img=fk.querySelector('img');
+  if(img){ img.style.width=newPx+'px'; img.style.height=newPx+'px'; } // גדילת ה-SVG
+  else { fk.style.fontSize=newPx+'px'; }
+  if(animate){
+    fk.classList.remove('grow');
+    void fk.offsetWidth;
+    fk.classList.add('grow');
+  }
+}
+
+function jumpKnightTo(tr,tc,callback){
+  const fk=document.getElementById('floating-knight'); if(!fk) return;
+  const dr=tr-knightRow, dc=tc-knightCol;
+  // Mid-point: always go the long leg first (2 squares), then short leg (1 square)
+  let midR,midC;
+  if(Math.abs(dr)===2){midR=knightRow+dr; midC=knightCol;}
+  else                {midR=knightRow;    midC=knightCol+dc;}
+
+  // Leg 1 — smooth ease-in over 260ms
+  fk.style.transition='left .26s cubic-bezier(.4,0,.6,1), top .26s cubic-bezier(.4,0,.6,1), font-size .5s ease';
+  const sz=getCellSize();
+  fk.style.left =(midC*sz+sz/2)+'px';
+  fk.style.top  =(midR*sz+sz/2)+'px';
+  // Slight scale-up mid-jump to emphasise the pivot
+  fk.style.filter='drop-shadow(0 0 18px rgba(244,208,63,1)) drop-shadow(0 2px 4px rgba(0,0,0,.8))';
+
+  setTimeout(()=>{
+    // Leg 2 — ease-out over 220ms
+    fk.style.transition='left .22s cubic-bezier(.2,0,.4,1), top .22s cubic-bezier(.2,0,.4,1), font-size .5s ease';
+    fk.style.left =(tc*sz+sz/2)+'px';
+    fk.style.top  =(tr*sz+sz/2)+'px';
+    fk.style.filter='drop-shadow(0 0 14px rgba(244,208,63,.9)) drop-shadow(0 2px 4px rgba(0,0,0,.8))';
+    knightRow=tr; knightCol=tc;
+    setTimeout(()=>{ if(callback) callback(); },230);
+  },270);
+}
+
+// ══════════════════════════════════════
+// REACHABLE HIGHLIGHTS
+// ══════════════════════════════════════
+function clearReachable(){
+  document.querySelectorAll('.cell.reachable').forEach(c=>c.classList.remove('reachable'));
+}
+function refreshReachable(){
+  knightMoves(knightRow,knightCol).forEach(({r,c})=>{
+    const cell=document.getElementById(`cell_${r}_${c}`);
+    if(cell) cell.classList.add('reachable');
+  });
+}
+function showReachable(){ clearReachable(); refreshReachable(); }
+
+// ══════════════════════════════════════
+// CARROT STRIP
+// ══════════════════════════════════════
+function updateCarrotStrip(){
+  const collected=carrots.filter(c=>c.collected).length;
+  for(let i=0;i<5;i++){
+    const el=document.getElementById(`cs-${i}`);
+    if(!el) continue;
+    if(i<collected){
+      el.className='carrot-item collected';
+    } else {
+      el.className='carrot-item';
+    }
+  }
+}
+
+// ══════════════════════════════════════
+// REBUILD CARROTS AFTER EXPLOSION
+// ══════════════════════════════════════
+function rebuildCarrotsOnBoard(){
+  // Remove any existing carrot elements
+  document.querySelectorAll('.board-carrot').forEach(el=>el.remove());
+  // Re-add all carrots
+  CARROTS.forEach(ca=>{
+    const cell=document.getElementById(`cell_${ca.row}_${ca.col}`);
+    if(!cell) return;
+    const el=document.createElement('div');
+    el.className='board-carrot pulse';
+    el.id=`carrot_${ca.row}_${ca.col}`;
+    el.textContent='🥕';
+    cell.appendChild(el);
+  });
+}
+
+// ══════════════════════════════════════
+// EXPLOSION
+// ══════════════════════════════════════
+function explodeKnight(landR, landC, callback){
+  playBoom();
+
+  // 1. Flash the whole board orange
+  const boardOuter=document.getElementById('board-outer');
+  const flash=document.createElement('div'); flash.className='board-flash';
+  boardOuter.appendChild(flash);
+  setTimeout(()=>flash.remove(), 500);
+
+  // 2. Spawn explosion particles from the knight's screen position
+  const fk=document.getElementById('floating-knight');
+  if(fk){
+    const rect=fk.getBoundingClientRect();
+    const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+    const colors=['#FF6B35','#FF4444','#F4D03F','#fff','#FF8C00','#FFD700'];
+    for(let i=0;i<22;i++){
+      const p=document.createElement('div'); p.className='exp-particle';
+      const sz=6+Math.random()*10;
+      const angle=Math.random()*Math.PI*2;
+      const dist=60+Math.random()*110;
+      const tx=Math.cos(angle)*dist, ty=Math.sin(angle)*dist;
+      p.style.cssText=`
+        width:${sz}px;height:${sz}px;
+        left:${cx-sz/2}px;top:${cy-sz/2}px;
+        background:${colors[Math.floor(Math.random()*colors.length)]};
+        --tx:${tx}px;--ty:${ty}px;
+        animation-duration:${0.5+Math.random()*0.4}s;
+      `;
+      document.body.appendChild(p);
+      setTimeout(()=>p.remove(), 900);
+    }
+
+    // 3. Big 💥 emoji at knight position
+    const boom=document.createElement('div');
+    boom.textContent='💥';
+    boom.style.cssText=`
+      position:fixed;left:${cx}px;top:${cy}px;
+      transform:translate(-50%,-50%) scale(0);
+      font-size:3.5rem;z-index:360;pointer-events:none;
+      transition:transform .2s cubic-bezier(.175,.885,.32,1.5), opacity .3s ease;
+    `;
+    document.body.appendChild(boom);
+    requestAnimationFrame(()=>{
+      boom.style.transform='translate(-50%,-50%) scale(1.4)';
+      setTimeout(()=>{ boom.style.opacity='0'; setTimeout(()=>boom.remove(),300); },300);
+    });
+  }
+
+  // 4. Screen shake via body
+  document.body.style.animation='none';
+  void document.body.offsetWidth;
+  document.body.style.animation='screenShake .4s ease both';
+
+  setTimeout(()=>{ callback(); }, 750);
+}
+
+
+// ══════════════════════════════════════
+// CELL CLICK
+// ══════════════════════════════════════
+function onCellClick(r,c,cell){
+  if(busy) return;
+  if(r===knightRow&&c===knightCol) return;
+
+  // אם הילד לוחץ בזמן שמצב 'beginner' פעיל — סמן שימוש בעזרה
+  if(difficulty === 'beginner') beginnerUsed = true;
+
+  if(!isReachable(r,c)){
+    cell.classList.add('wrong');
+    const x=document.createElement('div'); x.className='x-mark'; x.textContent='✕'; cell.appendChild(x);
+    setTimeout(()=>{ x.remove(); cell.classList.remove('wrong'); },700);
+    return;
+  }
+
+  const key=`${r},${c}`;
+  const isMine=MINES.has(key);
+  const carrotIdx=carrots.findIndex(ca=>ca.row===r&&ca.col===c&&!ca.collected);
+
+  busy=true;
+  jumpKnightTo(r,c,()=>{
+
+    if(isMine){
+      explodeKnight(r,c,()=>{
+        // Full reset
+        collectedCount=0; mineHits++; knightScale=0.75;
+        moveCount=0;
+        minesArr = ORIG_MINES.map(m=>({...m}));
+        if(difficulty==='beginner'){
+          CLOSE_IDX.forEach(i=>{ minesArr[i]={row:-1,col:-1}; });
+          BEGINNER_EXTRA_MINES.forEach(m=>minesArr.push({...m}));
+        }
+        rebuildMinesSet();
+        carrots = CARROTS.map(c=>({row:c.row,col:c.col,collected:false}));
+        updateCarrotStrip();
+        rebuildCarrotsOnBoard();
+        // Rebuild mine elements
+        document.querySelectorAll('.board-mine').forEach(el=>el.remove());
+        minesArr.forEach(m=>{
+          const cl=document.getElementById(`cell_${m.row}_${m.col}`);
+          if(cl){ const el=document.createElement('div');
+            el.className='board-mine'; el.id=`mine_${m.row}_${m.col}`;
+            el.textContent='💣'; cl.appendChild(el); }
+        });
+        knightRow=START.row; knightCol=START.col;
+        positionKnight(START.row,START.col,true);
+        applyKnightScale(false);
+        clearReachable();
+        if(difficulty==='beginner') refreshReachable();
+        setTimeout(()=>{ busy=false; },600);
+      });
+      return;
+    }
+
+    // ── מהלך חוקי — מנה ובדוק זוזת מוקשים ──
+    moveCount++;
+
+    if(difficulty==='advanced'){
+      if(moveCount>0 && moveCount%3===0){
+        setTimeout(()=>{
+          setTimeout(()=>{ shiftMines(moveCount===3?1:2); },600);
+        },300);
+      }
+    }
+
+    if(carrotIdx>=0){
+      carrots[carrotIdx].collected=true;
+      collectedCount++;
+      // ⭐ עדכון best score של שלב 4 — אחרי כל גזר (כולל בונוס סולו אם נבחר)
+
+      const carrotEl=document.getElementById(`carrot_${r}_${c}`);
+      if(carrotEl){
+        carrotEl.style.animation='carrotPop .3s ease forwards reverse';
+        setTimeout(()=>carrotEl.remove(),300);
+      }
+
+      // Pulse animation — without size change
+      setTimeout(()=>{
+        const fk=document.getElementById('floating-knight');
+        if(fk){ fk.classList.remove('grow'); void fk.offsetWidth; fk.classList.add('grow'); }
+        playSuccess();
+      },350);
+      playCarrot();
+
+      updateCarrotStrip();
+
+      if(collectedCount>=5){
+        const perfect = mineHits === 0 && !beginnerUsed;
+        KnightState.save('stage4', perfect);
+        setTimeout(()=>{
+          document.getElementById('af-title').textContent = perfect ? 'מושלם! ללא מוקשים! 🌟' : 'כל הגזרים נאספו! 🥕';
+          const stEl = document.getElementById('af-stars');
+          if(stEl){stEl.textContent=perfect?'⭐⭐⭐':'⭐⭐';stEl.style.display='block';}
+          document.getElementById('af-sub').textContent = beginnerUsed
+            ? 'יפה! בחרו ברמת המתקדם כדי לזכות ב-3 כוכבים'
+            : perfect ? 'עברתם ללא פגיעה — מדהים!' : 'כל הכבוד!';
+          document.getElementById('btn-af-retry').textContent = perfect ? 'שחקו שוב 🔄' : 'נסו שוב 🔄';
+          document.getElementById('af-overlay').classList.add('show');
+          spawnConfetti(80);
+        },700);
+        busy=false;
+        return;
+      }
+
+      if(difficulty==='beginner') showReachable();
+      busy=false;
+      return;
+    }
+
+    // Normal legal move
+    if(difficulty==='beginner') showReachable();
+    busy=false;
+  });
+}
+
+// ══════════════════════════════════════
+// MONSTER WIN
+// ══════════════════════════════════════
+function nextStage(){
+  window.location.href = 'knight-final-exam.html';
+}
+
+function retryGame(){
+  document.getElementById('af-overlay').classList.remove('show');
+  buildBoard();   // buildBoard מאפס mineHits
+}
+
+// ══════════════════════════════════════
+// UI HELPERS
+// ══════════════════════════════════════
+function setHint(txt,cls){
+  const h=document.getElementById('hint-bar');
+  h.textContent=txt; h.className='hint-bar'+(cls?' '+cls:'');
+}
+
+// ══════════════════════════════════════
+// CONFETTI
+// ══════════════════════════════════════
+function spawnConfetti(n=60){
+  const colors=['#F4D03F','#52B788','#7EC8E3','#FF6B35','#fff','#FF69B4'];
+  for(let i=0;i<n;i++){
+    const dot=document.createElement('div'); dot.className='confetti-dot';
+    const sz=6+Math.random()*8;
+    dot.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}vw;top:-${sz}px;background:${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${1.2+Math.random()*1.5}s;animation-delay:${Math.random()*.6}s;`;
+    document.body.appendChild(dot); setTimeout(()=>dot.remove(),3500);
+  }
+}
+
+// ══════════════════════════════════════
+// SOUNDS
+// ══════════════════════════════════════
+let audioCtx=null;
+let isMuted=['true','1'].includes(localStorage.getItem('chess_muted')); // קריאה סובלנית: true/false וגם 1/0
+function getCtx(){
+  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended') audioCtx.resume();  // iOS: חידוש על מחווה
+  return audioCtx;
+}
+
+function playCarrot(){
+  try{
+    if(isMuted) return;
+    const ctx=getCtx(), t=ctx.currentTime;
+    // Happy C-E-G-C chord arpeggio
+    [523.25,659.25,783.99,1046.5].forEach((freq,i)=>{
+      const osc=ctx.createOscillator(), gain=ctx.createGain();
+      osc.type='sine'; osc.frequency.value=freq;
+      const st=t+i*0.09;
+      gain.gain.setValueAtTime(0,st);
+      gain.gain.linearRampToValueAtTime(0.25,st+0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001,st+0.35);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(st); osc.stop(st+0.38);
+    });
+  }catch(e){}
+}
+
+function playSuccess(){
+  try{
+    if(isMuted) return;
+    const ctx=getCtx(), t=ctx.currentTime;
+    // Rising fanfare: G-B-D-G
+    [392,493.88,587.33,783.99].forEach((freq,i)=>{
+      const osc=ctx.createOscillator(), gain=ctx.createGain();
+      osc.type='triangle'; osc.frequency.value=freq;
+      const st=t+i*0.11;
+      gain.gain.setValueAtTime(0,st);
+      gain.gain.linearRampToValueAtTime(0.3,st+0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001,st+0.4);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(st); osc.stop(st+0.42);
+    });
+  }catch(e){}
+}
+
+function playBoom(){
+  try{
+    if(isMuted) return;
+    const ctx=getCtx(), t=ctx.currentTime;
+    // Layer 1: low thud
+    const buf1=ctx.createBuffer(1,ctx.sampleRate*.6,ctx.sampleRate);
+    const d1=buf1.getChannelData(0);
+    for(let i=0;i<d1.length;i++) d1[i]=(Math.random()*2-1)*Math.pow(1-i/d1.length,1.8);
+    const src1=ctx.createBufferSource(); src1.buffer=buf1;
+    const g1=ctx.createGain();
+    g1.gain.setValueAtTime(0.9,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.6);
+    // Low-pass filter for thud feel
+    const flt=ctx.createBiquadFilter(); flt.type='lowpass'; flt.frequency.value=220;
+    src1.connect(flt); flt.connect(g1); g1.connect(ctx.destination);
+    src1.start(t);
+
+    // Layer 2: crackling mid noise
+    const buf2=ctx.createBuffer(1,ctx.sampleRate*.35,ctx.sampleRate);
+    const d2=buf2.getChannelData(0);
+    for(let i=0;i<d2.length;i++) d2[i]=(Math.random()*2-1)*Math.pow(1-i/d2.length,2.5);
+    const src2=ctx.createBufferSource(); src2.buffer=buf2;
+    const g2=ctx.createGain();
+    g2.gain.setValueAtTime(0.55,t+0.02); g2.gain.exponentialRampToValueAtTime(0.001,t+0.37);
+    src2.connect(g2); g2.connect(ctx.destination);
+    src2.start(t+0.02);
+
+    // Layer 3: descending pitch "whoosh"
+    const osc=ctx.createOscillator(), g3=ctx.createGain();
+    osc.type='sawtooth';
+    osc.frequency.setValueAtTime(180,t); osc.frequency.exponentialRampToValueAtTime(40,t+0.35);
+    g3.gain.setValueAtTime(0.4,t); g3.gain.exponentialRampToValueAtTime(0.001,t+0.35);
+    osc.connect(g3); g3.connect(ctx.destination);
+    osc.start(t); osc.stop(t+0.35);
+  }catch(e){}
+}
+
+// ── INIT ─────────────────────────────────────
+difficulty = 'beginner';
+buildBoard();
+
+// ── EVENT LISTENERS (IIFE — מונע global scope) ──
+document.getElementById('btn-help').addEventListener('click',()=>setDifficulty('beginner'));
+document.getElementById('btn-solo').addEventListener('click',()=>setDifficulty('advanced'));
+document.getElementById('btn-af-continue').addEventListener('click',nextStage);
+document.getElementById('btn-af-retry').addEventListener('click',retryGame);
+
+// ── Mute toggle ──
+const muteBtn=document.getElementById('muteBtn');
+function syncMuteIcon(){ muteBtn.textContent = isMuted ? '🔇' : '🔊'; }
+syncMuteIcon();
+muteBtn.addEventListener('click', ()=>{
+  isMuted=!isMuted;
+  localStorage.setItem('chess_muted', isMuted);
+  syncMuteIcon();
+  if(!isMuted){ try{ getCtx(); }catch(e){} }
+});
+// iOS: נעילת אודיו על המחווה הראשונה
+document.addEventListener('click', ()=>{ try{ getCtx(); }catch(e){} }, {once:true});
+// סיבוב/שינוי גודל מסך — מיקום + סקאלה מחדש של הפרש הצף
+window.addEventListener('resize', ()=>{ positionKnight(knightRow,knightCol,false); applyKnightScale(false); });
+})();
+</script>
+</body>
+</html>

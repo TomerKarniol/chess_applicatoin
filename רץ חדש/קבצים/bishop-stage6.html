@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#162D4A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>הרץ — שלב 6 🗝️ מבחן מסכם</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+:root{
+  --gold:#F4D03F;--gold-dark:#C9A227;--green:#52B788;
+  --blue:#7EC8E3;--red:#E74C3C;--purple:#9B59B6;
+  --bg1:#162D4A;--bg2:#0C1E30;--bg3:#060E1A;
+  --cell-light:#C9E4F5;--cell-dark:#4A7FA5;
+  --cell:58px;
+}
+@media(max-width:480px){:root{--cell:53px;}}
+@media(max-width:430px){:root{--cell:48px;}}
+@media(max-width:390px){:root{--cell:44px;}}
+@media(max-width:360px){:root{--cell:40px;}}
+
+body{
+  font-family:'Nunito',sans-serif;
+  background:radial-gradient(ellipse at 50% 0%,var(--bg1) 0%,var(--bg2) 55%,var(--bg3) 100%);
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  padding:10px 12px max(28px,env(safe-area-inset-bottom));user-select:none;overflow-x:hidden;overflow-y:auto;overscroll-behavior:none;
+}
+.star-dot{position:fixed;border-radius:50%;background:#fff;
+  animation:twinkle ease-in-out infinite alternate;pointer-events:none;z-index:0;}
+@keyframes twinkle{from{opacity:.1;transform:scale(.8)}to{opacity:.85;transform:scale(1.2)}}
+
+/* BOARD SIZE */
+:root{ --board-size:calc(var(--cell)*8); }
+
+/* HEADER — board-aligned */
+.hdr{display:flex;align-items:center;justify-content:space-between;
+  width:var(--board-size);margin-bottom:8px;z-index:1;}
+.stage-badge{font-family:'Fredoka One',cursive;font-size:.85rem;
+  background:rgba(244,208,63,.12);border:1.5px solid rgba(244,208,63,.35);
+  border-radius:50px;padding:3px 14px;color:var(--gold);letter-spacing:.5px;}
+.score-right{display:flex;align-items:center;gap:8px;}
+
+/* MUTE */
+.btn-mute{background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.2);
+  border-radius:50%;width:36px;height:36px;font-size:1.1rem;cursor:pointer;color:white;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .2s;touch-action:manipulation;flex-shrink:0;}
+.btn-mute:hover{background:rgba(255,255,255,.18);}
+
+/* LIVES */
+.lives-row{display:flex;gap:4px;align-items:center;}
+.life-icon{font-size:1.25rem;transition:all .25s;}
+.life-icon.lost{filter:grayscale(1);opacity:.25;}
+
+/* COORD WRAP */
+.coord-wrap{display:flex;align-items:flex-start;gap:5px;direction:ltr;z-index:1;margin-bottom:8px;}
+.rank-labels{display:flex;flex-direction:column;justify-content:space-around;
+  font-family:'Fredoka One',cursive;font-size:.72rem;color:var(--gold);opacity:.8;
+  width:15px;text-align:center;}
+.file-labels{display:flex;justify-content:space-around;width:var(--board-size);
+  margin-top:4px;font-family:'Fredoka One',cursive;font-size:.72rem;color:var(--gold);opacity:.8;}
+
+/* PHASE INDICATOR */
+.phase-bar{
+  display:flex;align-items:center;gap:10px;margin-bottom:6px;z-index:1;
+}
+.phase-pill{
+  font-family:'Fredoka One',cursive;font-size:.88rem;
+  padding:4px 14px;border-radius:50px;border:2px solid;
+  transition:all .4s ease;
+  opacity:.35;
+}
+.phase-pill.ph1{color:var(--cell-light);border-color:var(--cell-light);background:transparent;}
+.phase-pill.ph1.active{
+  opacity:1;background:rgba(201,228,245,.22);
+  box-shadow:0 0 14px rgba(201,228,245,.7),0 0 28px rgba(201,228,245,.3);
+}
+.phase-pill.ph2{color:var(--gold);border-color:var(--gold);background:transparent;}
+.phase-pill.ph2.active{
+  opacity:1;background:rgba(244,208,63,.18);
+  box-shadow:0 0 14px rgba(244,208,63,.8),0 0 28px rgba(244,208,63,.3);
+}
+.phase-arrow{font-size:1rem;color:#4d6275;}
+
+/* TITLE */
+.game-title{font-family:'Fredoka One',cursive;font-size:1.22rem;color:var(--gold);
+  text-shadow:0 0 22px rgba(244,208,63,.8);text-align:center;margin-bottom:7px;z-index:1;
+  min-height:1.5em;}
+
+/* BOARD */
+.board-frame{
+  padding:5px;
+  background:linear-gradient(135deg,var(--gold) 0%,var(--gold-dark) 25%,#9A7B1A 50%,var(--gold-dark) 75%,var(--gold) 100%);
+  border-radius:10px;
+  box-shadow:0 0 50px rgba(244,208,63,.5),0 0 100px rgba(244,208,63,.15),0 10px 40px rgba(0,0,0,.75);
+  position:relative;z-index:1;margin-bottom:8px;
+}
+.board-outer{position:relative;direction:ltr;border-radius:6px;overflow:hidden;}
+.board-grid{
+  display:grid;
+  grid-template-columns:repeat(8,var(--cell));
+  grid-template-rows:repeat(8,var(--cell));
+  direction:ltr;
+}
+.cell{width:var(--cell);height:var(--cell);position:relative;cursor:pointer;
+  touch-action:manipulation;}
+.cell.cl{background:var(--cell-light);}
+.cell.cd{background:var(--cell-dark);}
+.cell.err-flash{animation:errFlash .38s ease!important;}
+@keyframes errFlash{0%,100%{background:inherit;}35%,65%{background:rgba(231,76,60,.6)!important;}}
+
+/* TOAST — inline מתחת ללוח */
+.err-area{height:36px;display:flex;align-items:center;justify-content:center;
+  margin-top:4px;z-index:1;}
+.err-toast{
+  background:rgba(8,18,35,.96);border:2px solid var(--red);
+  color:#FFB3A7;font-weight:700;font-size:.87rem;
+  padding:7px 20px;border-radius:50px;opacity:0;pointer-events:none;
+  transition:opacity .25s ease;text-align:center;max-width:88vw;white-space:nowrap;
+}
+.err-toast.show{opacity:1;}
+.cell-icon{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:calc(var(--cell)*.62);pointer-events:none;z-index:5;
+}
+/* BISHOP — one-time intro glow */
+@keyframes introGlow{
+  0%  {filter:drop-shadow(0 0 10px rgba(255,255,255,.7)) drop-shadow(0 2px 6px rgba(0,0,0,.9));}
+  35% {filter:drop-shadow(0 0 32px rgba(244,208,63,1))  drop-shadow(0 0 55px rgba(126,200,227,.8)) drop-shadow(0 2px 6px rgba(0,0,0,.9));}
+  100%{filter:drop-shadow(0 0 10px rgba(255,255,255,.7)) drop-shadow(0 2px 6px rgba(0,0,0,.9));}
+}
+.bishop-intro-glow{animation:introGlow 1.1s ease-in-out 1 forwards;}
+/* MINE */
+.mine-icon{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  pointer-events:none;z-index:5;
+}
+.mine-svg{
+  width:68%;height:68%;
+  animation:minePulse 1.8s ease-in-out infinite;
+}
+@keyframes minePulse{
+  0%,100%{transform:scale(1);filter:drop-shadow(0 0 4px rgba(231,76,60,.6));}
+  50%{transform:scale(1.1);filter:drop-shadow(0 0 10px rgba(231,76,60,1));}
+}
+/* KEY */
+.key-icon{
+  animation:keyGlow 2s ease-in-out infinite;
+}
+@keyframes keyGlow{
+  0%,100%{filter:drop-shadow(0 0 6px rgba(244,208,63,.8)) drop-shadow(0 0 12px rgba(244,208,63,.4));}
+  50%{filter:drop-shadow(0 0 14px rgba(244,208,63,1)) drop-shadow(0 0 28px rgba(244,208,63,.6));}
+}
+.key-collected{animation:keyCollect .5s ease forwards!important;}
+@keyframes keyCollect{
+  0%{transform:scale(1);opacity:1;}
+  40%{transform:scale(1.8) rotate(15deg);opacity:.9;}
+  100%{transform:scale(0) rotate(45deg);opacity:0;}
+}
+/* TARGET STAR — סיבוב עדין, ללא זוהר אדום (קנוני, תואם שלב 5) */
+.target-star{ animation:starSpin 3s linear infinite; }
+@keyframes starSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+/* BISHOP */
+.bishop-piece{
+  position:absolute;z-index:50;
+  display:flex;align-items:center;justify-content:center;
+  pointer-events:none;
+  filter:drop-shadow(0 0 10px rgba(255,255,255,.7)) drop-shadow(0 2px 6px rgba(0,0,0,.9));
+  transition:top .32s cubic-bezier(.4,0,.2,1),left .32s cubic-bezier(.4,0,.2,1);
+  visibility:hidden;
+}
+.bishop-piece img{object-fit:contain;display:block;pointer-events:none;}
+
+/* TELEPORT FLASH */
+.teleport-flash{
+  position:absolute;inset:0;
+  background:radial-gradient(circle,rgba(244,208,63,.9) 0%,rgba(244,208,63,.4) 40%,transparent 70%);
+  z-index:60;pointer-events:none;
+  animation:tpFlash .5s ease forwards;
+}
+@keyframes tpFlash{0%{opacity:0;}30%{opacity:1;}100%{opacity:0;}}
+
+/* BOOM */
+.boom-overlay{position:fixed;inset:0;background:rgba(6,14,26,.9);display:flex;align-items:center;justify-content:center;z-index:700;opacity:0;pointer-events:none;transition:opacity .35s;}
+.boom-overlay.show{opacity:1;pointer-events:all;}
+.boom-card{background:linear-gradient(150deg,#2d1919,#1a0d0d);border:2.5px solid var(--red);border-radius:22px;padding:26px 36px;text-align:center;box-shadow:0 0 70px rgba(231,76,60,.5);animation:cardIn .45s cubic-bezier(.175,.885,.32,1.5) both;}
+@keyframes cardIn{from{transform:scale(.55) translateY(24px);opacity:0;}to{transform:scale(1);opacity:1;}}
+.boom-icon{font-size:4rem;}
+.boom-title{font-family:'Fredoka One',cursive;font-size:2rem;color:var(--red);margin:6px 0 4px;text-shadow:0 0 20px rgba(231,76,60,.8);}
+.boom-sub{font-size:.9rem;color:#FFB3A7;font-weight:700;margin-bottom:16px;line-height:1.6;}
+.btn-retry{background:linear-gradient(160deg,var(--red),#c0392b);color:#fff;border:none;border-radius:14px;padding:11px 28px;font-family:'Fredoka One',cursive;font-size:1.15rem;cursor:pointer;touch-action:manipulation;box-shadow:0 4px 16px rgba(231,76,60,.5);transition:transform .15s;}
+.btn-retry:hover{transform:translateY(-2px);}
+
+/* WIN SCREENS — תבנית סטנדרטית */
+.win-screen{
+  position:fixed;inset:0;z-index:800;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(6,14,26,.93);opacity:0;pointer-events:none;transition:opacity .4s;
+}
+.win-screen.show{opacity:1;pointer-events:all;}
+@keyframes cardPop{from{opacity:0;transform:scale(.5);}to{opacity:1;transform:scale(1);}}
+.win-card{
+  background:linear-gradient(145deg,#152B45,#0D1E30);
+  border:2px solid var(--gold);border-radius:22px;
+  padding:36px 48px 44px;text-align:center;max-width:440px;width:92%;
+  animation:cardPop .5s cubic-bezier(.175,.885,.32,1.5) both;
+}
+.win-title{font-family:'Fredoka One',cursive;font-size:2.1rem;color:var(--gold);margin-bottom:4px;text-shadow:0 0 20px rgba(244,208,63,.7);}
+.win-crown-emoji{font-size:3.8rem;margin-bottom:8px;display:block;}
+.win-piece-name{font-family:'Fredoka One',cursive;font-size:2.6rem;color:var(--blue);margin-bottom:6px;text-shadow:0 0 20px rgba(126,200,227,.7);}
+.win-tease{font-family:'Fredoka One',cursive;font-size:1.3rem;color:rgba(255,255,255,.65);margin-top:6px;margin-bottom:4px;}
+#win-stars{
+  font-size:2.2rem;letter-spacing:4px;margin:6px 0;
+  animation:starsPop .5s .3s cubic-bezier(.175,.885,.32,1.5) both;
+}
+@keyframes starsPop{from{opacity:0;transform:scale(.3);}to{opacity:1;transform:scale(1);}}
+.btn-show-card{
+  font-family:'Fredoka One',cursive;font-size:1.3rem;color:#000;
+  background:linear-gradient(180deg,var(--gold) 0%,var(--gold-dark) 60%,#9A7B1A 100%);
+  border:none;border-radius:50px;
+  padding:12px 36px;cursor:pointer;width:100%;margin-top:12px;
+  box-shadow:0 4px 18px rgba(244,208,63,.45);
+  animation:pulse-btn 2s ease-in-out infinite;
+  touch-action:manipulation;
+}
+@keyframes pulse-btn{
+  0%,100%{box-shadow:0 4px 18px rgba(244,208,63,.45);}
+  50%{box-shadow:0 4px 32px rgba(244,208,63,.85);}
+}
+.btn-show-card:hover{transform:translateY(-2px);}
+.btn-replay{background:transparent;color:rgba(255,255,255,.6);
+  border:1.5px solid rgba(255,255,255,.2);border-radius:14px;
+  padding:9px 26px;font-family:'Fredoka One',cursive;font-size:1rem;
+  cursor:pointer;touch-action:manipulation;
+  transition:color .2s,border-color .2s;margin-top:8px;}
+.btn-replay:hover{color:white;border-color:rgba(255,255,255,.5);}
+
+/* WIN CONTENT — עטיפת win-screen2 */
+.win-content{display:flex;flex-direction:column;align-items:center;gap:14px;}
+
+/* WIN SCREEN 2 — TRADING CARD */
+/* TRADING CARD — תבנית סטנדרטית */
+.trading-card{
+  width:340px;
+  background:linear-gradient(160deg,#0a1a30 0%,#162D4A 50%,#0a1a30 100%);
+  border:4px solid var(--blue);
+  border-radius:20px;
+  box-shadow:0 0 40px rgba(126,200,227,.8),0 0 80px rgba(244,208,63,.3),inset 0 0 30px rgba(126,200,227,.1);
+  overflow:hidden;
+  animation:cardReveal .8s cubic-bezier(.175,.885,.32,1.5) both;
+}
+@keyframes cardReveal{
+  from{opacity:0;transform:scale(.5) rotateY(90deg);}
+  to{opacity:1;transform:scale(1) rotateY(0deg);}
+}
+@keyframes monsterPulse{
+  0%,100%{filter:drop-shadow(0 0 20px rgba(126,200,227,.7)) drop-shadow(0 0 40px rgba(244,208,63,.3));}
+  50%{filter:drop-shadow(0 0 35px rgba(126,200,227,1)) drop-shadow(0 0 60px rgba(244,208,63,.6));}
+}
+.card-header{
+  font-family:'Fredoka One',cursive;font-size:1.2rem;
+  color:var(--gold);text-align:center;
+  padding:10px 16px 6px;
+  background:linear-gradient(90deg,transparent,rgba(244,208,63,.15),transparent);
+  border-bottom:1px solid rgba(126,200,227,.4);
+  text-shadow:0 0 12px rgba(244,208,63,.9);
+}
+.card-img-wrap{
+  padding:10px;background:rgba(0,0,0,.3);
+  display:flex;align-items:center;justify-content:center;
+}
+.card-bishop-img{
+  width:100%;border-radius:10px;
+  animation:monsterPulse 2s ease-in-out infinite;
+}
+.btn-album{
+  font-family:'Fredoka One',cursive;font-size:1.1rem;
+  color:#fff;background:rgba(255,255,255,.07);
+  border:2px solid rgba(126,200,227,.6);border-radius:50px;
+  padding:11px 36px;cursor:pointer;touch-action:manipulation;
+  transition:background .2s,box-shadow .2s;
+}
+.btn-album:hover{background:rgba(126,200,227,.15);box-shadow:0 0 16px rgba(126,200,227,.4);}
+
+/* כפתור שחקו שוב — WIN SCREEN 2 */
+.btn-replay-final{
+  font-family:'Fredoka One',cursive;font-size:1.1rem;
+  color:#fff;background:linear-gradient(180deg,#52B788 0%,#3a8a62 100%);
+  border:none;border-radius:50px;padding:10px 36px;
+  cursor:pointer;touch-action:manipulation;
+  box-shadow:0 3px 14px rgba(82,183,136,.4);
+  transition:transform .2s;
+}
+.btn-replay-final:hover{transform:translateY(-2px);}
+
+/* PARTICLES */
+.particle{position:fixed;border-radius:50%;pointer-events:none;z-index:999;animation:pFly ease-out forwards;}
+@keyframes pFly{from{opacity:1;transform:translate(0,0) scale(1);}to{opacity:0;transform:translate(var(--px),var(--py)) scale(.1);}}
+
+/* STAGE PILLS — שורת שלבים מתחת לקלף */
+@keyframes pill-blink{
+  0%,100%{background:rgba(244,208,63,.12);box-shadow:0 0 4px rgba(244,208,63,.3);transform:scale(1);}
+  50%{background:rgba(244,208,63,.55);box-shadow:0 0 18px rgba(244,208,63,1),0 0 35px rgba(244,208,63,.5);transform:scale(1.06);}
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="hdr">
+  <div class="stage-badge">שלב 6 · מבחן מסכם</div>
+  <div class="lives-row" id="lives-row">
+    <span class="life-icon" id="life0">💙</span>
+    <span class="life-icon" id="life1">💙</span>
+    <span class="life-icon" id="life2">💙</span>
+  </div>
+  <div class="score-right">
+    <button class="btn-mute" id="btn-mute" onclick="toggleMute()">🔊</button>
+  </div>
+</div>
+
+<!-- כותרת מרכזית -->
+<div class="game-title">המבחן המסכם — מפתח הקסמים 🗝️</div>
+
+<!-- PHASE INDICATOR -->
+<div class="phase-bar">
+  <div class="phase-pill ph1 active" id="pill1">שלב א׳ 🗝️</div>
+  <div class="phase-arrow">→</div>
+  <div class="phase-pill ph2" id="pill2">שלב ב׳ ⭐</div>
+</div>
+
+<!-- BOARD -->
+<div class="coord-wrap">
+  <div class="rank-labels" id="ranks"></div>
+  <div>
+    <div class="board-frame">
+      <div class="board-outer" id="board-outer">
+        <div class="board-grid" id="board"></div>
+        <div class="bishop-piece" id="bishop-piece"></div>
+      </div>
+    </div>
+    <div class="file-labels" id="files"></div>
+  </div>
+</div>
+
+<div class="err-area">
+  <div class="err-toast" id="err-toast"></div>
+</div>
+
+<!-- BOOM -->
+<div class="boom-overlay" id="boom-overlay">
+  <div class="boom-card">
+    <div class="boom-icon">💥</div>
+    <div class="boom-title">BOOM! 💣</div>
+    <div class="boom-sub">המורה ברוך מאמין שתצליחו בפעם הבאה! 💪</div>
+    <button class="btn-retry" onclick="retryPhase()">נסו שוב 💪</button>
+  </div>
+</div>
+
+<!-- WIN SCREEN 1 — הכתרה -->
+<div class="win-screen" id="win-screen1">
+  <div class="win-card">
+    <span class="win-crown-emoji">👑</span>
+    <div class="win-title">הוכתרתם ע"י המורה ברוך</div>
+    <div class="win-piece-name">כמפלצת הרץ! <img id="win-bishop-icon" src="" alt="רץ" style="width:2.2rem;height:2.2rem;vertical-align:middle;object-fit:contain;filter:drop-shadow(0 0 8px rgba(126,200,227,1));"/></div>
+    <div id="win-stars"></div>
+    <div class="win-tease">זכיתם בקלף מפלצת הרץ! 🧩</div>
+    <button class="btn-show-card" onclick="showWinScreen2()">הציגו את הקלף ←</button>
+  </div>
+</div>
+
+<!-- WIN SCREEN 2 — קלף מפלצת -->
+<div class="win-screen" id="win-screen2">
+  <div class="win-content">
+    <div class="trading-card">
+      <div class="card-header">⚔️ מפלצת הרץ ⚔️</div>
+      <div class="card-img-wrap">
+        <img class="card-bishop-img" id="card-bishop-img" src="" alt="מפלצת הרץ"/>
+      </div>
+      <div id="card-score-line" style="text-align:center;padding:8px 16px 4px;"></div>
+      <div id="card-stars" style="display:flex;flex-wrap:wrap;justify-content:center;padding:4px 10px 10px;gap:2px;"></div>
+    </div>
+    <!-- כפתורים -->
+    <button class="btn-album" onclick="goToAlbum()">📌 הצמידו לאלבום!</button>
+    <button class="btn-replay-final" onclick="replayFromCard()">🔄 שחקו שוב!</button>
+  </div>
+</div>
+
+<script>
+/* ══ BISHOP SVG (white) ══ */
+const BISHOP_WHITE_SVG=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g fill="none" fill-rule="evenodd" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><g fill="#fff" stroke-linecap="butt"><path d="M9 36c3.39-.97 10.11.43 13.5-2 3.39 2.43 10.11 1.03 13.5 2 0 0 1.65.54 3 2-.68.97-1.65.99-3 .5-3.39-.97-10.11.46-13.5-1-3.39 1.46-10.11.03-13.5 1-1.354.49-2.323.47-3-.5 1.354-1.94 3-2 3-2zm6-4c2.5 2.5 12.5 2.5 15 0 .5-1.5 0-2 0-2 0-2.5-2.5-4-2.5-4 5.5-1.5 6-11.5-5-15.5-11 4-10.5 14-5 15.5 0 0-2.5 1.5-2.5 4 0 0-.5.5 0 2zM25 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 1 1 5 0z"/></g><path d="M17.5 26h10M15 30h15m-7.5-14.5v5M20 18h5" stroke="#000" stroke-linejoin="miter"/></g></svg>`;
+
+/* ══ MINE SVG — פצצה ♟ ══ */
+const MINE_SVG=`<svg viewBox="0 0 40 46" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bGrad" cx="38%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#555"/>
+      <stop offset="55%" stop-color="#2a2a2a"/>
+      <stop offset="100%" stop-color="#111"/>
+    </radialGradient>
+  </defs>
+  <!-- פקק -->
+  <rect x="17" y="10" width="6" height="4" rx="1.5" fill="#888" stroke="#555" stroke-width="1"/>
+  <!-- פתיל -->
+  <path d="M20 10 Q26 5 24 1" stroke="#8B6914" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  <!-- ניצוץ בקצה הפתיל -->
+  <circle cx="24" cy="1" r="2.8" fill="#FF8C00" opacity=".9">
+    <animate attributeName="r" values="2.2;3.2;2.2" dur="0.6s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values=".7;1;.7" dur="0.6s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="24" cy="1" r="1.4" fill="#FFE033"/>
+  <!-- גוף הפצצה -->
+  <circle cx="20" cy="27" r="15" fill="url(#bGrad)" stroke="#111" stroke-width="1.5"/>
+  <!-- ברק ניצבר -->
+  <ellipse cx="13.5" cy="20" rx="4" ry="2.2" fill="rgba(255,255,255,.18)" transform="rotate(-30,13.5,20)"/>
+  <!-- שני נקודות זעירות -->
+  <circle cx="26" cy="30" r="1.2" fill="rgba(255,255,255,.07)"/>
+</svg>`;
+
+/* ══ CONFIG ══ */
+const START_PH1 = {row:7,col:1};   // B1
+const KEY_POS   = {row:0,col:2};   // C8
+const HEART_POS = {row:3,col:0};   // A5
+const TARGET    = {row:0,col:7};   // H8
+
+const MINES_PH1 = [
+  {row:2,col:0},  // A6
+  {row:1,col:3},  // D7
+  {row:2,col:4},  // E6
+  {row:4,col:4},  // E4
+  {row:4,col:2},  // C4
+];
+const MINES_PH2 = [
+  {row:2,col:5},  // F6
+  {row:2,col:1},  // B6 — חוסם נתיב שמאלה-למעלה
+  {row:5,col:6},  // G3 — חוסם נתיב ימינה-למטה
+  {row:1,col:4},  // E7 — חוסם מעבר דרך שורת 7
+  {row:4,col:3},  // D4 — חוסם אזור מרכזי
+  {row:6,col:3},  // D2 — חוסם נתיב תחתון
+];
+
+/* ══ CHESS STATE API — v2 ══ */
+const ChessState={
+  getCompleted(){try{return JSON.parse(localStorage.getItem('chess_completed')||'[]');}catch{return[];}},
+  addCompleted(id){const l=this.getCompleted();if(!l.includes(id)){l.push(id);localStorage.setItem('chess_completed',JSON.stringify(l));}localStorage.setItem('chess_just_completed',id);},
+  addCard(id){const c=JSON.parse(localStorage.getItem('chess_cards')||'[]');if(!c.includes(id)){c.push(id);localStorage.setItem('chess_cards',JSON.stringify(c));}}
+};
+
+/* ══ BISHOP STATE — v2 קנוני ══ */
+const STAGE_KEYS=['stage1','stage2','stage3','stage4','stage5','stage6'];
+const PERFECT_THRESHOLD=6; // 6/6 שלבים מושלמים = 3 כוכבים (החלטת ברוך)
+
+function getStageData(key){
+  // שלבים 1–6 שומרים בתוך אובייקט chess_bishop: { stage1:{done,perfect}, ... }
+  try{
+    const d=JSON.parse(localStorage.getItem('chess_bishop')||'{}');
+    return d[key]||null;
+  }catch(e){return null;}
+}
+
+function buildStageRow(){
+  return STAGE_KEYS.map((k,i)=>{
+    const d=getStageData(k);
+    const num=i+1;
+    if(d?.perfect){
+      // שלם — ⭐ ירוק, ללא הבהוב
+      return `<span style="display:inline-flex;align-items:center;gap:3px;font-family:'Fredoka One',cursive;font-size:.75rem;padding:5px 10px;border-radius:50px;border:1.5px solid rgba(82,183,136,.4);color:rgba(82,183,136,.7);margin:2px;">שלב ${num} ⭐</span>`;
+    } else {
+      // שוחק אבל לא מושלם — 🔁 זהוב מהבהב
+      const url=`bishop-stage${num}.html`;
+      return `<button onclick="window.location.href='${url}'" style="display:inline-flex;align-items:center;gap:3px;font-family:'Fredoka One',cursive;font-size:.75rem;padding:6px 12px;border-radius:50px;border:2px solid var(--gold);background:rgba(244,208,63,.12);color:var(--gold);cursor:pointer;margin:2px;min-height:36px;touch-action:manipulation;animation:pill-blink 1.2s ease-in-out infinite;" title="שחקו שלב ${num} שוב">שלב ${num} 🔁</button>`;
+    }
+  }).join('');
+}
+
+const BishopState={
+  MODULE_KEY:'chess_bishop',
+  STAGE_KEYS:['stage1','stage2','stage3','stage4','stage5','stage6'],
+  PERFECT_THRESHOLD:6,   // 6/6 perfect = 3⭐ (החלטת ברוך)
+  save(stageKey,perfect){
+    try{
+      const d=JSON.parse(localStorage.getItem(this.MODULE_KEY)||'{}');
+      const prev=d[stageKey]||{};
+      const bestPerfect=(prev.bestPerfect||prev.perfect||false)||perfect;
+      d[stageKey]={done:true,perfect,lastPerfect:perfect,bestPerfect};
+      localStorage.setItem(this.MODULE_KEY,JSON.stringify(d));
+    }catch(e){}
+  },
+  getModuleStars(){   // מחזיר { best, last } — לא int
+    try{
+      const d=JSON.parse(localStorage.getItem(this.MODULE_KEY)||'{}');
+      const done=this.STAGE_KEYS.filter(k=>d[k]?.done).length;
+      if(done<this.STAGE_KEYS.length)return{best:0,last:0};
+      const bestP=this.STAGE_KEYS.filter(k=>(d[k]?.bestPerfect??d[k]?.perfect)).length;
+      const lastP=this.STAGE_KEYS.filter(k=>(d[k]?.lastPerfect??d[k]?.perfect)).length;
+      const toStars=p=>p>=this.PERFECT_THRESHOLD?3:2;
+      return{best:toStars(bestP),last:toStars(lastP)};
+    }catch(e){return{best:0,last:0};}
+  }
+};
+
+/* ══ STATE ══ */
+let phase=1, bishopPos={...START_PH1}, lives=3, busy=false;
+let mineHits=0;  // עוקב אחר פגיעות מוקש על פני שתי הפאזות — קובע perfect
+let muted=false;
+function toggleMute(){muted=!muted;document.getElementById('btn-mute').textContent=muted?'🔇':'🔊';}
+
+/* ══ AUDIO ══ */
+let audioCtx=null;
+function ga(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();return audioCtx;}
+document.addEventListener('click',()=>{try{ga();}catch(e){}},{once:true});
+function tone(f1,f2,d,type='sine',v=.12){try{const c=ga(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type=type;o.frequency.setValueAtTime(f1,c.currentTime);if(f2)o.frequency.exponentialRampToValueAtTime(f2,c.currentTime+d);g.gain.setValueAtTime(v,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+d);o.start();o.stop(c.currentTime+d);}catch(e){}}
+const sndMove=()=>{if(!muted)tone(440,660,.18,'sine',.10);};
+const sndErr =()=>{if(!muted)tone(220,110,.3,'sawtooth',.12);};
+const sndKey =()=>{if(!muted)[0,120,240].forEach((d,i)=>setTimeout(()=>tone([880,1100,1320][i],[1100,1320,1760][i],.3),d));};
+const sndWin =()=>{if(!muted)[0,150,300,450,600].forEach((d,i)=>setTimeout(()=>tone([660,880,1100,1320,1760][i],[880,1100,1320,1760,2200][i],.38),d));};
+
+function playCapture(){if(muted)return;try{
+  const c=ga(),n=c.currentTime;
+  const th=c.createOscillator(),tg=c.createGain();th.connect(tg);tg.connect(c.destination);
+  th.type='sine';th.frequency.setValueAtTime(90,n);th.frequency.exponentialRampToValueAtTime(20,n+.5);
+  tg.gain.setValueAtTime(.8,n);tg.gain.exponentialRampToValueAtTime(.001,n+.55);th.start(n);th.stop(n+.6);
+  const pu=c.createOscillator(),pg=c.createGain();pu.connect(pg);pg.connect(c.destination);
+  pu.type='sine';pu.frequency.setValueAtTime(200,n);pu.frequency.exponentialRampToValueAtTime(50,n+.18);
+  pg.gain.setValueAtTime(.45,n);pg.gain.exponentialRampToValueAtTime(.001,n+.2);pu.start(n);pu.stop(n+.22);
+  const bs=Math.floor(c.sampleRate*.3),nb=c.createBuffer(1,bs,c.sampleRate),nd=nb.getChannelData(0);
+  for(let i=0;i<bs;i++)nd[i]=Math.random()*2-1;
+  const ns=c.createBufferSource();ns.buffer=nb;
+  const nf=c.createBiquadFilter();nf.type='bandpass';nf.frequency.value=500;nf.Q.value=.5;
+  const ng=c.createGain();ng.gain.setValueAtTime(.5,n);ng.gain.exponentialRampToValueAtTime(.001,n+.3);
+  ns.connect(nf);nf.connect(ng);ng.connect(c.destination);ns.start(n);ns.stop(n+.32);
+  const cr=c.createOscillator(),crg=c.createGain();cr.connect(crg);crg.connect(c.destination);
+  cr.type='sawtooth';cr.frequency.value=900;crg.gain.setValueAtTime(.5,n);crg.gain.exponentialRampToValueAtTime(.001,n+.05);cr.start(n);cr.stop(n+.06);
+}catch(e){}}
+
+/* ══ EXPLOSION ══ */
+function showExplosion(row,col){
+  const SZ=getCellPx(),bo=document.getElementById('board-outer');
+  const W=SZ*8,H=SZ*8,cx=col*SZ+SZ/2,cy=row*SZ+SZ/2;
+  const cv=document.createElement('canvas');cv.width=W;cv.height=H;
+  cv.style.cssText=`position:absolute;left:0;top:0;width:${W}px;height:${H}px;z-index:60;pointer-events:none;`;
+  bo.appendChild(cv);const c=cv.getContext('2d');
+  const COLS=['#FF6B00','#FF4500','#FFD700','#FFFFFF','#FF8C00','#FF2200','#FFA500','#FFEE44'];
+  const parts=Array.from({length:45},(_,i)=>{const a=(i/45)*Math.PI*2+Math.random()*.4,spd=3.5+Math.random()*9;return{x:cx,y:cy,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd-1.5,r:1.5+Math.random()*5,color:COLS[Math.floor(Math.random()*COLS.length)],alpha:1,decay:.018+Math.random()*.022,grav:.18};});
+  let frame=0;
+  function draw(){
+    c.clearRect(0,0,W,H);
+    if(frame<8){const t=frame/7,r=SZ*.9*t;const g=c.createRadialGradient(cx,cy,0,cx,cy,Math.max(r,1));g.addColorStop(0,`rgba(255,255,255,${1-t})`);g.addColorStop(.35,`rgba(255,230,80,${(1-t)*.9})`);g.addColorStop(.7,`rgba(255,100,0,${(1-t)*.5})`);g.addColorStop(1,'rgba(200,30,0,0)');c.fillStyle=g;c.beginPath();c.arc(cx,cy,Math.max(r,1),0,Math.PI*2);c.fill();}
+    if(frame>=1&&frame<22){const t=(frame-1)/21,r=SZ*.75*t,a=1-t;const g=c.createRadialGradient(cx,cy,0,cx,cy,Math.max(r,1));g.addColorStop(0,`rgba(255,255,200,${a})`);g.addColorStop(.2,`rgba(255,180,0,${a*.95})`);g.addColorStop(.55,`rgba(210,50,0,${a*.7})`);g.addColorStop(.85,`rgba(100,15,0,${a*.4})`);g.addColorStop(1,'rgba(40,5,0,0)');c.fillStyle=g;c.beginPath();c.arc(cx,cy,Math.max(r,1),0,Math.PI*2);c.fill();}
+    if(frame>=3&&frame<14){const t=(frame-3)/11;c.beginPath();c.arc(cx,cy,SZ*.5*t+SZ*.15,0,Math.PI*2);c.strokeStyle=`rgba(255,180,50,${.6*(1-t)})`;c.lineWidth=3*(1-t);c.stroke();}
+    if(frame>10){const age=frame-10;for(let i=0;i<4;i++){const sa=Math.max(0,.18-age*.004);if(sa<=0)break;c.beginPath();c.arc(cx+Math.sin(i*1.7+age*.04)*age*.5,cy-age*.35+i*4,age*2.8+i*9,0,Math.PI*2);c.fillStyle=`rgba(55,55,55,${sa/(i*.4+1)})`;c.fill();}}
+    c.save();parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=p.grav;p.vx*=.94;p.alpha=Math.max(0,p.alpha-p.decay);if(p.alpha<=0)return;c.globalAlpha=p.alpha;c.beginPath();c.arc(p.x,p.y,Math.max(.5,p.r*Math.sqrt(p.alpha)),0,Math.PI*2);c.fillStyle=p.color;c.fill();});c.restore();
+    frame++;if(frame<55)requestAnimationFrame(draw);else cv.remove();
+  }
+  requestAnimationFrame(draw);
+}
+
+/* ══ UTILS ══ */
+function getCellPx(){const w=window.innerWidth;if(w<=360)return 40;if(w<=390)return 44;if(w<=430)return 48;if(w<=480)return 53;return 58;}
+document.documentElement.style.setProperty('--cell',getCellPx()+'px');
+window.addEventListener('resize',()=>{
+  document.documentElement.style.setProperty('--cell',getCellPx()+'px');
+  renderIcons();buildCoords();positionBishop(false);
+});
+function getCell(r,c){return document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);}
+function currentMines(){return phase===1?MINES_PH1:MINES_PH2;}
+function isMine(r,c){return currentMines().some(m=>m.row===r&&m.col===c);}
+
+function isBishopPathClear(fr,fc,tr,tc){
+  const dr=Math.sign(tr-fr),dc=Math.sign(tc-fc);
+  let r=fr+dr,c=fc+dc;
+  while(r!==tr||c!==tc){
+    if(isMine(r,c))return false;
+    r+=dr;c+=dc;
+  }
+  return true;
+}
+
+/* ══ TOAST ══ */
+let toastTimer=null;
+function showToast(txt){
+  const t=document.getElementById('err-toast');
+  t.textContent=txt;t.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2400);
+}
+
+/* ══ BUILD COORDS ══ */
+function buildCoords(){
+  const rl=document.getElementById('ranks'),fl=document.getElementById('files');
+  rl.innerHTML='';fl.innerHTML='';
+  for(let r=0;r<8;r++){const d=document.createElement('div');d.textContent=8-r;rl.appendChild(d);}
+  'ABCDEFGH'.split('').forEach(f=>{const d=document.createElement('div');d.textContent=f;fl.appendChild(d);});
+  const bf=document.querySelector('.board-frame');
+  if(bf)rl.style.height=bf.offsetHeight+'px';
+}
+
+/* ══ BUILD BOARD ══ */
+function buildBoard(){
+  const board=document.getElementById('board');board.innerHTML='';
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    const cell=document.createElement('div');
+    cell.className='cell '+((r+c)%2===0?'cl':'cd');
+    cell.dataset.r=r;cell.dataset.c=c;
+    cell.addEventListener('click',()=>onCellClick(r,c));
+    board.appendChild(cell);
+  }
+}
+
+/* ══ RENDER BOARD ICONS ══ */
+function renderIcons(){
+  // נקה את כל האייקונים הקיימים
+  document.querySelectorAll('.cell-icon,.mine-icon').forEach(e=>e.remove());
+
+  // מוקשים — רק של הפאזה הנוכחית
+  currentMines().forEach(m=>{
+    const cell=getCell(m.row,m.col);if(!cell)return;
+    const wrap=document.createElement('div');wrap.className='mine-icon';
+    wrap.innerHTML=`<div class="mine-svg">${MINE_SVG}</div>`;
+    cell.appendChild(wrap);
+  });
+
+  if(phase===1){
+    // 🗝️ מפתח — המטרה היחידה בפאזה א׳ (הכוכב מוסתר כדי שלא יבלבל את הסדר)
+    const keyCell=getCell(KEY_POS.row,KEY_POS.col);
+    if(keyCell){
+      const k=document.createElement('div');k.className='cell-icon key-icon';k.id='key-icon';k.textContent='🗝️';
+      keyCell.appendChild(k);
+    }
+  } else {
+    // ⭐ יעד — המטרה היחידה בפאזה ב׳
+    const tCell=getCell(TARGET.row,TARGET.col);
+    if(tCell&&!tCell.querySelector('.cell-icon')){
+      const star=document.createElement('div');star.className='cell-icon target-star';star.textContent='⭐';
+      tCell.appendChild(star);
+    }
+  }
+}
+
+/* ══ BISHOP POSITION ══ */
+function positionBishop(animate){
+  const SZ=getCellPx(),bp=document.getElementById('bishop-piece');
+  bp.style.width=SZ+'px';bp.style.height=SZ+'px';
+  if(!animate){
+    bp.style.transition='none';
+    bp.style.left=bishopPos.col*SZ+'px';bp.style.top=bishopPos.row*SZ+'px';bp.style.visibility='visible';
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{bp.style.transition='';}));
+  }else{
+    bp.style.left=bishopPos.col*SZ+'px';bp.style.top=bishopPos.row*SZ+'px';bp.style.visibility='visible';
+  }
+}
+
+/* ══ TELEPORT EFFECT ══ */
+function teleportTo(newPos,onDone){
+  const SZ=getCellPx(),bo=document.getElementById('board-outer'),bp=document.getElementById('bishop-piece');
+
+  // flash על המשבצת הנוכחית (יציאה)
+  const flash1=document.createElement('div');flash1.className='teleport-flash';
+  flash1.style.cssText=`position:absolute;left:${bishopPos.col*SZ}px;top:${bishopPos.row*SZ}px;width:${SZ}px;height:${SZ}px;z-index:60;pointer-events:none;animation:tpFlash .5s ease forwards;`;
+  bo.appendChild(flash1);
+  bp.style.visibility='hidden';
+
+  setTimeout(()=>{
+    flash1.remove();
+    bishopPos={...newPos};
+    positionBishop(false);
+
+    // flash על המשבצת החדשה (כניסה)
+    const flash2=document.createElement('div');flash2.className='teleport-flash';
+    flash2.style.cssText=`position:absolute;left:${newPos.col*SZ}px;top:${newPos.row*SZ}px;width:${SZ}px;height:${SZ}px;z-index:60;pointer-events:none;animation:tpFlash .5s ease forwards;`;
+    bo.appendChild(flash2);
+    setTimeout(()=>{flash2.remove();if(onDone)onDone();},520);
+  },520);
+}
+
+/* ══ KEY COLLECTION SEQUENCE ══ */
+function collectKey(){
+  busy=true;
+  const keyEl=document.getElementById('key-icon');
+  if(keyEl)keyEl.classList.add('key-collected');
+  sndKey();
+
+  setTimeout(()=>{
+    if(keyEl)keyEl.remove();
+    teleportTo(HEART_POS,()=>{
+      phase=2;
+      lives=3;        // איפוס חיים לפאזה ב׳
+      updateLives();
+      updatePhaseUI();
+      renderIcons();
+      positionBishop(false);
+      spawnParticles();
+      busy=false;
+    });
+  },700);
+}
+
+/* ══ PHASE UI ══ */
+function updatePhaseUI(){
+  const p1=document.getElementById('pill1');
+  const p2=document.getElementById('pill2');
+  if(phase===1){
+    p1.classList.add('active');
+    p2.classList.remove('active');
+  } else {
+    p1.classList.remove('active');
+    p2.classList.add('active');
+  }
+}
+
+/* ══ CLICK HANDLER ══ */
+function onCellClick(r,c){
+  if(busy)return;
+  if(r===bishopPos.row&&c===bishopPos.col)return;
+
+  // ולידציה: אלכסון
+  if(Math.abs(r-bishopPos.row)!==Math.abs(c-bishopPos.col)){
+    sndErr();showToast('❌ הרץ הולך רק באלכסון!');
+    const cell=getCell(r,c);cell?.classList.add('err-flash');setTimeout(()=>cell?.classList.remove('err-flash'),400);
+    return;
+  }
+  // ולידציה: נתיב חסום במוקש
+  if(!isBishopPathClear(bishopPos.row,bishopPos.col,r,c)){
+    sndErr();showToast('🚧 הנתיב חסום — יש מוקש בדרך!');
+    const cell=getCell(r,c);cell?.classList.add('err-flash');setTimeout(()=>cell?.classList.remove('err-flash'),400);
+    return;
+  }
+
+  busy=true;sndMove();
+  bishopPos={row:r,col:c};positionBishop(true);
+
+  setTimeout(()=>{
+    // נחתנו על מוקש?
+    if(isMine(r,c)){
+      triggerMine(r,c);return;
+    }
+    // הגענו למפתח (שלב 1)?
+    if(phase===1&&r===KEY_POS.row&&c===KEY_POS.col){
+      collectKey();return;
+    }
+    // הגענו ליעד (שלב 2)?
+    if(phase===2&&r===TARGET.row&&c===TARGET.col){
+      showWin();return;
+    }
+    busy=false;
+  },360);
+}
+
+/* ══ SAFE PATHS (שובל רמז) ══ */
+const SAFE_PATH_PH1 = [
+  {row:7,col:1},  // B1 — התחלה
+  {row:6,col:2},  // C2
+  {row:4,col:0},  // A4  (עובר B3 — נקי)
+  {row:2,col:2},  // C6  (עובר B5 — נקי)
+  {row:1,col:1},  // B7
+  {row:0,col:2},  // C8 — המפתח
+];
+const SAFE_PATH_PH2 = [
+  {row:3,col:0},  // A5 — התחלה
+  {row:4,col:1},  // B4
+  {row:2,col:3},  // D6  (עובר C5 — נקי)
+  {row:4,col:5},  // F4  (עובר E5 — נקי)
+  {row:2,col:7},  // H6  (עובר G5 — נקי)
+  {row:1,col:6},  // G7
+  {row:0,col:7},  // H8 — יעד
+];
+
+function showSafePath(){
+  const SZ=getCellPx();
+  const bo=document.getElementById('board-outer');
+  const path=phase===1?SAFE_PATH_PH1:SAFE_PATH_PH2;
+  const COLOR='#F4D03F';
+  const MS_PER_SQ=220;
+
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('viewBox',`0 0 ${8*SZ} ${8*SZ}`);
+  svg.style.cssText=`position:absolute;inset:0;width:${8*SZ}px;height:${8*SZ}px;pointer-events:none;z-index:20;overflow:visible;`;
+  bo.appendChild(svg);
+
+  function drawSegment(from,to,delay){
+    const x1=from.col*SZ+SZ/2, y1=from.row*SZ+SZ/2;
+    const x2=to.col*SZ+SZ/2,   y2=to.row*SZ+SZ/2;
+    const len=Math.hypot(x2-x1,y2-y1);
+    const dur=Math.abs(to.row-from.row)*MS_PER_SQ;
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',x1);line.setAttribute('y1',y1);
+    line.setAttribute('x2',x2);line.setAttribute('y2',y2);
+    line.setAttribute('stroke',COLOR);line.setAttribute('stroke-width','5');
+    line.setAttribute('stroke-linecap','round');
+    line.style.strokeDasharray=len;line.style.strokeDashoffset=len;
+    line.style.opacity='1';
+    line.style.filter=`drop-shadow(0 0 6px ${COLOR}) drop-shadow(0 0 14px rgba(244,208,63,.7))`;
+    svg.appendChild(line);
+    setTimeout(()=>{
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        line.style.transition=`stroke-dashoffset ${dur}ms ease-in-out`;
+        line.style.strokeDashoffset='0';
+      }));
+    },delay);
+    return delay+dur;
+  }
+
+  let t=0;
+  for(let i=0;i<path.length-1;i++){t=drawSegment(path[i],path[i+1],t);t+=60;}
+
+  // נקודת יעד
+  const dest=path[path.length-1];
+  setTimeout(()=>{
+    const circle=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('cx',dest.col*SZ+SZ/2);
+    circle.setAttribute('cy',dest.row*SZ+SZ/2);
+    circle.setAttribute('r',SZ*0.28);
+    circle.setAttribute('fill',`rgba(244,208,63,.3)`);
+    circle.setAttribute('stroke',COLOR);circle.setAttribute('stroke-width','3');
+    circle.style.filter=`drop-shadow(0 0 10px ${COLOR})`;
+    svg.appendChild(circle);
+  },t);
+
+  // דועך אחרי 2.5 שניות
+  setTimeout(()=>{
+    svg.style.transition='opacity 500ms ease-out';
+    svg.style.opacity='0';
+    setTimeout(()=>svg.remove(),520);
+  },t+1200);
+}
+
+/* ══ MINE HIT ══ */
+function triggerMine(r,c){
+  mineHits++;
+  playCapture();
+  showExplosion(r,c);
+  document.getElementById('bishop-piece').style.visibility='hidden';
+  setTimeout(()=>{
+    if(lives>0)lives--;
+    updateLives();
+    document.getElementById('boom-overlay').classList.add('show');
+    busy=false;
+  },900);
+}
+
+/* ══ RETRY ══ */
+function retryPhase(){
+  document.getElementById('boom-overlay').classList.remove('show');
+  bishopPos = phase===1 ? {...START_PH1} : {...HEART_POS};
+  renderIcons();
+  positionBishop(false);
+  busy=false;
+  if(lives===0){showSafePath();}
+}
+function replayStage(){
+  document.getElementById('win-screen1').classList.remove('show');
+  document.getElementById('win-screen2').classList.remove('show');
+  phase=1;bishopPos={...START_PH1};lives=3;busy=false;mineHits=0;
+  updateLives();renderIcons();positionBishop(false);updatePhaseUI();
+}
+function replayFromCard(){
+  window.location.href='bishop-stage1.html';
+}
+
+/* ══ LIVES ══ */
+function updateLives(){
+  for(let i=0;i<3;i++)document.getElementById('life'+i).classList.toggle('lost',i>=lives);
+}
+
+/* ══ WIN ══ */
+function showWin(){
+  busy=true;
+  spawnParticles();setTimeout(spawnParticles,600);
+  sndWin();
+
+  // perfect = לא פגעו במוקש אף פעם בשתי הפאזות
+  const perfect=(mineHits===0);
+  BishopState.save('stage6',perfect);
+  const ms=BishopState.getModuleStars();          // {best, last} (v2.1)
+  const starsBest='⭐'.repeat(ms.best)||'⭐⭐';
+  const lastTag=ms.last<ms.best
+    ? `<div style="font-size:.8rem;color:rgba(255,255,255,.6);margin-top:3px;">אחרון: ${'⭐'.repeat(ms.last)}</div>`
+    : '';
+
+  // win-screen1: כוכבים (שיא) + תגית אחרון
+  document.getElementById('win-stars').innerHTML=starsBest+lastTag;
+
+  // win-screen2 (קלף): כוכבים + שורת שלבים
+  document.getElementById('card-score-line').innerHTML=
+    `<div style="font-family:'Fredoka One',cursive;font-size:1.5rem;color:var(--gold);margin:6px 0;">${starsBest}</div>`+lastTag;
+  document.getElementById('card-stars').innerHTML=buildStageRow();
+
+  setTimeout(()=>document.getElementById('win-screen1').classList.add('show'),2800);
+}
+function showWinScreen2(){
+  document.getElementById('win-screen1').classList.remove('show');
+  document.getElementById('win-screen2').classList.add('show');
+}
+function goToAlbum(){
+  ChessState.addCompleted('bishop');
+  ChessState.addCard('bishop');
+  window.location.href='../../מסך הפתיחה/index.html';
+}
+
+/* ══ PARTICLES ══ */
+function spawnParticles(){
+  const colors=['#F4D03F','#52B788','#7EC8E3','#FF6B35','#fff','#9B59B6'];
+  for(let i=0;i<55;i++){
+    const p=document.createElement('div');p.className='particle';
+    const sz=5+Math.random()*8,a=Math.random()*Math.PI*2,d=100+Math.random()*200;
+    p.style.cssText=`width:${sz}px;height:${sz}px;background:${colors[Math.floor(Math.random()*colors.length)]};left:50vw;top:40vh;--px:${Math.cos(a)*d}px;--py:${Math.sin(a)*d}px;animation-duration:${1+Math.random()*1.2}s;animation-delay:${Math.random()*.4}s;`;
+    document.body.appendChild(p);setTimeout(()=>p.remove(),2400);
+  }
+}
+
+/* ══ STARS ══ */
+for(let i=0;i<55;i++){const s=document.createElement('div');s.className='star-dot';const sz=Math.random()*2.2+.7;s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}vw;top:${Math.random()*100}vh;animation-duration:${1.5+Math.random()*2.5}s;animation-delay:${Math.random()*3}s;`;document.body.appendChild(s);}
+
+/* ══ INIT ══ */
+const bImg=document.createElement('img');
+bImg.src='data:image/svg+xml,'+encodeURIComponent(BISHOP_WHITE_SVG);
+bImg.style.cssText='width:90%;height:90%;object-fit:contain;display:block;pointer-events:none;';
+document.getElementById('bishop-piece').appendChild(bImg);
+
+// אייקון הרץ במסך ההכתרה — גרסה מעודכנת (SVG ולא אמוג'י)
+document.getElementById('win-bishop-icon').src='data:image/svg+xml,'+encodeURIComponent(BISHOP_WHITE_SVG);
+
+// קלף — אותו רץ לבן
+document.getElementById('card-bishop-img').src='../../מסך הפתיחה/bishop.png';
+
+buildBoard();renderIcons();positionBishop(false);updateLives();buildCoords();
+
+// הבהוב חד-פעמי בטעינה — "הרץ מוכן"
+setTimeout(()=>{
+  const bp=document.getElementById('bishop-piece');
+  bp.classList.add('bishop-intro-glow');
+  bp.addEventListener('animationend',()=>bp.classList.remove('bishop-intro-glow'),{once:true});
+},400);
+</script>
+</body>
+</html>

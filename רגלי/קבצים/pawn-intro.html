@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl" style="-webkit-text-size-adjust:100%;">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#162D4A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>הרגלי — כלי קטן עם חלומות גדולים! ♟</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gold:#F4D03F;--gold-dark:#C9A227;--gold-deep:#9A7B1A;
+  --blue:#7EC8E3;--green:#52B788;--orange:#FF6B35;
+  --red:#E74C3C;--purple:#C39BD3;
+  --bg1:#162D4A;--bg2:#0C1E30;--bg3:#060E1A;
+  --mini:34px;
+  --cell-light:#C9E4F5;--cell-dark:#4A7FA5;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'Nunito',sans-serif;font-weight:700;color:white;
+  background:radial-gradient(ellipse at 50% 0%,var(--bg1) 0%,var(--bg2) 55%,var(--bg3) 100%);
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  padding:14px 10px max(28px,env(safe-area-inset-bottom));user-select:none;overflow-x:hidden;
+  overscroll-behavior:none;-webkit-tap-highlight-color:transparent;
+}
+
+/* ── STARS ── */
+.star-dot{position:fixed;border-radius:50%;background:white;
+  animation:twinkle ease-in-out infinite alternate;pointer-events:none;z-index:0;}
+@keyframes twinkle{from{opacity:.1;transform:scale(.8);}to{opacity:.85;transform:scale(1.2);}}
+
+/* ── TITLE ── */
+.main-title{
+  font-family:'Fredoka One',cursive;font-size:2.4rem;color:var(--gold);
+  text-shadow:0 0 28px rgba(244,208,63,.9),0 0 60px rgba(244,208,63,.4),
+              0 0 44px rgba(82,183,136,.55),0 2px 8px rgba(0,0,0,.6);
+  text-align:center;margin-bottom:3px;margin-top:6px;
+  animation:sp-in .7s cubic-bezier(.175,.885,.32,1.5) both;z-index:1;
+}
+@keyframes sp-in{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
+
+/* ── ARENA ── */
+.pawn-arena{position:relative;width:160px;height:160px;margin-bottom:6px;flex-shrink:0;z-index:1;}
+.arena-svg{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none;}
+
+.beam-line{stroke-linecap:round;opacity:0;fill:none;}
+.bm-g{stroke:var(--green);stroke-width:2.5;animation:beamPulseG 2.4s ease-in-out infinite;}
+.bm-gold{stroke:var(--gold);stroke-width:1.8;animation:beamPulseG 2.8s ease-in-out infinite;}
+@keyframes beamPulseG{
+  0%{opacity:0;stroke-width:1.5;}15%{opacity:1;stroke-width:4;}
+  55%{opacity:.45;}100%{opacity:0;stroke-width:1.5;}
+}
+
+.bdot{opacity:0;}
+.bdot-g{fill:#52B788;filter:drop-shadow(0 0 5px rgba(82,183,136,.9));animation:dotFade 2.4s ease-in-out infinite;}
+.bdot-gold{fill:#FFD700;filter:drop-shadow(0 0 4px rgba(255,215,0,.9));animation:dotFade 2.8s ease-in-out infinite;}
+@keyframes dotFade{0%{opacity:0;}10%{opacity:1;}80%{opacity:1;}100%{opacity:0;}}
+
+.crown-ring{fill:none;stroke:var(--green);stroke-width:1.5;opacity:0;animation:ringG 2.6s ease-in-out infinite;}
+@keyframes ringG{0%,100%{r:38;opacity:0;}35%{r:48;opacity:.45;}65%{r:54;opacity:.18;}}
+
+.piece-center{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  z-index:5;animation:pPulse 2.4s ease-in-out infinite;
+}
+.piece-center img{width:49%;height:49%;object-fit:contain;
+  filter:drop-shadow(0 0 3px rgba(0,0,0,1)) drop-shadow(0 0 12px rgba(82,183,136,.7)) drop-shadow(0 0 24px rgba(244,208,63,.4));}
+@keyframes pPulse{
+  0%,100%{transform:scale(1);}
+  50%{transform:scale(1.12);}
+}
+
+/* ── 3 BOARDS WRAPPER ── */
+.boards-outer{
+  width:100%;display:flex;justify-content:center;
+  overflow-x:auto;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory;
+  padding:4px 4px 10px;scrollbar-width:none;margin-bottom:6px;z-index:1;
+}
+.boards-outer::-webkit-scrollbar{display:none;}
+.boards-row{display:flex;gap:14px;flex-shrink:0;align-items:flex-start;}
+
+.board-card{
+  scroll-snap-align:center;flex-shrink:0;
+  display:flex;flex-direction:column;align-items:center;
+  padding:0 4px;animation:sp-in .7s .18s both;
+}
+.board-title{
+  font-family:'Fredoka One',cursive;font-size:1.3rem;
+  text-align:center;margin-bottom:8px;line-height:1.3;
+  max-width:280px;padding:0 4px;
+  min-height:3.4rem;display:flex;align-items:center;justify-content:center;
+}
+.board-card.c1 .board-title{color:var(--gold);}
+.board-card.c2 .board-title{color:var(--red);}
+.board-card.c3 .board-title{color:var(--green);}
+
+/* ── MINI BOARD ── */
+.mini-wrap{
+  border:2.5px solid var(--gold-dark);border-radius:5px;overflow:hidden;
+  box-shadow:0 4px 18px rgba(0,0,0,.5),0 0 14px rgba(244,208,63,.1);
+  direction:ltr;position:relative;
+}
+.mini-grid{
+  display:grid;
+  grid-template-columns:repeat(8,var(--mini));
+  grid-template-rows:repeat(8,var(--mini));
+}
+.msq{display:flex;align-items:center;justify-content:center;position:relative;}
+.msq.ml{background:var(--cell-light);}
+.msq.md{background:var(--cell-dark);}
+.msq img{width:82%;height:82%;object-fit:contain;display:block;}
+
+/* Board SVG overlays */
+.board-svg-overlay{position:absolute;top:0;left:0;pointer-events:none;z-index:3;}
+
+/* Board 3 — floating anim piece */
+.anim-pawn{
+  position:absolute;z-index:6;pointer-events:none;
+  width:var(--mini);height:var(--mini);
+  display:flex;align-items:center;justify-content:center;
+  transition:top 200ms cubic-bezier(.4,0,.2,1);
+}
+.anim-pawn img{width:78%;height:78%;object-fit:contain;
+  filter:drop-shadow(0 0 1.5px rgba(0,0,0,.9));}
+
+/* Scroll dots */
+.promo-img{
+  position:absolute;inset:0;width:100%;height:100%;
+  display:none;z-index:5;
+}
+.promo-img img{width:90%;height:90%;object-fit:contain;margin:auto;display:block;
+  filter:drop-shadow(0 0 6px rgba(82,183,136,.7));}
+
+/* Scroll dots */
+.sdots{display:flex;gap:6px;justify-content:center;margin-bottom:8px;z-index:1;}
+.sdot{width:7px;height:7px;border-radius:50%;background:rgba(82,183,136,.28);transition:background .2s;}
+.sdot.on{background:var(--green);box-shadow:0 0 6px rgba(82,183,136,.7);}
+
+/* ── STAGE PILLS ── */
+.stages-wrap{
+  display:flex;gap:5px;margin:2px 0 12px;flex-wrap:wrap;
+  justify-content:center;animation:sp-in .7s .32s both;z-index:1;
+}
+.stage-pill{
+  font-family:'Fredoka One',cursive;font-size:.99rem;
+  padding:4px 11px;border-radius:50px;border:2px solid;white-space:nowrap;
+}
+.s1{color:#52B788;border-color:#52B788;background:rgba(82,183,136,.12);}
+.s2{color:#7EC8E3;border-color:#7EC8E3;background:rgba(126,200,227,.12);}
+.s3{color:#F4D03F;border-color:#F4D03F;background:rgba(244,208,63,.10);}
+
+/* ── CTA BUTTON ── */
+.btn-start{
+  font-family:'Fredoka One',cursive;font-size:1.5rem;padding:12px 44px;
+  border-radius:50px;border:none;cursor:pointer;color:#060E1A;letter-spacing:1px;
+  background:linear-gradient(135deg,#F4D03F 0%,#C9A227 50%,#9A7B1A 100%);
+  box-shadow:0 0 28px rgba(244,208,63,.55),0 6px 20px rgba(0,0,0,.4);
+  transition:transform .15s ease,box-shadow .15s ease;position:relative;overflow:hidden;
+  animation:btnPop .6s .45s cubic-bezier(.175,.885,.32,1.5) both,
+            btnPulse 2s ease-in-out 1.5s infinite;
+  touch-action:manipulation;-webkit-appearance:none;
+  z-index:1;
+}
+.btn-start::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.18) 0%,transparent 60%);
+  border-radius:inherit;
+}
+.btn-start:hover{transform:scale(1.06);}
+.btn-start:active{transform:scale(.97);}
+@keyframes btnPop{from{opacity:0;transform:scale(.4);}to{opacity:1;transform:scale(1);}}
+@keyframes btnPulse{
+  0%,100%{box-shadow:0 0 28px rgba(244,208,63,.55),0 6px 20px rgba(0,0,0,.4);}
+  50%{box-shadow:0 0 55px rgba(244,208,63,.9),0 6px 28px rgba(0,0,0,.4);}
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width:480px){
+  .main-title{font-size:1.8rem;}
+  .btn-start{font-size:1.25rem;padding:10px 32px;}
+  .board-title{font-size:1.1rem;}
+}
+@media (max-height:700px){
+  body{padding:6px 10px 14px;}
+  .pawn-arena{width:120px;height:120px;margin-bottom:2px;}
+  .main-title{font-size:1.9rem;margin-bottom:1px;}
+  .boards-outer{margin-bottom:4px;}
+  .stages-wrap{margin:0 0 8px;}
+}
+
+/* Sparks */
+.pspark{position:fixed;width:6px;height:6px;border-radius:50%;pointer-events:none;
+  animation:psparkFly ease-out forwards;z-index:999;}
+@keyframes psparkFly{
+  from{opacity:1;transform:translate(0,0) scale(1);}
+  to{opacity:0;transform:translate(var(--px),var(--py)) scale(.2);}
+}
+
+/* Arrow pulse — sequential show/hide so B3 and B4 options appear one at a time */
+@keyframes arrowSeqA{
+  0%,5%{opacity:0;}15%,40%{opacity:1;}55%,100%{opacity:0;}
+}
+@keyframes arrowSeqB{
+  0%,55%{opacity:0;}65%,90%{opacity:1;}100%{opacity:0;}
+}
+/* Single-arrow pulse (Board 2 reuses this) */
+@keyframes arrowPulse{
+  0%,100%{opacity:.45;}
+  50%{opacity:1;}
+}
+
+</style>
+</head>
+<body>
+
+<!-- TITLE -->
+<div class="main-title">הרגלי — כלי קטן עם חלומות גדולים!</div>
+
+<!-- ARENA -->
+<div class="pawn-arena">
+  <svg class="arena-svg" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
+    <circle class="crown-ring" cx="80" cy="87" r="38"/>
+    <!-- Main beam: straight up (forward movement) -->
+    <line class="beam-line bm-g"    x1="80" y1="68"  x2="80" y2="18"  style="animation-delay:0s"/>
+    <!-- Diagonal beams: promotion paths -->
+    <line class="beam-line bm-gold" x1="88" y1="72"  x2="136" y2="24" style="animation-delay:.65s"/>
+    <line class="beam-line bm-gold" x1="72" y1="72"  x2="24"  y2="24" style="animation-delay:1.3s"/>
+    <!-- Endpoint dots -->
+    <circle class="bdot bdot-g"    cx="80"  cy="18"  r="5" style="animation-delay:0s"/>
+    <circle class="bdot bdot-gold" cx="136" cy="24"  r="4" style="animation-delay:.65s"/>
+    <circle class="bdot bdot-gold" cx="24"  cy="24"  r="4" style="animation-delay:1.3s"/>
+  </svg>
+  <div class="piece-center" id="arenaPawn"></div>
+</div>
+
+<!-- 3 BOARDS -->
+<div class="boards-outer" id="boardsOuter">
+ <div class="boards-row">
+
+  <!-- Board 1: Movement (forward only) — RIGHT in RTL -->
+  <div class="board-card c1">
+    <div class="board-title">אופן התנועה — קדימה! ⬆️</div>
+    <div class="mini-wrap" id="wrap1">
+      <div class="mini-grid" id="b1"></div>
+    </div>
+  </div>
+
+  <!-- Board 2: Eating (diagonal captures) — CENTER -->
+  <div class="board-card c2">
+    <div class="board-title">אופן אכילת הכלים ⚔️</div>
+    <div class="mini-wrap" id="wrap2">
+      <div class="mini-grid" id="b2"></div>
+    </div>
+  </div>
+
+  <!-- Board 3: Dream (promotion animation) — LEFT in RTL -->
+  <div class="board-card c3">
+    <div class="board-title">החלום מתגשם! 👑</div>
+    <div class="mini-wrap" id="wrap3">
+      <div class="mini-grid" id="b3"></div>
+    </div>
+  </div>
+
+ </div>
+</div>
+
+<!-- SCROLL DOTS -->
+<div class="sdots" id="sdots">
+  <div class="sdot on"></div><div class="sdot"></div><div class="sdot"></div>
+</div>
+
+<!-- STAGE PILLS -->
+<div class="stages-wrap">
+  <div class="stage-pill s1">שלב 1 — משחק הרגלים ♟</div>
+  <div class="stage-pill s2">שלב 2 — צריח מול רגלים ♜</div>
+  <div class="stage-pill s3">שלב 3 — מבחן מסכם ♛</div>
+</div>
+
+<button class="btn-start" onclick="startGame(event)">בואו נשחק! 🎮</button>
+
+<script>
+/* ══════════════════════════════════════
+   STARS
+══════════════════════════════════════ */
+for(let i=0;i<55;i++){
+  const s=document.createElement('div');s.className='star-dot';
+  const sz=Math.random()*2.2+.7;
+  s.style.cssText=`width:${sz}px;height:${sz}px;top:${Math.random()*100}vh;
+    left:${Math.random()*100}vw;animation-duration:${2+Math.random()*3}s;
+    animation-delay:${Math.random()*3}s;`;
+  document.body.appendChild(s);
+}
+
+/* ══════════════════════════════════════
+   SVG PIECE DEFINITIONS
+══════════════════════════════════════ */
+const WHITE_PAWN=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="13 7 20 30"><path d="M22.5 9c-2.21 0-4 1.79-4 4 0 .89.29 1.71.78 2.38C17.33 16.5 16 18.59 16 21c0 2.03.94 3.84 2.41 5.03-3 1.06-7.41 5.55-7.41 13.47h23c0-7.92-4.41-12.41-7.41-13.47 1.47-1.19 2.41-3 2.41-5.03 0-2.41-1.33-4.5-3.28-5.62.49-.67.78-1.49.78-2.38 0-2.21-1.79-4-4-4z" fill="#fff" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+const BLACK_PAWN=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="13 7 20 30"><path d="M22.5 9c-2.21 0-4 1.79-4 4 0 .89.29 1.71.78 2.38C17.33 16.5 16 18.59 16 21c0 2.03.94 3.84 2.41 5.03-3 1.06-7.41 5.55-7.41 13.47h23c0-7.92-4.41-12.41-7.41-13.47 1.47-1.19 2.41-3 2.41-5.03 0-2.41-1.33-4.5-3.28-5.62.49-.67.78-1.49.78-2.38 0-2.21-1.79-4-4-4z" fill="#000" stroke="#666" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+/* ── Exact WHITE_SVG from project (checkmate module) ── */
+const WHITE_SVG={
+  '♕':`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g style="fill:#fff;stroke:#000;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><circle cx="6" cy="12" r="2.75"/><circle cx="14" cy="9" r="2.75"/><circle cx="22.5" cy="8" r="2.75"/><circle cx="31" cy="9" r="2.75"/><circle cx="39" cy="12" r="2.75"/><path d="M9,26c8.5-1.5,21-1.5,27,0l2.5-12.5L31,25l-.3-14.1L22.5,24.5l-8.2-13.6L14,25,6.5,13.5z"/><path d="M9,26c0,2,1.5,2,2.5,4,1,1.5,1,1,.5,3.5-1.5,1-1.5,2.5-1.5,2.5-1,1.5,1,2.5,1,2.5,6.5,1,16.5,1,23,0,0,0,1.5-1,.5-2.5,0,0,.5-1.5-1-2.5-.5-2.5-.5-2,.5-3.5,1-2,2.5-2,2.5-4-8.5-1.5-18.5-1.5-27,0z"/><path d="M11.5,30c3.5-1,17.5-1,22,0M12,33.5c3.5-1,17.5-1,21,0" style="fill:none;stroke:#000;stroke-width:1"/></g></svg>`,
+  '♖':`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g style="fill:#fff;stroke:#000;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4"><path d="M9,39h27v-3H9z" style="stroke-linecap:butt"/><path d="M12.5,32l1.5-2.5h17l1.5,2.5z" style="stroke-linecap:butt"/><path d="M12,36v-4h21v4z" style="stroke-linecap:butt"/><path d="M14,29.5v-13h17v13z" style="stroke-linecap:butt;stroke-linejoin:miter"/><path d="M14,16.5l-3-2.5h23l-3,2.5z" style="stroke-linecap:butt"/><path d="M11,14V9h4v2h5V9h5v2h5V9h4v5z" style="stroke-linecap:butt"/><path d="M12,35.5h21M13,31.5h19" style="fill:none;stroke:#000;stroke-width:1"/></g></svg>`,
+  '♗':`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g fill="none" fill-rule="evenodd" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><g fill="#fff" stroke-linecap="butt"><path d="M9 36c3.39-.97 10.11.43 13.5-2 3.39 2.43 10.11 1.03 13.5 2 0 0 1.65.54 3 2-.68.97-1.65.99-3 .5-3.39-.97-10.11.46-13.5-1-3.39 1.46-10.11.03-13.5 1-1.354.49-2.323.47-3-.5 1.354-1.94 3-2 3-2zm6-4c2.5 2.5 12.5 2.5 15 0 .5-1.5 0-2 0-2 0-2.5-2.5-4-2.5-4 5.5-1.5 6-11.5-5-15.5-11 4-10.5 14-5 15.5 0 0-2.5 1.5-2.5 4 0 0-.5.5 0 2zM25 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 1 1 5 0z"/></g><path d="M17.5 26h10M15 30h15m-7.5-14.5v5M20 18h5" stroke="#000" stroke-linejoin="miter"/></g></svg>`,
+  '♘':`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g style="fill:#fff;stroke:#000;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><path d="M22,10c10.5,1,16.5,8,16,29H15c0-9,10-12.5,8-18" style="fill:#fff;stroke:#000"/><path d="M24,18c.38,2.91-5.55,7.37-8,9-3,2-3.18,4.34-5,4-.96-.96,1.41-3.04,0-3-1,0,.19,1.23-1,2-1,0-4,.003-4-5,0-2,6-12,6-12s1.89-1.9,2-3.5c-.73-1-2.5-1-2.5-1.5,1-1,3,3,3,3s1.28-2,3-3c1,0,1,3,1,3"/><path d="M9.5,25.5A.5.5,0,1,1,8.5,25.5.5.5,0,1,1,9.5,25.5z" style="fill:#000;stroke:#000"/><path d="M15,15.5A.5,1.5,0,1,1,14,15.5.5,1.5,0,1,1,15,15.5z" style="fill:#000;stroke:#000" transform="rotate(30,14.5,15.5)"/></g></svg>`,
+};
+
+function mkImg(svgStr){
+  const img=document.createElement('img');
+  img.src='data:image/svg+xml,'+encodeURIComponent(svgStr);
+  return img;
+}
+
+/* ARENA PAWN */
+document.getElementById('arenaPawn').appendChild(mkImg(WHITE_PAWN));
+
+/* buildBoard helper */
+function buildBoard(id, cb){
+  const el=document.getElementById(id);
+  for(let r=0;r<8;r++) for(let c=0;c<8;c++){
+    const sq=document.createElement('div');
+    sq.className='msq '+((r+c)%2===0?'ml':'md');
+    if(cb) cb(sq,r,c);
+    el.appendChild(sq);
+  }
+  return el;
+}
+
+/* ══════════════════════════════════════
+   BOARD 1 — 3 MOVEMENT SCENARIOS
+   A) B2(r6,c1)→B4(r4,c1): 2-square first move
+   B) D4(r4,c3)→D5(r3,c3): 1-square normal move
+   C) G5(r3,c6) blocked by G6(r2,c6)
+══════════════════════════════════════ */
+const M1=34;
+const sqMap1={};
+buildBoard('b1',(sq,r,c)=>{
+  sqMap1[`${r},${c}`]=sq;
+  sq.style.position='relative';
+});
+const wrap1el=document.getElementById('wrap1');
+
+// Floating pawn factory
+function mkFP(r,c){
+  const d=document.createElement('div');
+  d.style.cssText=`position:absolute;z-index:6;pointer-events:none;
+    width:${M1}px;height:${M1}px;display:flex;align-items:center;justify-content:center;
+    left:${c*M1}px;top:${r*M1}px;`;
+  const img=mkImg(WHITE_PAWN);
+  img.style.cssText='width:72%;height:72%;object-fit:contain;filter:drop-shadow(0 0 1.5px rgba(0,0,0,.9));';
+  d.appendChild(img);
+  wrap1el.appendChild(d);
+  return d;
+}
+const pA=mkFP(6,1); // B2
+const pB=mkFP(4,3); // D4
+const pC=mkFP(3,6); // G5
+
+// Static black pawn at G6
+const bpDiv=document.createElement('div');
+bpDiv.style.cssText=`position:absolute;z-index:5;pointer-events:none;
+  width:${M1}px;height:${M1}px;display:flex;align-items:center;justify-content:center;
+  left:${6*M1}px;top:${2*M1}px;`;
+const bpImg=mkImg(BLACK_PAWN);
+bpImg.style.cssText='width:72%;height:72%;object-fit:contain;';
+bpDiv.appendChild(bpImg);
+wrap1el.appendChild(bpDiv);
+
+/* ── Loop A: B2 — two arrows (B3 + B4), pawn stays put ── */
+(function(){
+  const S=8*M1;
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('width',S);svg.setAttribute('height',S);
+  svg.setAttribute('viewBox',`0 0 ${S} ${S}`);
+  svg.style.cssText='position:absolute;top:0;left:0;pointer-events:none;z-index:7;';
+
+  // Arrowhead marker
+  const defs=document.createElementNS('http://www.w3.org/2000/svg','defs');
+  const mk=document.createElementNS('http://www.w3.org/2000/svg','marker');
+  mk.setAttribute('id','arr-b1');mk.setAttribute('markerWidth','6');mk.setAttribute('markerHeight','6');
+  mk.setAttribute('refX','5');mk.setAttribute('refY','3');mk.setAttribute('orient','auto');
+  const ap=document.createElementNS('http://www.w3.org/2000/svg','path');
+  ap.setAttribute('d','M0,0 L7,3.5 L0,7 Z');ap.setAttribute('fill','#52B788');
+  mk.appendChild(ap);defs.appendChild(mk);svg.appendChild(defs);
+
+  // Arrow from pawn center to target center
+  function mkArrow(fr,fc,tr,tc,animStr){
+    const fx=(fc+.5)*M1, fy=(fr+.5)*M1;
+    const tx=(tc+.5)*M1, ty=(tr+.5)*M1;
+    const dy=ty-fy, len=Math.abs(dy);
+    const uy=dy/len;
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',fx.toFixed(1)); line.setAttribute('y1',(fy+uy*13).toFixed(1));
+    line.setAttribute('x2',tx.toFixed(1)); line.setAttribute('y2',(ty-uy*3).toFixed(1));
+    line.setAttribute('stroke','#52B788'); line.setAttribute('stroke-width','2.5');
+    line.setAttribute('stroke-linecap','round');
+    line.setAttribute('marker-end','url(#arr-b1)');
+    line.style.filter='drop-shadow(0 0 4px rgba(82,183,136,.6))';
+    line.style.opacity='0';
+    line.style.animation=animStr;
+    svg.appendChild(line);
+  }
+
+  // B2→B3 and B2→B4 — sequential (one at a time, 4s cycle)
+  mkArrow(6,1, 5,1, 'arrowSeqA 4s 0s ease-in-out infinite');    // B2→B3, first
+  mkArrow(6,1, 4,1, 'arrowSeqB 4s 0s ease-in-out infinite');    // B2→B4, second
+
+  wrap1el.appendChild(svg);
+})();
+
+/* ── Loop B: D4 — one arrow (D5), pawn stays put ── */
+(function(){
+  const S=8*M1;
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('width',S);svg.setAttribute('height',S);
+  svg.setAttribute('viewBox',`0 0 ${S} ${S}`);
+  svg.style.cssText='position:absolute;top:0;left:0;pointer-events:none;z-index:7;';
+
+  const defs=document.createElementNS('http://www.w3.org/2000/svg','defs');
+  const mk=document.createElementNS('http://www.w3.org/2000/svg','marker');
+  mk.setAttribute('id','arr-b1b');mk.setAttribute('markerWidth','6');mk.setAttribute('markerHeight','6');
+  mk.setAttribute('refX','5');mk.setAttribute('refY','3');mk.setAttribute('orient','auto');
+  const ap=document.createElementNS('http://www.w3.org/2000/svg','path');
+  ap.setAttribute('d','M0,0 L7,3.5 L0,7 Z');ap.setAttribute('fill','#52B788');
+  mk.appendChild(ap);defs.appendChild(mk);svg.appendChild(defs);
+
+  const fx=(3+.5)*M1, fy=(4+.5)*M1;  // D4 center
+  const tx=(3+.5)*M1, ty=(3+.5)*M1;  // D5 center
+  const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1',fx.toFixed(1)); line.setAttribute('y1',(fy-13).toFixed(1));
+  line.setAttribute('x2',tx.toFixed(1)); line.setAttribute('y2',(ty+3).toFixed(1));
+  line.setAttribute('stroke','#52B788'); line.setAttribute('stroke-width','2.5');
+  line.setAttribute('stroke-linecap','round');
+  line.setAttribute('marker-end','url(#arr-b1b)');
+  line.style.filter='drop-shadow(0 0 4px rgba(82,183,136,.6))';
+  line.style.animation='arrowPulse 1.8s 0.3s ease-in-out infinite';
+  svg.appendChild(line);
+
+  wrap1el.appendChild(svg);
+})();
+
+/* ── Loop C: alternating bounce — white tries up, black tries down ── */
+const BOUNCE=9; // pixels to nudge
+
+function bounceWhite(){
+  // White G5 tries to move toward G6 (up = row decreases)
+  pC.style.transition='top 170ms ease-in';
+  pC.style.top=(3*M1-BOUNCE)+'px';
+  setTimeout(()=>{
+    pC.style.transition='top 230ms ease-out';
+    pC.style.top=(3*M1)+'px';
+    // After white settles, black tries
+    setTimeout(bounceBlack, 600);
+  },170);
+}
+
+function bounceBlack(){
+  // Black G6 tries to move toward G5 (down = row increases)
+  bpDiv.style.transition='top 170ms ease-in';
+  bpDiv.style.top=(2*M1+BOUNCE)+'px';
+  setTimeout(()=>{
+    bpDiv.style.transition='top 230ms ease-out';
+    bpDiv.style.top=(2*M1)+'px';
+    // After black settles, white tries again
+    setTimeout(bounceWhite, 900);
+  },170);
+}
+
+setTimeout(bounceWhite, 1200);
+
+/* ══════════════════════════════════════
+   BOARD 2 — CAPTURE ANIMATION
+   Based on exact image scenario:
+   White pawn C2(r6,c2) eats:
+   ♞ D3(r5,c3) → ♟ E4(r4,c4) → ♜ F5(r3,c5) → ♝ E6(r2,c4) → ♛ D7(r1,c3)
+══════════════════════════════════════ */
+const BLACK_SVG_B2={
+  '♞':`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g style="fill:#000;stroke:#fff;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><path d="M22,10c10.5,1,16.5,8,16,29H15c0-9,10-12.5,8-18" style="stroke:#fff"/><path d="M24,18c.38,2.91-5.55,7.37-8,9-3,2-3.18,4.34-5,4-.96-.96,1.41-3.04,0-3-1,0,.19,1.23-1,2-1,0-4,.003-4-5,0-2,6-12,6-12s1.89-1.9,2-3.5c-.73-1-2.5-1-2.5-1.5,1-1,3,3,3,3s1.28-2,3-3c1,0,1,3,1,3"/><path d="M9.5,25.5A.5.5,0,1,1,8.5,25.5.5.5,0,1,1,9.5,25.5z" style="fill:#fff;stroke:#fff"/><path d="M15,15.5A.5,1.5,0,1,1,14,15.5.5,1.5,0,1,1,15,15.5z" style="fill:#fff;stroke:#fff" transform="rotate(30,14.5,15.5)"/></g></svg>`,
+  '♟':`<svg xmlns="http://www.w3.org/2000/svg" viewBox="13 7 20 30"><path d="M22.5 9c-2.21 0-4 1.79-4 4 0 .89.29 1.71.78 2.38C17.33 16.5 16 18.59 16 21c0 2.03.94 3.84 2.41 5.03-3 1.06-7.41 5.55-7.41 13.47h23c0-7.92-4.41-12.41-7.41-13.47 1.47-1.19 2.41-3 2.41-5.03 0-2.41-1.33-4.5-3.28-5.62.49-.67.78-1.49.78-2.38 0-2.21-1.79-4-4-4z" fill="#000" stroke="#666" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  '♜':`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g style="fill:#000;stroke:#fff;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4"><path d="M9,39h27v-3H9z" style="stroke-linecap:butt"/><path d="M12.5,32l1.5-2.5h17l1.5,2.5z" style="stroke-linecap:butt"/><path d="M12,36v-4h21v4z" style="stroke-linecap:butt"/><path d="M14,29.5v-13h17v13z" style="stroke-linecap:butt;stroke-linejoin:miter"/><path d="M14,16.5l-3-2.5h23l-3,2.5z" style="stroke-linecap:butt"/><path d="M11,14V9h4v2h5V9h5v2h5V9h4v5z" style="stroke-linecap:butt"/><path d="M12,35.5h21" style="fill:none;stroke:#fff;stroke-width:1"/><path d="M13,31.5h19" style="fill:none;stroke:#fff;stroke-width:1"/></g></svg>`,
+  '♝':`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g fill="none" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round"><path d="M9 36c3.39-.97 10.11.43 13.5-2 3.39 2.43 10.11 1.03 13.5 2 0 0 1.65.54 3 2-.68.97-1.65.99-3 .5-3.39-.97-10.11.46-13.5-1-3.39 1.46-10.11.03-13.5 1-1.354.49-2.323.47-3-.5 1.354-1.94 3-2 3-2zm6-4c2.5 2.5 12.5 2.5 15 0 .5-1.5 0-2 0-2 0-2.5-2.5-4-2.5-4 5.5-1.5 6-11.5-5-15.5-11 4-10.5 14-5 15.5 0 0-2.5 1.5-2.5 4 0 0-.5.5 0 2zM25 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 1 1 5 0z" fill="#000" stroke="#fff" stroke-width="1.5" stroke-linecap="butt"/><path d="M17.5 26h10M15 30h15m-7.5-14.5v5M20 18h5" stroke="#fff" stroke-width="1.5" stroke-linejoin="miter"/></g></svg>`,
+  '♛':`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g style="fill:#000;stroke:#666;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><circle cx="6" cy="12" r="2.75" style="fill:#000;stroke:none"/><circle cx="14" cy="9" r="2.75" style="fill:#000;stroke:none"/><circle cx="22.5" cy="8" r="2.75" style="fill:#000;stroke:none"/><circle cx="31" cy="9" r="2.75" style="fill:#000;stroke:none"/><circle cx="39" cy="12" r="2.75" style="fill:#000;stroke:none"/><path d="M9,26c8.5-1.5,21-1.5,27,0l2.5-12.5L31,25l-.3-14.1L22.5,24.5l-8.2-13.6L14,25,6.5,13.5z"/><path d="M9,26c0,2,1.5,2,2.5,4,1,1.5,1,1,.5,3.5-1.5,1-1.5,2.5-1.5,2.5-1,1.5,1,2.5,1,2.5,6.5,1,16.5,1,23,0,0,0,1.5-1,.5-2.5,0,0,.5-1.5-1-2.5-.5-2.5-.5-2,.5-3.5,1-2,2.5-2,2.5-4-8.5-1.5-18.5-1.5-27,0z"/><path d="M11.5,30c3.5-1,17.5-1,22,0" style="fill:none;stroke:#666;stroke-width:1"/><path d="M12,33.5c3.5-1,17.5-1,21,0" style="fill:none;stroke:#666;stroke-width:1"/></g></svg>`,
+};
+
+const M2=34;
+const B2_SEQUENCE=[
+  {r:5,c:3, sym:'♞'},  // D3 — black knight
+  {r:4,c:4, sym:'♟'},  // E4 — black pawn
+  {r:3,c:5, sym:'♜'},  // F5 — black rook
+  {r:2,c:4, sym:'♝'},  // E6 — black bishop
+  {r:1,c:3, sym:'♛'},  // D7 — black queen
+];
+const B2_PAWN_START=[6,2]; // C2
+
+// Build empty board
+buildBoard('b2',null);
+const wrap2=document.getElementById('wrap2');
+
+// Floating white pawn
+const wp2=document.createElement('div');
+wp2.style.cssText=`position:absolute;z-index:6;pointer-events:none;
+  width:${M2}px;height:${M2}px;display:flex;align-items:center;justify-content:center;`;
+const wp2img=mkImg(WHITE_PAWN);
+wp2img.style.cssText='width:72%;height:72%;object-fit:contain;filter:drop-shadow(0 0 1.5px rgba(0,0,0,.9));';
+wp2.appendChild(wp2img);
+wrap2.appendChild(wp2);
+
+// Floating black pieces
+const bp2=B2_SEQUENCE.map(p=>{
+  const div=document.createElement('div');
+  div.style.cssText=`position:absolute;z-index:5;pointer-events:none;
+    width:${M2}px;height:${M2}px;display:flex;align-items:center;justify-content:center;
+    left:${p.c*M2}px;top:${p.r*M2}px;transition:opacity 220ms ease;`;
+  const img=mkImg(BLACK_SVG_B2[p.sym]);
+  const isPawn2 = p.sym==='♟';
+  img.style.cssText=`width:${isPawn2?'72':'90'}%;height:${isPawn2?'72':'90'}%;object-fit:contain;`;
+  div.appendChild(img);
+  wrap2.appendChild(div);
+  return div;
+});
+
+// Laser SVG overlay
+const lSvg2=document.createElementNS('http://www.w3.org/2000/svg','svg');
+lSvg2.setAttribute('width',8*M2); lSvg2.setAttribute('height',8*M2);
+lSvg2.setAttribute('viewBox',`0 0 ${8*M2} ${8*M2}`);
+lSvg2.style.cssText='position:absolute;top:0;left:0;pointer-events:none;z-index:8;';
+const lLine2=document.createElementNS('http://www.w3.org/2000/svg','line');
+lLine2.setAttribute('stroke','#E74C3C');
+lLine2.setAttribute('stroke-width','3');
+lLine2.setAttribute('stroke-linecap','round');
+lLine2.setAttribute('stroke-dasharray','5,3');
+lLine2.style.filter='drop-shadow(0 0 6px rgba(231,76,60,.95))';
+lLine2.style.opacity='0';
+lLine2.style.transition='opacity 240ms ease';
+lSvg2.appendChild(lLine2);
+wrap2.appendChild(lSvg2);
+
+// State
+let b2Row=B2_PAWN_START[0], b2Col=B2_PAWN_START[1];
+let b2Idx=0;
+
+function b2PlacePawn(r,c,animate){
+  wp2.style.transition=animate
+    ? `left 310ms cubic-bezier(.4,0,.2,1),top 310ms cubic-bezier(.4,0,.2,1)`
+    : 'none';
+  wp2.style.left=(c*M2)+'px';
+  wp2.style.top=(r*M2)+'px';
+}
+
+function b2ShowLaser(fr,fc,tr,tc,cb){
+  const fx=(fc+.5)*M2, fy=(fr+.5)*M2;
+  const tx=(tc+.5)*M2, ty=(tr+.5)*M2;
+  const dx=tx-fx, dy=ty-fy, len=Math.sqrt(dx*dx+dy*dy);
+  const ux=dx/len, uy=dy/len;
+  lLine2.setAttribute('x1',(fx+ux*14).toFixed(1));
+  lLine2.setAttribute('y1',(fy+uy*14).toFixed(1));
+  lLine2.setAttribute('x2',(tx-ux*9).toFixed(1));
+  lLine2.setAttribute('y2',(ty-uy*9).toFixed(1));
+  // Fade in
+  lLine2.style.opacity='1';
+  // Hold 1000ms → fade out → callback
+  setTimeout(()=>{
+    lLine2.style.opacity='0';
+    setTimeout(cb, 260);
+  }, 1000);
+}
+
+function b2Reset(){
+  // Instant reset
+  b2Row=B2_PAWN_START[0]; b2Col=B2_PAWN_START[1]; b2Idx=0;
+  lLine2.style.transition='none'; lLine2.style.opacity='0';
+  b2PlacePawn(b2Row,b2Col,false);
+  bp2.forEach(d=>{ d.style.transition='none'; d.style.opacity='1'; });
+  // Re-enable transitions after brief frame
+  setTimeout(()=>{
+    lLine2.style.transition='opacity 240ms ease';
+    bp2.forEach(d=>d.style.transition='opacity 220ms ease');
+  },60);
+}
+
+function b2RunStep(){
+  if(b2Idx>=B2_SEQUENCE.length){
+    setTimeout(()=>{ b2Reset(); setTimeout(b2RunStep,900); },1800);
+    return;
+  }
+  const captureIdx=b2Idx;                      // ← capture NOW before any async
+  const {r:toR,c:toC}=B2_SEQUENCE[captureIdx];
+
+  // 1. Show laser
+  b2ShowLaser(b2Row,b2Col,toR,toC,()=>{
+    // 2. Move pawn
+    b2PlacePawn(toR,toC,true);
+    // 3. Fade out captured piece exactly on arrival (310ms = pawn transition)
+    setTimeout(()=>{
+      if(bp2[captureIdx]) bp2[captureIdx].style.opacity='0';
+    }, 310);
+    // 4. Update state
+    b2Row=toR; b2Col=toC;
+    b2Idx=captureIdx+1;
+    // 5. Next step after pawn settles
+    setTimeout(b2RunStep,1050);
+  });
+}
+
+// Init
+b2PlacePawn(...B2_PAWN_START,false);
+setTimeout(b2RunStep,1000);
+
+/* ══════════════════════════════════════
+   BOARD 3 — PROMOTION ANIMATION
+   Pawns: B1=r7c1, D1=r7c3, F1=r7c5, H1=r7c7
+   Promote to: Bishop, Knight, Rook, Queen
+══════════════════════════════════════ */
+const PROMS=[
+  {col:1, sym:'♗'},
+  {col:3, sym:'♘'},
+  {col:5, sym:'♖'},
+  {col:7, sym:'♕'},
+];
+const M3=34;
+const sqMap={};
+
+buildBoard('b3',(sq,r,c)=>{
+  sqMap[`${r},${c}`]=sq;
+});
+
+const wrap3=document.getElementById('wrap3');
+
+const START_ROW=6; // rank 2 — standard pawn starting row
+
+// Static pawn images (row 6 start positions)
+const staticPawns=PROMS.map(p=>{
+  const sq=sqMap[`${START_ROW},${p.col}`];
+  const img=mkImg(WHITE_PAWN);
+  img.style.cssText='width:76%;height:76%;object-fit:contain;display:block;filter:drop-shadow(0 0 1.5px rgba(0,0,0,.9))';
+  sq.style.cssText='display:flex;align-items:center;justify-content:center;';
+  sq.appendChild(img);
+  return img;
+});
+
+// Floating animated pawn divs
+const animDivs=PROMS.map(p=>{
+  const div=document.createElement('div');
+  div.className='anim-pawn';
+  div.style.left=(p.col*M3)+'px';
+  div.style.top=(START_ROW*M3)+'px';
+  div.appendChild(mkImg(WHITE_PAWN));
+  div.style.display='none';
+  wrap3.appendChild(div);
+  return div;
+});
+
+const promoDivs=PROMS.map((p)=>{
+  const sq=sqMap[`0,${p.col}`];
+  const wrap=document.createElement('div');
+  wrap.className='promo-img';
+  wrap.style.cssText='position:absolute;inset:0;display:none;align-items:center;justify-content:center;';
+  const img=mkImg(WHITE_SVG[p.sym]);
+  img.style.cssText='width:90%;height:90%;object-fit:contain;display:block;';
+  wrap.appendChild(img);
+  sq.appendChild(wrap);
+  return wrap;
+});
+
+/* ── Animation engine ── */
+// Timing constants
+const STEP_MS   = 200;  // transition duration
+const STEP_WAIT = 610;  // delay between steps (310 + 300 extra)
+const FIRST_JUMP= 2;    // first move = 2 squares
+
+function marchPawn(idx, onDone){
+  const animDiv=animDivs[idx];
+
+  staticPawns[idx].style.visibility='hidden';
+
+  animDiv.style.transition='none';
+  animDiv.style.top=(START_ROW*M3)+'px';
+  animDiv.style.display='flex';
+
+  let row=START_ROW;
+  let firstMove=true;
+
+  function step(){
+    const jump=firstMove ? FIRST_JUMP : 1;
+    firstMove=false;
+    row-=jump;
+
+    if(row<=0){
+      row=0;
+      animDiv.style.transition=`top ${STEP_MS}ms cubic-bezier(.4,0,.2,1)`;
+      animDiv.style.top=(row*M3)+'px';
+      // Promote after arrival
+      setTimeout(()=>{
+        animDiv.style.display='none';
+        // Show promoted piece directly — no flash
+        promoDivs[idx].style.display='flex';
+        setTimeout(onDone, 1400);
+      }, STEP_MS+80);
+      return;
+    }
+
+    animDiv.style.transition=`top ${STEP_MS}ms cubic-bezier(.4,0,.2,1)`;
+    animDiv.style.top=(row*M3)+'px';
+    setTimeout(step, STEP_WAIT);
+  }
+
+  setTimeout(step, 220);
+}
+
+function resetBoard3(){
+  PROMS.forEach((_,i)=>{
+    staticPawns[i].style.visibility='visible';
+    animDivs[i].style.display='none';
+    promoDivs[i].style.display='none';
+  });
+}
+
+function runPromoSequence(){
+  resetBoard3();
+  let idx=0;
+  function nextPawn(){
+    if(idx>=PROMS.length){
+      // All done — pause then restart
+      setTimeout(runPromoSequence, 2200);
+      return;
+    }
+    marchPawn(idx, ()=>{ idx++; setTimeout(nextPawn, 500); });
+  }
+  setTimeout(nextPawn, 900);
+}
+runPromoSequence();
+
+/* ══════════════════════════════════════
+   SCROLL DOTS
+══════════════════════════════════════ */
+const outerEl=document.getElementById('boardsOuter');
+const dotEls=document.querySelectorAll('.sdot');
+outerEl.addEventListener('scroll',()=>{
+  const maxScroll=outerEl.scrollWidth-outerEl.clientWidth||1;
+  // Normalize: Chrome RTL gives positive values, Firefox gives negative
+  const pct=Math.abs(outerEl.scrollLeft)/maxScroll;
+  dotEls.forEach((d,i)=>d.classList.toggle('on',i===Math.round(pct*2)));
+});
+
+/* ══════════════════════════════════════
+   SPARKS + START
+══════════════════════════════════════ */
+function spawnSparks(e){
+  const colors=['#F4D03F','#52B788','#7EC8E3','#FF6B35','#FFF'];
+  const rect=e.target.getBoundingClientRect();
+  const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+  for(let i=0;i<18;i++){
+    const sp=document.createElement('div');sp.className='pspark';
+    const a=Math.random()*Math.PI*2, d=60+Math.random()*80;
+    sp.style.cssText=`left:${cx}px;top:${cy}px;background:${colors[i%colors.length]};animation-duration:${.5+Math.random()*.4}s;`;
+    sp.style.setProperty('--px',Math.cos(a)*d+'px');
+    sp.style.setProperty('--py',Math.sin(a)*d+'px');
+    document.body.appendChild(sp);
+    setTimeout(()=>sp.remove(),900);
+  }
+}
+function startGame(e){
+  spawnSparks(e);
+  setTimeout(()=>{ window.location.href='pawn-stage1.html'; }, 600);
+}
+</script>
+</body>
+</html>

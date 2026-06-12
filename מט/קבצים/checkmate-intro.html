@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="theme-color" content="#060E1A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>שחמט — מט!</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold:       #F4D03F;
+  --gold-dark:  #C9A227;
+  --gold-deep:  #9A7B1A;
+  --blue:       #7EC8E3;
+  --red:        #E74C3C;
+  --green:      #52B788;
+  --bg1:        #162D4A;
+  --bg2:        #0C1E30;
+  --bg3:        #060E1A;
+  /* מובייל: לוח אחד בשורה */
+  --cell: max(min(calc((100vw - 64px) / 6), 80px), 32px);
+  --cell-light: #C9E4F5;
+  --cell-dark:  #4A7FA5;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: radial-gradient(ellipse at 50% 0%, var(--bg1) 0%, var(--bg2) 55%, var(--bg3) 100%);
+  min-height: 100vh;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  color: white;
+  user-select: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 16px calc(36px + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 820px) {
+  :root {
+    /* דסקטופ: 3 לוחות אופקית — 18 תאים + רווחים */
+    --cell: max(min(calc((100vw - 112px) / 18), 80px), 38px);
+  }
+}
+
+@media (max-height: 580px) {
+  :root {
+    --cell: max(
+      min(calc((100vw - 112px) / 18), calc((100vh - 220px) / 6), 80px),
+      28px
+    );
+  }
+  body        { padding-top: 10px; }
+  .main-title { margin-bottom: 14px; font-size: clamp(1.2rem, 3vw, 1.8rem); }
+  .stages-wrap{ margin: 12px 0 10px; }
+  .rules-section { gap: 7px; }
+}
+
+/* ── Stars ── */
+.star-dot {
+  position: fixed;
+  border-radius: 50%;
+  background: white;
+  animation: twinkle ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 0;
+}
+@keyframes twinkle {
+  from { opacity: .1;  transform: scale(.8);  }
+  to   { opacity: .85; transform: scale(1.2); }
+}
+
+/* ── Title ── */
+.main-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(1.6rem, 4vw, 2.6rem);
+  color: var(--red);
+  text-shadow: 0 0 30px rgba(231,76,60,.9), 0 0 65px rgba(231,76,60,.45), 0 2px 8px rgba(0,0,0,.7);
+  text-align: center;
+  margin-bottom: 32px;
+  position: relative; z-index: 1;
+  animation: sp-in .7s cubic-bezier(.175,.885,.32,1.5) both;
+}
+
+@keyframes sp-in {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ── Boards row ── */
+.boards-row {
+  display: flex;
+  direction: ltr;
+  gap: 24px;
+  justify-content: center;
+  flex-wrap: wrap;
+  position: relative; z-index: 1;
+  margin-bottom: 32px;
+  animation: sp-in .7s .15s cubic-bezier(.175,.885,.32,1.5) both;
+}
+
+/* ── Single board section ── */
+.board-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+}
+
+.board-label {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.2rem;
+  color: #888;
+  text-align: center;
+  direction: rtl;
+  letter-spacing: .3px;
+  text-shadow: none;
+  transition: color .4s ease, text-shadow .4s ease;
+}
+.board-label.active {
+  color: var(--gold);
+  text-shadow: 0 0 14px rgba(244,208,63,.6);
+}
+
+/* ── Board wrapper (replaces standard 160px piece-arena for this module intro) ── */
+.board-outer {
+  position: relative;
+  box-sizing: content-box;   /* התיקון: ה-border יושב מחוץ ל-6×cell ולא "אוכל" פנימה (שגרם לגריד לגלוש ולכסות את הצלע התחתונה) */
+  width: calc(var(--cell) * 6);
+  height: calc(var(--cell) * 6);
+  border: 3px solid var(--gold-dark);
+  border-radius: 5px;
+  overflow: visible;
+  /* box-shadow simulates the border on all 4 sides — children cannot cover it */
+  box-shadow:
+    0 0 0 3px var(--gold-dark),
+    0 5px 24px rgba(0,0,0,.6),
+    0 0 18px rgba(244,208,63,.55),
+    0 0 36px rgba(244,208,63,.25);
+  direction: ltr;
+}
+
+.board-grid {
+  display: grid;
+  grid-template-columns: repeat(6, var(--cell));
+  grid-template-rows: repeat(6, var(--cell));
+  direction: ltr;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.sq {
+  width: var(--cell);
+  height: var(--cell);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .3s ease;
+}
+.sq.l { background: var(--cell-light); }
+.sq.d { background: var(--cell-dark); }
+.sq.check-sq { background: rgba(231,76,60,.52) !important; }
+
+/* ── Laser SVG ── */
+.laser-svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 10;
+  overflow: visible;
+}
+
+.laser-line {
+  stroke: var(--red);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  fill: none;
+  opacity: 0;
+  filter:
+    drop-shadow(0 0 5px rgba(231,76,60,1))
+    drop-shadow(0 0 12px rgba(231,76,60,.7))
+    drop-shadow(0 0 22px rgba(231,76,60,.4));
+}
+
+/* ── Animated (floating) piece ── */
+.piece-float {
+  position: absolute;
+  width: var(--cell);
+  height: var(--cell);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  pointer-events: none;
+  transition: left .52s cubic-bezier(.4,0,.2,1), top .52s cubic-bezier(.4,0,.2,1);
+}
+
+/* ── White flag ── */
+.flag-wrap {
+  position: absolute;
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0) rotate(-25deg);
+  transition: opacity .3s ease, transform .45s cubic-bezier(.175,.885,.32,1.5);
+  font-size: 1.5rem;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,.6));
+}
+.flag-wrap.show {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+
+/* ── Rules section ── */
+.rules-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 11px;
+  position: relative; z-index: 1;
+  direction: rtl;
+  animation: sp-in .7s .3s cubic-bezier(.175,.885,.32,1.5) both;
+}
+
+.rule {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.25rem;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  direction: rtl;
+  letter-spacing: .3px;
+}
+
+.x-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px; height: 26px;
+  background: var(--red);
+  border-radius: 50%;
+  color: white;
+  font-family: 'Fredoka One', cursive;
+  font-size: 1rem;
+  box-shadow: 0 0 10px rgba(231,76,60,.55);
+  flex-shrink: 0;
+}
+
+/* ── Stage Pills ── */
+.stages-wrap {
+  display: flex;
+  gap: 8px;
+  margin: 24px 0 18px;
+  flex-wrap: wrap;
+  justify-content: center;
+  position: relative; z-index: 1;
+  animation: sp-in .7s .4s cubic-bezier(.175,.885,.32,1.5) both;
+}
+.stage-pill {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.056rem;
+  padding: 6px 16px;
+  border-radius: 50px;
+  border: 2px solid;
+  letter-spacing: .3px;
+  white-space: nowrap;
+}
+.stage-pill.s1 { color:#52B788; border-color:#52B788; background:rgba(82,183,136,.12);  }
+.stage-pill.s2 { color:#7EC8E3; border-color:#7EC8E3; background:rgba(126,200,227,.12); }
+.stage-pill.s3 { color:#F4D03F; border-color:#F4D03F; background:rgba(244,208,63,.10);  }
+.stage-pill.s4 { color:#FF6B35; border-color:#FF6B35; background:rgba(255,107,53,.10);  }
+.stage-pill.s5 { color:#C39BD3; border-color:#C39BD3; background:rgba(195,155,211,.10); }
+.stage-pill.s6 { color:#F1948A; border-color:#F1948A; background:rgba(241,148,138,.10); }
+
+/* ── CTA Button ── */
+.btn-start {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.5rem;
+  padding: 14px 50px;
+  border-radius: 50px;
+  border: none; cursor: pointer;
+  color: #060E1A; letter-spacing: 1px;
+  touch-action: manipulation;
+  background: linear-gradient(135deg, #F4D03F 0%, #C9A227 50%, #9A7B1A 100%);
+  box-shadow: 0 0 28px rgba(244,208,63,.55), 0 6px 20px rgba(0,0,0,.4);
+  transition: transform .15s ease, box-shadow .15s ease;
+  position: relative; overflow: hidden; z-index: 1;
+  animation: btnPop .6s .5s cubic-bezier(.175,.885,.32,1.5) both,
+             btnPulse 2s ease-in-out 1.5s infinite;
+}
+.btn-start::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,.18) 0%, transparent 60%);
+  border-radius: inherit;
+}
+.btn-start:hover  { transform: scale(1.06); }
+.btn-start:active { transform: scale(.97);  }
+
+@keyframes btnPop {
+  from { opacity: 0; transform: scale(.4); }
+  to   { opacity: 1; transform: scale(1);  }
+}
+@keyframes btnPulse {
+  0%,100% { box-shadow: 0 0 28px rgba(244,208,63,.55), 0 6px 20px rgba(0,0,0,.4); }
+  50%     { box-shadow: 0 0 55px rgba(244,208,63,.9),  0 6px 28px rgba(0,0,0,.4); }
+}
+
+/* ── Sparks ── */
+.pspark {
+  position: fixed;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: psparkFly ease-out forwards;
+  z-index: 999;
+}
+@keyframes psparkFly {
+  from { opacity: 1; transform: translate(0,0) scale(1); }
+  to   { opacity: 0; transform: translate(var(--px), var(--py)) scale(.2); }
+}
+@keyframes pieceArrive {
+  0%   { filter: drop-shadow(0 1px 3px rgba(0,0,0,.7)); }
+  40%  { filter: drop-shadow(0 0 12px rgba(244,208,63,1)) drop-shadow(0 0 22px rgba(244,208,63,.7)); }
+  100% { filter: drop-shadow(0 1px 3px rgba(0,0,0,.7)); }
+}
+.piece-glow {
+  animation: pieceArrive .8s ease forwards;
+}
+</style>
+</head>
+<body>
+
+<div class="main-title">המלך נכנע = ניצחון = שחמט!</div>
+
+<div class="boards-row" id="boardsRow"></div>
+
+<div class="rules-section">
+  <div class="rule"><span class="x-mark">✗</span>אין בריחה</div>
+  <div class="rule"><span class="x-mark">✗</span>אין חסימה</div>
+  <div class="rule"><span class="x-mark">✗</span>אין אכילה</div>
+</div>
+
+<div class="stages-wrap">
+  <div class="stage-pill s1">שלב 1 — מט נשיקה</div>
+  <div class="stage-pill s2">שלב 2 — מט שורה אחורית</div>
+  <div class="stage-pill s3">שלב 3 — מט שורות</div>
+  <div class="stage-pill s4">שלב 4 — מט חנק</div>
+  <div class="stage-pill s5">שלב 5 — מט ב-2 מהלכים</div>
+  <div class="stage-pill s6">שלב 6 — מבחן מסכם</div>
+</div>
+
+<button class="btn-start" onclick="getCtx(); spawnSparks(event); setTimeout(()=>window.location.href='checkmate-stage1.html',350)">בואו נשחק! 🎮</button>
+
+<script>
+// ════════════════════════════════════════════
+//  STARS — 55 stars, must be first loop (validator S3)
+// ════════════════════════════════════════════
+for (let i = 0; i < 55; i++) {
+  const s  = document.createElement('div');
+  s.className = 'star-dot';
+  const sz = Math.random() * 2.2 + .7;
+  s.style.cssText = `
+    width:${sz}px; height:${sz}px;
+    top:${Math.random()*100}vh;
+    left:${Math.random()*100}vw;
+    animation-duration:${2+Math.random()*3}s;
+    animation-delay:${Math.random()*3}s;
+  `;
+  document.body.appendChild(s);
+}
+
+// ════════════════════════════════════════════
+//  BOARD DATA
+// ════════════════════════════════════════════
+// ════════════════════════════════════════════
+//  CELL SIZE — JS mirrors CSS formula exactly
+//  getComputedStyle(--cell) returns formula text, not px.
+//  So we compute here and also setProperty to a concrete px value.
+// ════════════════════════════════════════════
+function computeCell() {
+  const vw = window.innerWidth;
+  let cell;
+  if (vw >= 820) {
+    // Desktop: 3 boards side by side — 18 cells + padding/gaps
+    cell = Math.max(Math.min((vw - 112) / 18, 80), 38);
+  } else {
+    // Mobile: single board per row
+    cell = Math.max(Math.min((vw - 64) / 6, 80), 32);
+  }
+  // Override CSS variable with concrete px so CSS + JS stay in sync
+  document.documentElement.style.setProperty('--cell', cell + 'px');
+  return cell;
+}
+const C = computeCell();
+const COLS = 6, ROWS = 6; // show A-F, ranks 3-8
+
+const BOARDS = [
+  {
+    // ── Board 1: Back-rank mate ──────────────
+    label: 'מט שורה אחורית!',
+    statics: [
+      { piece:'♟', col:3, row:1, black:true  }, // D7 pawn
+      { piece:'♟', col:4, row:1, black:true  }, // E7 pawn
+      { piece:'♟', col:5, row:1, black:true  }, // F7 pawn
+      { piece:'♚', col:5, row:0, black:true  }, // F8 king
+    ],
+    anim: {
+      piece:'♖', black:false,
+      sc:0, sr:5,   // A3
+      ec:0, er:0,   // A8
+    },
+    laser: { x1:0.5*C, y1:0.5*C, x2:5.5*C, y2:0.5*C }, // A8 → F8
+    checkSq: { col:5, row:0 }, // F8
+    flagOffset: { x: C*0.55, y: -C*0.3 }
+  },
+  {
+    // ── Board 2: Rank mate ───────────────────
+    label: 'מט שורות!',
+    statics: [
+      { piece:'♖', col:0, row:1, black:false }, // A7 rook (static)
+      { piece:'♚', col:5, row:0, black:true  }, // F8 king
+    ],
+    anim: {
+      piece:'♖', black:false,
+      sc:1, sr:5,   // B3
+      ec:1, er:0,   // B8
+    },
+    laser: { x1:1.5*C, y1:0.5*C, x2:5.5*C, y2:0.5*C }, // B8 → F8
+    checkSq: { col:5, row:0 },
+    flagOffset: { x: C*0.55, y: -C*0.3 }
+  },
+  {
+    // ── Board 3: Kiss mate (נשיקת רעל) ──────
+    label: 'מט נשיקה!',
+    statics: [
+      { piece:'♔', col:3, row:2, black:false }, // D6 white king
+      { piece:'♚', col:4, row:0, black:true  }, // E8 black king
+    ],
+    anim: {
+      piece:'♕', black:false,
+      sc:0, sr:1,   // A7
+      ec:4, er:1,   // E7
+    },
+    laser: { x1:4.5*C, y1:1.5*C, x2:4.5*C, y2:0.5*C }, // E7 → E8
+    checkSq: { col:4, row:0 }, // E8
+    flagOffset: { x: C*0.55, y: -C*0.3 }
+  }
+];
+
+// ════════════════════════════════════════════
+//  SVG PIECE DICTIONARIES (cburnett, public domain)
+// ════════════════════════════════════════════
+const BLACK_SVG = {
+  '♚': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g style="fill:#000;stroke:#fff;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><path d="M22.5,11.63V6" style="fill:none;stroke:#fff;stroke-linejoin:miter"/><path d="M20,8h5" style="fill:none;stroke:#fff;stroke-linejoin:miter"/><path d="M22.5,25c0,0,4.5-7.5,3-10.5,0,0-1-2.5-3-2.5s-3,2.5-3,2.5c-1.5,3,3,10.5,3,10.5" style="fill:#000;stroke:#fff;stroke-linecap:butt;stroke-linejoin:miter"/><path d="M11.5,37c5.5,3.5,15.5,3.5,21,0V30c0,0,9-4.5,6-10.5-4-6.5-13.5-3.5-16,4v3.5v-3.5c-2.5-7.5-12-10.5-16-4-3,6,5,10.5,5,10.5V37"/><path d="M11.5,30c5.5-3,15.5-3,21,0" style="fill:none;stroke:#fff"/><path d="M11.5,33.5c5.5-3,15.5-3,21,0" style="fill:none;stroke:#fff"/><path d="M11.5,37c5.5-3,15.5-3,21,0" style="fill:none;stroke:#fff"/></g></svg>`,
+  '♛': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g style="fill:#000;stroke:#666;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><circle cx="6" cy="12" r="2.75" style="fill:#000;stroke:none"/><circle cx="14" cy="9" r="2.75" style="fill:#000;stroke:none"/><circle cx="22.5" cy="8" r="2.75" style="fill:#000;stroke:none"/><circle cx="31" cy="9" r="2.75" style="fill:#000;stroke:none"/><circle cx="39" cy="12" r="2.75" style="fill:#000;stroke:none"/><path d="M9,26c8.5-1.5,21-1.5,27,0l2.5-12.5L31,25l-.3-14.1L22.5,24.5l-8.2-13.6L14,25,6.5,13.5z"/><path d="M9,26c0,2,1.5,2,2.5,4,1,1.5,1,1,.5,3.5-1.5,1-1.5,2.5-1.5,2.5-1,1.5,1,2.5,1,2.5,6.5,1,16.5,1,23,0,0,0,1.5-1,.5-2.5,0,0,.5-1.5-1-2.5-.5-2.5-.5-2,.5-3.5,1-2,2.5-2,2.5-4-8.5-1.5-18.5-1.5-27,0z"/><path d="M11.5,30c3.5-1,17.5-1,22,0" style="fill:none;stroke:#666;stroke-width:1"/><path d="M12,33.5c3.5-1,17.5-1,21,0" style="fill:none;stroke:#666;stroke-width:1"/></g></svg>`,
+  '♜': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g style="fill:#000;stroke:#fff;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4"><path d="M9,39h27v-3H9z" style="stroke-linecap:butt"/><path d="M12.5,32l1.5-2.5h17l1.5,2.5z" style="stroke-linecap:butt"/><path d="M12,36v-4h21v4z" style="stroke-linecap:butt"/><path d="M14,29.5v-13h17v13z" style="stroke-linecap:butt;stroke-linejoin:miter"/><path d="M14,16.5l-3-2.5h23l-3,2.5z" style="stroke-linecap:butt"/><path d="M11,14V9h4v2h5V9h5v2h5V9h4v5z" style="stroke-linecap:butt"/><path d="M12,35.5h21" style="fill:none;stroke:#fff;stroke-width:1"/><path d="M13,31.5h19" style="fill:none;stroke:#fff;stroke-width:1"/></g></svg>`,
+  '♝': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g fill="none" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round"><path d="M9 36c3.39-.97 10.11.43 13.5-2 3.39 2.43 10.11 1.03 13.5 2 0 0 1.65.54 3 2-.68.97-1.65.99-3 .5-3.39-.97-10.11.46-13.5-1-3.39 1.46-10.11.03-13.5 1-1.354.49-2.323.47-3-.5 1.354-1.94 3-2 3-2zm6-4c2.5 2.5 12.5 2.5 15 0 .5-1.5 0-2 0-2 0-2.5-2.5-4-2.5-4 5.5-1.5 6-11.5-5-15.5-11 4-10.5 14-5 15.5 0 0-2.5 1.5-2.5 4 0 0-.5.5 0 2zM25 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 1 1 5 0z" fill="#000" stroke="#000" stroke-width="1.5" stroke-linecap="butt"/><path d="M17.5 26h10M15 30h15m-7.5-14.5v5M20 18h5" stroke="#fff" stroke-width="1.5" stroke-linejoin="miter"/></g></svg>`,
+  '♞': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g style="fill:#000;stroke:#fff;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><path d="M22,10c10.5,1,16.5,8,16,29H15c0-9,10-12.5,8-18" style="stroke:#fff"/><path d="M24,18c.38,2.91-5.55,7.37-8,9-3,2-3.18,4.34-5,4-.96-.96,1.41-3.04,0-3-1,0,.19,1.23-1,2-1,0-4,.003-4-5,0-2,6-12,6-12s1.89-1.9,2-3.5c-.73-1-2.5-1-2.5-1.5,1-1,3,3,3,3s1.28-2,3-3c1,0,1,3,1,3"/><path d="M9.5,25.5A.5.5,0,1,1,8.5,25.5.5.5,0,1,1,9.5,25.5z" style="fill:#fff;stroke:#fff"/><path d="M15,15.5A.5,1.5,0,1,1,14,15.5.5,1.5,0,1,1,15,15.5z" style="fill:#fff;stroke:#fff" transform="rotate(30,14.5,15.5)"/></g></svg>`,
+  '♟': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="13 7 20 30"><path d="M22.5 9c-2.21 0-4 1.79-4 4 0 .89.29 1.71.78 2.38C17.33 16.5 16 18.59 16 21c0 2.03.94 3.84 2.41 5.03-3 1.06-7.41 5.55-7.41 13.47h23c0-7.92-4.41-12.41-7.41-13.47 1.47-1.19 2.41-3 2.41-5.03 0-2.41-1.33-4.5-3.28-5.62.49-.67.78-1.49.78-2.38 0-2.21-1.79-4-4-4z" fill="#000" stroke="none"/></svg>`,
+};
+const WHITE_SVG = {
+  '♔': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g style="fill:none;stroke:#000;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><path d="M22.5,11.63V6M20,8h5" style="fill:none;stroke:#000;stroke-linejoin:miter"/><path d="M22.5,25c0,0,4.5-7.5,3-10.5,0,0-1-2.5-3-2.5s-3,2.5-3,2.5c-1.5,3,3,10.5,3,10.5" style="fill:#fff;stroke:#000;stroke-linecap:butt;stroke-linejoin:miter"/><path d="M11.5,37c5.5,3.5,15.5,3.5,21,0V30c0,0,9-4.5,6-10.5-4-6.5-13.5-3.5-16,4v3.5v-3.5c-2.5-7.5-12-10.5-16-4-3,6,5,10.5,5,10.5V37" style="fill:#fff"/><path d="M11.5,30c5.5-3,15.5-3,21,0M11.5,33.5c5.5-3,15.5-3,21,0M11.5,37c5.5-3,15.5-3,21,0" style="fill:none"/></g></svg>`,
+  '♕': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g style="fill:#fff;stroke:#000;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><circle cx="6" cy="12" r="2.75"/><circle cx="14" cy="9" r="2.75"/><circle cx="22.5" cy="8" r="2.75"/><circle cx="31" cy="9" r="2.75"/><circle cx="39" cy="12" r="2.75"/><path d="M9,26c8.5-1.5,21-1.5,27,0l2.5-12.5L31,25l-.3-14.1L22.5,24.5l-8.2-13.6L14,25,6.5,13.5z"/><path d="M9,26c0,2,1.5,2,2.5,4,1,1.5,1,1,.5,3.5-1.5,1-1.5,2.5-1.5,2.5-1,1.5,1,2.5,1,2.5,6.5,1,16.5,1,23,0,0,0,1.5-1,.5-2.5,0,0,.5-1.5-1-2.5-.5-2.5-.5-2,.5-3.5,1-2,2.5-2,2.5-4-8.5-1.5-18.5-1.5-27,0z"/><path d="M11.5,30c3.5-1,17.5-1,22,0M12,33.5c3.5-1,17.5-1,21,0" style="fill:none;stroke:#000;stroke-width:1"/></g></svg>`,
+  '♖': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g style="fill:#fff;stroke:#000;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4"><path d="M9,39h27v-3H9z" style="stroke-linecap:butt"/><path d="M12.5,32l1.5-2.5h17l1.5,2.5z" style="stroke-linecap:butt"/><path d="M12,36v-4h21v4z" style="stroke-linecap:butt"/><path d="M14,29.5v-13h17v13z" style="stroke-linecap:butt;stroke-linejoin:miter"/><path d="M14,16.5l-3-2.5h23l-3,2.5z" style="stroke-linecap:butt"/><path d="M11,14V9h4v2h5V9h5v2h5V9h4v5z" style="stroke-linecap:butt"/><path d="M12,35.5h21M13,31.5h19" style="fill:none;stroke:#000;stroke-width:1"/></g></svg>`,
+  '♗': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g fill="none" fill-rule="evenodd" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><g fill="#fff" stroke-linecap="butt"><path d="M9 36c3.39-.97 10.11.43 13.5-2 3.39 2.43 10.11 1.03 13.5 2 0 0 1.65.54 3 2-.68.97-1.65.99-3 .5-3.39-.97-10.11.46-13.5-1-3.39 1.46-10.11.03-13.5 1-1.354.49-2.323.47-3-.5 1.354-1.94 3-2 3-2zm6-4c2.5 2.5 12.5 2.5 15 0 .5-1.5 0-2 0-2 0-2.5-2.5-4-2.5-4 5.5-1.5 6-11.5-5-15.5-11 4-10.5 14-5 15.5 0 0-2.5 1.5-2.5 4 0 0-.5.5 0 2zM25 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 1 1 5 0z"/></g><path d="M17.5 26h10M15 30h15m-7.5-14.5v5M20 18h5" stroke="#000" stroke-linejoin="miter"/></g></svg>`,
+  '♘': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g style="fill:#fff;stroke:#000;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><path d="M22,10c10.5,1,16.5,8,16,29H15c0-9,10-12.5,8-18" style="fill:#fff;stroke:#000"/><path d="M24,18c.38,2.91-5.55,7.37-8,9-3,2-3.18,4.34-5,4-.96-.96,1.41-3.04,0-3-1,0,.19,1.23-1,2-1,0-4,.003-4-5,0-2,6-12,6-12s1.89-1.9,2-3.5c-.73-1-2.5-1-2.5-1.5,1-1,3,3,3,3s1.28-2,3-3c1,0,1,3,1,3"/><path d="M9.5,25.5A.5.5,0,1,1,8.5,25.5.5.5,0,1,1,9.5,25.5z" style="fill:#000;stroke:#000"/><path d="M15,15.5A.5,1.5,0,1,1,14,15.5.5,1.5,0,1,1,15,15.5z" style="fill:#000;stroke:#000" transform="rotate(30,14.5,15.5)"/></g></svg>`,
+  '♙': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="13 7 20 30"><path d="M22.5 9c-2.21 0-4 1.79-4 4 0 .89.29 1.71.78 2.38C17.33 16.5 16 18.59 16 21c0 2.03.94 3.84 2.41 5.03-3 1.06-7.41 5.55-7.41 13.47h23c0-7.92-4.41-12.41-7.41-13.47 1.47-1.19 2.41-3 2.41-5.03 0-2.41-1.33-4.5-3.28-5.62.49-.67.78-1.49.78-2.38 0-2.21-1.79-4-4-4z" fill="#fff" stroke="none"/></svg>`,
+};
+
+// Creates an <img> element from the SVG dictionary
+function makePieceSVG(sym, isBlack) {
+  const dict = isBlack ? BLACK_SVG : WHITE_SVG;
+  if (!dict[sym]) return null;
+  const img = document.createElement('img');
+  img.src = 'data:image/svg+xml,' + encodeURIComponent(dict[sym]);
+  const isBlackPawn  = sym === '♟';
+  const isWhitePawn  = sym === '♙';
+  const isLarger     = sym === '♞' || sym === '♜'; // 95%
+  // 42px cell: ♟ at 62% ≈ 26px; ♙ at 61% ≈ 26px — רגלי שחור הוקטן ב-15% (73→62) ליישור מול הלבן
+  const baseSz = isBlackPawn ? 62 : isWhitePawn ? 61 : isLarger ? 95 : 90;
+  img.style.cssText = `width:${baseSz}%;height:${baseSz}%;object-fit:contain;display:block;margin:auto;`;
+  if (isBlack) img.style.filter = 'drop-shadow(0 0 1.5px rgba(0,0,0,0.9)) drop-shadow(0 0 1px rgba(0,0,0,0.7))';
+  if (isWhitePawn) img.style.filter = 'drop-shadow(0 0 1.5px rgba(0,0,0,0.7))';
+  return img;
+}
+
+// ════════════════════════════════════════════
+//  BUILD BOARDS
+// ════════════════════════════════════════════
+function buildBoard(data, idx) {
+  const section = document.createElement('div');
+  section.className = 'board-section';
+
+  // Label
+  const lbl = document.createElement('div');
+  lbl.className = 'board-label';
+  lbl.textContent = data.label;
+  section.appendChild(lbl);
+
+  // Wrapper
+  const wrap = document.createElement('div');
+  wrap.className = 'board-outer';
+  wrap.id = `wrap-${idx}`;
+
+  // Grid + keep cell references in 2D array
+  const grid = document.createElement('div');
+  grid.className = 'board-grid';
+  const cells = [];
+
+  for (let r = 0; r < 6; r++) {
+    cells[r] = [];
+    for (let c = 0; c < 6; c++) {
+      const sq = document.createElement('div');
+      sq.className = 'sq ' + ((r + c) % 2 === 0 ? 'l' : 'd');
+      sq.id = `sq-${idx}-${r}-${c}`;
+      cells[r][c] = sq;
+      grid.appendChild(sq);
+    }
+  }
+  wrap.appendChild(grid);
+
+  // Place static pieces using direct cell refs (NOT getElementById — not in DOM yet)
+  data.statics.forEach(p => {
+    if (p.row < 6 && p.col < 6 && cells[p.row] && cells[p.row][p.col]) {
+      const img = makePieceSVG(p.piece, p.black);
+      if (img) cells[p.row][p.col].appendChild(img);
+    }
+  });
+
+  // Laser SVG
+  const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.classList.add('laser-svg');
+  svg.setAttribute('viewBox', `0 0 ${C*6} ${C*6}`);
+  svg.id = `svg-${idx}`;
+
+  const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.classList.add('laser-line');
+  line.id = `laser-${idx}`;
+  line.setAttribute('x1', data.laser.x1);
+  line.setAttribute('y1', data.laser.y1);
+  line.setAttribute('x2', data.laser.x2);
+  line.setAttribute('y2', data.laser.y2);
+  // Prepare dash-draw
+  const len = Math.hypot(data.laser.x2-data.laser.x1, data.laser.y2-data.laser.y1);
+  line.setAttribute('stroke-dasharray', len);
+  line.setAttribute('stroke-dashoffset', len);
+  svg.appendChild(line);
+  wrap.appendChild(svg);
+
+  // Animated piece
+  const ap = document.createElement('div');
+  ap.className = 'piece-float';
+  ap.id = `ap-${idx}`;
+  const apImg = makePieceSVG(data.anim.piece, data.anim.black);
+  if (apImg) ap.appendChild(apImg);
+  ap.style.left = (data.anim.sc * C) + 'px';
+  ap.style.top  = (data.anim.sr * C) + 'px';
+  wrap.appendChild(ap);
+
+  // Flag
+  const flag = document.createElement('div');
+  flag.className = 'flag-wrap';
+  flag.id = `flag-${idx}`;
+  flag.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36">
+    <rect x="12" y="2" width="2.5" height="33" rx="1" fill="#888"/>
+    <polygon points="14.5,3 26,10 14.5,17" fill="white" stroke="#aaa" stroke-width="0.8"/>
+  </svg>`;
+  flag.style.left = (data.checkSq.col * C + data.flagOffset.x) + 'px';
+  flag.style.top  = (data.checkSq.row * C + data.flagOffset.y) + 'px';
+  wrap.appendChild(flag);
+
+  section.appendChild(wrap);
+  document.getElementById('boardsRow').appendChild(section);
+}
+
+BOARDS.forEach((b, i) => buildBoard(b, i));
+
+// ════════════════════════════════════════════
+//  ANIMATION ENGINE
+// ════════════════════════════════════════════
+const MOVE_MS  = 520;   // piece slide duration
+const LASER_DL = 180;   // delay after piece arrives before laser fires
+const FLAG_DL  = 1500;  // delay after laser before flag appears
+const HOLD_MS  = 1200;  // how long flag stays visible before next board starts
+const GAP_MS   = 2600;  // pause between boards
+
+function animateBoard(idx, onDone) {
+  const data   = BOARDS[idx];
+  const ap     = document.getElementById(`ap-${idx}`);
+  const laser  = document.getElementById(`laser-${idx}`);
+  const flag   = document.getElementById(`flag-${idx}`);
+  const checkEl = document.getElementById(
+    `sq-${idx}-${data.checkSq.row}-${data.checkSq.col}`
+  );
+
+  // Light up this board's label
+  const section = document.getElementById(`boardsRow`).children[idx];
+  const lbl = section.querySelector('.board-label');
+  lbl.classList.add('active');
+
+  // 1 ── Move piece
+  ap.style.left = (data.anim.ec * C) + 'px';
+  ap.style.top  = (data.anim.er * C) + 'px';
+
+  setTimeout(() => {
+    // Glow on arrival
+    ap.classList.add('piece-glow');
+    setTimeout(() => ap.classList.remove('piece-glow'), 850);
+  }, MOVE_MS - 60);
+
+  // 2 ── Fire laser
+  setTimeout(() => {
+    laser.style.opacity = '1';
+    laser.style.transition = 'stroke-dashoffset .3s ease';
+    laser.setAttribute('stroke-dashoffset', '0');
+    checkEl && checkEl.classList.add('check-sq');
+    playZap();
+  }, MOVE_MS + LASER_DL);
+
+  // 3 ── Show flag
+  setTimeout(() => {
+    flag.classList.add('show');
+    playChime();
+  }, MOVE_MS + LASER_DL + FLAG_DL);
+
+  // 4 ── Callback for next board
+  setTimeout(() => {
+    onDone && onDone();
+  }, MOVE_MS + LASER_DL + FLAG_DL + HOLD_MS);
+}
+
+function resetBoard(idx) {
+  const data  = BOARDS[idx];
+  const ap    = document.getElementById(`ap-${idx}`);
+  const laser = document.getElementById(`laser-${idx}`);
+  const flag  = document.getElementById(`flag-${idx}`);
+  const checkEl = document.getElementById(
+    `sq-${idx}-${data.checkSq.row}-${data.checkSq.col}`
+  );
+
+  // Reset label
+  const section = document.getElementById(`boardsRow`).children[idx];
+  const lbl = section.querySelector('.board-label');
+  lbl.classList.remove('active');
+
+  // Instant reset (no transition)
+  ap.style.transition = 'none';
+  ap.style.left = (data.anim.sc * C) + 'px';
+  ap.style.top  = (data.anim.sr * C) + 'px';
+  ap.getBoundingClientRect(); // force reflow
+  ap.style.transition = '';  // re-enable
+
+  // Reset laser
+  laser.style.transition = 'none';
+  laser.style.opacity = '0';
+  const len = Math.hypot(
+    data.laser.x2 - data.laser.x1,
+    data.laser.y2 - data.laser.y1
+  );
+  laser.setAttribute('stroke-dashoffset', len);
+
+  // Reset flag and check highlight
+  flag.classList.remove('show');
+  checkEl && checkEl.classList.remove('check-sq');
+}
+
+function animLoop() {
+  // Board 1 → gap → Board 2 → gap → Board 3 → pause → reset → loop
+
+  animateBoard(0, () => {
+    setTimeout(() => {
+      animateBoard(1, () => {
+        setTimeout(() => {
+          animateBoard(2, () => {
+            // All 3 done — wait 3s then reset & loop
+            setTimeout(() => {
+              BOARDS.forEach((_, i) => resetBoard(i));
+              setTimeout(() => animLoop(), 800);
+            }, 2800);
+          });
+        }, GAP_MS);
+      });
+    }, GAP_MS);
+  });
+}
+
+// ════════════════════════════════════════════
+//  AUDIO — shared context, resumed on first tap
+// ════════════════════════════════════════════
+let _ctx = null;
+function getCtx() {
+  if (!_ctx) _ctx = new (window.AudioContext || window.webkitAudioContext)();
+  if (_ctx.state === 'suspended') _ctx.resume();
+  return _ctx;
+}
+// Unlock on tap-overlay click (handled separately)
+
+function playZap() {
+  try {
+    const ctx = getCtx();
+    const now = ctx.currentTime;
+    const mk  = () => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      return [o, g];
+    };
+    // noise burst
+    const buf = ctx.createBuffer(1, ctx.sampleRate * .5, ctx.sampleRate);
+    const d   = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++)
+      d[i] = (Math.random()*2-1) * Math.exp(-i/(ctx.sampleRate*.07));
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const gn  = ctx.createGain();
+    gn.gain.setValueAtTime(.55, now);
+    gn.gain.exponentialRampToValueAtTime(.001, now+.45);
+    const lpf = ctx.createBiquadFilter();
+    lpf.type = 'bandpass'; lpf.frequency.value = 1400; lpf.Q.value = 2.5;
+    src.connect(lpf); lpf.connect(gn); gn.connect(ctx.destination);
+    src.start(now); src.stop(now+.5);
+    // tone sweep
+    const [o, gv] = mk(); o.type = 'square';
+    o.frequency.setValueAtTime(500, now);
+    o.frequency.exponentialRampToValueAtTime(1000, now+.12);
+    o.frequency.exponentialRampToValueAtTime(200,  now+.32);
+    gv.gain.setValueAtTime(.22, now);
+    gv.gain.exponentialRampToValueAtTime(.001, now+.38);
+    o.start(now); o.stop(now+.4);
+  } catch(e) {}
+}
+
+function playChime() {
+  try {
+    const ctx = getCtx();
+    const now = ctx.currentTime;
+    const gain = ctx.createGain();
+    gain.connect(ctx.destination);
+    [523, 659, 784].forEach((f, i) => {
+      const o = ctx.createOscillator();
+      o.type = 'sine';
+      o.frequency.value = f;
+      o.connect(gain);
+      const t = now + i * .1;
+      gain.gain.setValueAtTime(.22, t);
+      gain.gain.exponentialRampToValueAtTime(.001, t + .35);
+      o.start(t); o.stop(t + .4);
+    });
+  } catch(e) {}
+}
+
+// ════════════════════════════════════════════
+//  SPARKS
+// ════════════════════════════════════════════
+function spawnSparks(e) {
+  const colors = ['#F4D03F','#7EC8E3','#52B788','#FF6B35','#E74C3C','#FFFFFF'];
+  const rect = e.target.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top  + rect.height / 2;
+  for (let i = 0; i < 20; i++) {
+    const sp = document.createElement('div');
+    sp.className = 'pspark';
+    const a = Math.random() * Math.PI * 2;
+    const d = 60 + Math.random() * 90;
+    sp.style.cssText = `left:${cx}px;top:${cy}px;background:${colors[i%colors.length]};animation-duration:${.5+Math.random()*.4}s;`;
+    sp.style.setProperty('--px', Math.cos(a)*d+'px');
+    sp.style.setProperty('--py', Math.sin(a)*d+'px');
+    document.body.appendChild(sp);
+    setTimeout(() => sp.remove(), 900);
+  }
+}
+
+// ════════════════════════════════════════════
+//  START — animation begins immediately on load
+// ════════════════════════════════════════════
+// AudioContext unlocks automatically on first user gesture (בואו נשחק! button)
+window.addEventListener('load', () => animLoop());
+</script>
+</body>
+</html>

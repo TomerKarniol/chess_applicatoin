@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls \"C:\\\\Users\\\\User\\\\Desktop\\\\אפליקציית שחמט\\\\מסך הפתיחה\")",
+      "Read(//c/Users/User/Desktop/אפליקציית שחמט/מסך הפתיחה/**)"
+    ]
+  }
+}

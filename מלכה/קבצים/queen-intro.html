@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#162D4A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>המלכה הכול-יכולה 👑</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold:       #F4D03F;
+  --gold-dark:  #C9A227;
+  --gold-deep:  #9A7B1A;
+  --blue:       #7EC8E3;
+  --green:      #52B788;
+  --orange:     #FF6B35;
+  --red:        #E74C3C;
+  --purple:     #C39BD3;
+  --bg1:        #162D4A;
+  --bg2:        #0C1E30;
+  --bg3:        #060E1A;
+  --cell:       min(38px, calc((100vw - 48px) / 8));
+  --cell-light: #C9E4F5;
+  --cell-dark:  #4A7FA5;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Nunito', sans-serif;
+  color: white;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  background: radial-gradient(ellipse at 50% 0%, var(--bg1) 0%, var(--bg2) 55%, var(--bg3) 100%);
+  min-height: 100vh; display: flex; flex-direction: column;
+  align-items: center; padding: 16px 12px max(28px, env(safe-area-inset-bottom));
+  user-select: none; overflow-x: hidden;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* STARS */
+.star-dot {
+  position: fixed; border-radius: 50%; background: white;
+  animation: twinkle ease-in-out infinite alternate;
+  pointer-events: none; z-index: 0;
+}
+@keyframes twinkle {
+  from { opacity:.1; transform:scale(.8); }
+  to   { opacity:.85; transform:scale(1.2); }
+}
+
+/* TITLE */
+.main-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 2.4rem; color: var(--gold);
+  text-shadow:
+    0 0 28px rgba(244,208,63,.9),
+    0 0 60px rgba(244,208,63,.4),
+    0 0 44px rgba(195,155,211,.5),
+    0 2px 8px rgba(0,0,0,.6);
+  text-align: center; margin-bottom: 4px; margin-top: 8px;
+  animation: sp-in .7s cubic-bezier(.175,.885,.32,1.5) both;
+}
+.sub-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.05rem; color: var(--blue);
+  text-align: center; line-height: 1.6; margin-bottom: 12px;
+  animation: sp-in .7s .1s cubic-bezier(.175,.885,.32,1.5) both;
+}
+@keyframes sp-in {
+  from { opacity:0; transform:translateY(16px); }
+  to   { opacity:1; transform:none; }
+}
+
+/* QUEEN ARENA */
+.queen-arena {
+  position: relative; width: 160px; height: 160px;
+  margin-bottom: 10px; flex-shrink: 0;
+}
+.arena-svg {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  z-index: 3; pointer-events: none;
+}
+.beam-line {
+  stroke-width: 2.5; stroke-linecap: round;
+  opacity: 0; fill: none;
+  animation: beamPulse 3.2s ease-in-out infinite;
+}
+.beam-line.gold   { stroke: var(--gold); }
+.beam-line.purple { stroke: var(--purple); }
+.beam-line:nth-child(1){animation-delay:0s;}
+.beam-line:nth-child(2){animation-delay:.4s;}
+.beam-line:nth-child(3){animation-delay:.8s;}
+.beam-line:nth-child(4){animation-delay:1.2s;}
+.beam-line:nth-child(5){animation-delay:1.6s;}
+.beam-line:nth-child(6){animation-delay:2.0s;}
+.beam-line:nth-child(7){animation-delay:2.4s;}
+.beam-line:nth-child(8){animation-delay:2.8s;}
+@keyframes beamPulse {
+  0%  { opacity:0; stroke-width:1.5; }
+  15% { opacity:1; stroke-width:4; }
+  55% { opacity:.45; }
+  100%{ opacity:0; stroke-width:1.5; }
+}
+.beam-dot { opacity:0; animation:dotFade 3.2s ease-in-out infinite; will-change: transform, opacity; }
+.beam-dot.gold   { fill:#FFD700; filter:drop-shadow(0 0 5px rgba(255,215,0,.9)); }
+.beam-dot.purple { fill:var(--purple); filter:drop-shadow(0 0 5px rgba(195,155,211,.9)); }
+@keyframes dotFade { 0%{opacity:0;} 10%{opacity:1;} 80%{opacity:1;} 100%{opacity:0;} }
+.queen-center {
+  position: absolute; inset: 0; display: flex;
+  align-items: center; justify-content: center;
+  font-size: 5.2rem; z-index: 5; color: #FFFFFF;
+  filter: drop-shadow(0 0 22px rgba(244,208,63,.9)) drop-shadow(0 0 40px rgba(195,155,211,.5));
+  animation: queenPulse 2.4s ease-in-out infinite;
+  will-change: transform, filter;
+}
+@keyframes queenPulse {
+  0%,100% { transform:scale(1); }
+  50% {
+    transform:scale(1.09);
+    filter:drop-shadow(0 0 32px rgba(244,208,63,1)) drop-shadow(0 0 55px rgba(195,155,211,.8));
+  }
+}
+
+/* BOARD */
+.board-section { margin-bottom: 14px; }
+.board-wrap {
+  border: 3.5px solid var(--gold-dark); border-radius: 6px; overflow: hidden;
+  box-shadow: 0 6px 28px rgba(0,0,0,.6), 0 0 22px rgba(244,208,63,.15);
+}
+.board-grid {
+  display: grid;
+  grid-template-columns: repeat(8, var(--cell));
+  grid-template-rows:    repeat(8, var(--cell));
+  direction: ltr;
+}
+.sq {
+  width: var(--cell); height: var(--cell); position: relative;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.65rem; transition: background .2s;
+}
+.sq.queen-piece {
+  font-size: 2.1rem;
+  color: #FFD700;
+  filter: drop-shadow(0 0 6px rgba(244,208,63,.9));
+}
+.sq.l { background: var(--cell-light); }
+.sq.d { background: var(--cell-dark); }
+.sq.beam-gold   { background: rgba(244,208,63,.5)  !important; }
+.sq.beam-purple { background: rgba(195,155,211,.5) !important; }
+.sq.queen-sq    { background: rgba(255,215,0,.25)  !important; }
+
+/* STAGE PILLS — תקן check-intro */
+.stages-wrap {
+  display: flex; gap: 8px;
+  margin: 4px 0 16px; flex-wrap: wrap; justify-content: center;
+}
+.stage-pill {
+  font-family: 'Fredoka One', cursive;
+  font-size: .94rem; padding: 5px 13px;
+  border-radius: 50px; border: 2px solid;
+  letter-spacing: .3px; white-space: nowrap;
+  font-weight: 900;
+  text-shadow: 0 1px 4px rgba(0,0,0,.45);
+}
+.stage-pill.s1{color:#52B788;border-color:#52B788;background:rgba(82,183,136,.12);}
+.stage-pill.s2{color:#7EC8E3;border-color:#7EC8E3;background:rgba(126,200,227,.12);}
+.stage-pill.s3{color:#F4D03F;border-color:#F4D03F;background:rgba(244,208,63,.12);}
+.stage-pill.s4{color:#C39BD3;border-color:#C39BD3;background:rgba(195,155,211,.12);}
+
+/* BUTTON */
+.btn-start {
+  font-family: 'Fredoka One', cursive; font-size: 1.5rem;
+  padding: 14px 52px; border-radius: 50px; border: none; cursor: pointer;
+  color: white; letter-spacing: 1px;
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 50%, var(--gold-deep) 100%);
+  box-shadow: 0 0 28px rgba(244,208,63,.55), 0 6px 20px rgba(0,0,0,.4);
+  transition: transform .15s ease, box-shadow .15s ease;
+  position: relative; overflow: hidden;
+  touch-action: manipulation;
+  animation: btnPop .6s .3s cubic-bezier(.175,.885,.32,1.5) both,
+             btnPulse 2s ease-in-out 1.5s infinite;
+}
+.btn-start::before {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.18) 0%,transparent 60%);
+  border-radius:inherit;
+}
+.btn-start:hover  { transform:scale(1.06); }
+.btn-start:active { transform:scale(.97); }
+@keyframes btnPop  { from{opacity:0;transform:scale(.4);}  to{opacity:1;transform:scale(1);} }
+@keyframes btnPulse {
+  0%,100%{ box-shadow:0 0 28px rgba(244,208,63,.55),0 6px 20px rgba(0,0,0,.4); }
+  50%    { box-shadow:0 0 58px rgba(195,155,211,.9), 0 6px 28px rgba(0,0,0,.4); }
+}
+
+/* RESPONSIVE */
+@media (max-width: 767px) {
+  .main-title { font-size: 2rem; }
+  .queen-arena { width: 140px; height: 140px; }
+  :root { --cell: min(34px, calc((100vw - 48px) / 8)); }
+}
+@media (max-width: 479px) {
+  .main-title { font-size: 1.7rem; }
+  .queen-arena { width: 120px; height: 120px; }
+  :root { --cell: min(30px, calc((100vw - 48px) / 8)); }
+  .btn-start { font-size: 1.3rem; padding: 12px 36px; }
+  .stages-wrap { gap: 6px; }
+}
+@media (max-height: 700px) {
+  .main-title { font-size: 1.5rem; }
+  .sub-title  { font-size: .9rem; margin-bottom: 6px; }
+  .queen-arena { width: 100px; height: 100px; margin-bottom: 6px; }
+  :root { --cell: min(26px, calc((100vw - 48px) / 8)); }
+  .board-section { margin-bottom: 8px; }
+  .stages-wrap { margin: 2px 0 10px; gap: 5px; }
+  .stage-pill { font-size: .86rem; padding: 4px 10px; }
+  .btn-start { font-size: 1.2rem; padding: 11px 32px; }
+}
+
+/* SPARKS */
+.pspark {
+  position:fixed; width:6px; height:6px; border-radius:50%;
+  pointer-events:none; animation:psparkFly ease-out forwards; z-index:999;
+}
+@keyframes psparkFly {
+  from { opacity:1; transform:translate(0,0) scale(1); }
+  to   { opacity:0; transform:translate(var(--px),var(--py)) scale(.2); }
+}
+</style>
+</head>
+<body>
+
+<div class="main-title">המלכה הכול-יכולה 👑</div>
+<div class="sub-title">טור, שורה ואלכסון — כוח ללא גבולות!</div>
+
+<!-- QUEEN ARENA -->
+<div class="queen-arena">
+  <svg class="arena-svg" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <path id="path-up"    d="M0,0 L0,-76"/>
+      <path id="path-down"  d="M0,0 L0,76"/>
+      <path id="path-right" d="M0,0 L76,0"/>
+      <path id="path-left"  d="M0,0 L-76,0"/>
+      <path id="path-ne"    d="M0,0 L76,-76"/>
+      <path id="path-se"    d="M0,0 L76,76"/>
+      <path id="path-sw"    d="M0,0 L-76,76"/>
+      <path id="path-nw"    d="M0,0 L-76,-76"/>
+    </defs>
+    <line class="beam-line gold"   x1="80" y1="80" x2="80"  y2="4"/>
+    <line class="beam-line gold"   x1="80" y1="80" x2="80"  y2="156"/>
+    <line class="beam-line gold"   x1="80" y1="80" x2="156" y2="80"/>
+    <line class="beam-line gold"   x1="80" y1="80" x2="4"   y2="80"/>
+    <line class="beam-line purple" x1="80" y1="80" x2="156" y2="4"/>
+    <line class="beam-line purple" x1="80" y1="80" x2="156" y2="156"/>
+    <line class="beam-line purple" x1="80" y1="80" x2="4"   y2="156"/>
+    <line class="beam-line purple" x1="80" y1="80" x2="4"   y2="4"/>
+    <circle class="beam-dot gold"   r="5" cx="80" cy="80"><animateMotion dur="1.6s" repeatCount="indefinite" begin="0s">  <mpath href="#path-up"/></animateMotion></circle>
+    <circle class="beam-dot gold"   r="5" cx="80" cy="80"><animateMotion dur="1.6s" repeatCount="indefinite" begin=".4s"> <mpath href="#path-down"/></animateMotion></circle>
+    <circle class="beam-dot gold"   r="5" cx="80" cy="80"><animateMotion dur="1.6s" repeatCount="indefinite" begin=".8s"> <mpath href="#path-right"/></animateMotion></circle>
+    <circle class="beam-dot gold"   r="5" cx="80" cy="80"><animateMotion dur="1.6s" repeatCount="indefinite" begin="1.2s"><mpath href="#path-left"/></animateMotion></circle>
+    <circle class="beam-dot purple" r="5" cx="80" cy="80"><animateMotion dur="1.6s" repeatCount="indefinite" begin="1.6s"><mpath href="#path-ne"/></animateMotion></circle>
+    <circle class="beam-dot purple" r="5" cx="80" cy="80"><animateMotion dur="1.6s" repeatCount="indefinite" begin="2.0s"><mpath href="#path-se"/></animateMotion></circle>
+    <circle class="beam-dot purple" r="5" cx="80" cy="80"><animateMotion dur="1.6s" repeatCount="indefinite" begin="2.4s"><mpath href="#path-sw"/></animateMotion></circle>
+    <circle class="beam-dot purple" r="5" cx="80" cy="80"><animateMotion dur="1.6s" repeatCount="indefinite" begin="2.8s"><mpath href="#path-nw"/></animateMotion></circle>
+  </svg>
+  <div class="queen-center"></div>
+</div>
+
+<!-- BOARD -->
+<div class="board-section">
+  <div class="board-wrap">
+    <div class="board-grid" id="board"></div>
+  </div>
+</div>
+
+<!-- STAGE PILLS -->
+<div class="stages-wrap">
+  <div class="stage-pill s1">שלב 1 — מלכת הכוכבים</div>
+  <div class="stage-pill s2">שלב 2 — המלכה תוקפת!</div>
+  <div class="stage-pill s3">שלב 3 — הלייזר המפוצל</div>
+  <div class="stage-pill s4">שלב 4 — המבחן המסכם 🏆</div>
+</div>
+
+<button class="btn-start" onclick="onStart(event)">בואו נשחק! 🎮</button>
+
+<script>
+// ── Queen SVG (cburnett) — אחיד עם שלבים 1-4 ──
+const QUEEN_WHITE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g style="fill:#fff;stroke:#000;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><circle cx="6" cy="12" r="2.75"/><circle cx="14" cy="9" r="2.75"/><circle cx="22.5" cy="8" r="2.75"/><circle cx="31" cy="9" r="2.75"/><circle cx="39" cy="12" r="2.75"/><path d="M9,26c8.5-1.5,21-1.5,27,0l2.5-12.5L31,25l-.3-14.1L22.5,24.5l-8.2-13.6L14,25,6.5,13.5z"/><path d="M9,26c0,2,1.5,2,2.5,4,1,1.5,1,1,.5,3.5-1.5,1-1.5,2.5-1.5,2.5-1,1.5,1,2.5,1,2.5,6.5,1,16.5,1,23,0,0,0,1.5-1,.5-2.5,0,0,.5-1.5-1-2.5-.5-2.5-.5-2,.5-3.5,1-2,2.5-2,2.5-4-8.5-1.5-18.5-1.5-27,0z"/><path d="M11.5,30c3.5-1,17.5-1,22,0M12,33.5c3.5-1,17.5-1,21,0" style="fill:none;stroke:#000;stroke-width:1"/></g></svg>`;
+function makeQueenImg(sizePct){
+  const img=document.createElement('img');
+  img.src='data:image/svg+xml,'+encodeURIComponent(QUEEN_WHITE_SVG);
+  img.style.cssText=`width:${sizePct}%;height:${sizePct}%;object-fit:contain;display:block;margin:auto;pointer-events:none;`;
+  return img;
+}
+// Arena queen — SVG עם glow (החליף את גליף ה-Unicode)
+(function(){
+  document.querySelector('.queen-center').appendChild(makeQueenImg(80));
+})();
+
+// Stars
+for(let i=0;i<55;i++){
+  const s=document.createElement('div'); s.className='star-dot';
+  const sz=Math.random()*2.2+.7;
+  s.style.cssText=`width:${sz}px;height:${sz}px;top:${Math.random()*100}vh;left:${Math.random()*100}vw;animation-duration:${2+Math.random()*3}s;animation-delay:${Math.random()*3}s;`;
+  document.body.appendChild(s);
+}
+
+// Board — מלכה ב-D5, אנימציית קרניים
+const QR=3, QC=3;
+let animRunning = true;
+window.addEventListener('pagehide', () => animRunning = false);
+const board=document.getElementById('board');
+function isLight(r,c){ return (r+c)%2===0; }
+const cells=[];
+for(let r=0;r<8;r++){
+  cells[r]=[];
+  for(let c=0;c<8;c++){
+    const sq=document.createElement('div');
+    sq.className='sq '+(isLight(r,c)?'l':'d');
+    if(r===QR && c===QC){ sq.appendChild(makeQueenImg(92)); sq.classList.add('queen-piece'); }
+    board.appendChild(sq);
+    cells[r][c]=sq;
+  }
+}
+
+const GROUPS=[
+  [{dr:-1,dc:0},{dr:1,dc:0}],
+  [{dr:0,dc:1},{dr:0,dc:-1}],
+  [{dr:-1,dc:1},{dr:1,dc:-1}],
+  [{dr:-1,dc:-1},{dr:1,dc:1}],
+];
+const GROUP_CLS=['beam-gold','beam-gold','beam-purple','beam-purple'];
+
+function dimAll(){
+  for(let r=0;r<8;r++) for(let c=0;c<8;c++)
+    cells[r][c].classList.remove('beam-gold','beam-purple','queen-sq');
+}
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+async function runAnim(){
+  cells[QR][QC].classList.add('queen-sq');
+  await sleep(400);
+  while(animRunning){
+    for(let g=0;g<GROUPS.length;g++){
+      if(!animRunning) return;
+      const cls=GROUP_CLS[g];
+      const lines=GROUPS[g].map(({dr,dc})=>{
+        const sqs=[]; let r=QR+dr, c=QC+dc;
+        while(r>=0&&r<8&&c>=0&&c<8){ sqs.push(cells[r][c]); r+=dr; c+=dc; }
+        return sqs;
+      });
+      const maxLen=Math.max(...lines.map(l=>l.length));
+      for(let i=0;i<maxLen;i++){
+        for(const line of lines) if(line[i]) line[i].classList.add(cls);
+        await sleep(85);
+      }
+      await sleep(650);
+      dimAll();
+      cells[QR][QC].classList.add('queen-sq');
+      await sleep(150);
+    }
+  }
+}
+runAnim();
+
+// Button
+function spawnSparks(e){
+  const colors=['#F4D03F','#C39BD3','#7EC8E3','#FF6B35','#FFFFFF'];
+  const x = e.clientX || window.innerWidth/2;
+  const y = e.clientY || window.innerHeight/2;
+  for(let i=0;i<22;i++){
+    const sp=document.createElement('div'); sp.className='pspark';
+    const a=(i/22)*Math.PI*2, d=40+Math.random()*70;
+    sp.style.cssText=`left:${x}px;top:${y}px;--px:${Math.cos(a)*d}px;--py:${Math.sin(a)*d}px;animation-duration:${.35+Math.random()*.35}s;background:${colors[i%colors.length]};`;
+    document.body.appendChild(sp); setTimeout(()=>sp.remove(),700);
+  }
+}
+function onStart(e){
+  spawnSparks(e);
+  setTimeout(()=>{ window.location.href='queen-stage1.html'; },350);
+}
+</script>
+</body>
+</html>

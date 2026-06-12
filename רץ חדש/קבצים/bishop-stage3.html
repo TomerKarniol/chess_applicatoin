@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="theme-color" content="#162D4A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>הרץ — שלב 3 🎯</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+:root{
+  --gold:#F4D03F;--gold-dark:#C9A227;--green:#52B788;
+  --blue:#7EC8E3;--red:#E74C3C;--orange:#FF6B35;
+  --bg1:#162D4A;--bg2:#0C1E30;--bg3:#060E1A;
+  --cell-light:#C9E4F5;--cell-dark:#4A7FA5;
+  --cell:58px;
+}
+@media(max-width:480px){:root{--cell:53px;}}
+@media(max-width:430px){:root{--cell:48px;}}
+@media(max-width:390px){:root{--cell:44px;}}
+@media(max-width:360px){:root{--cell:40px;}}
+@media(max-height:600px){:root{--cell:36px;}}
+
+body{
+  font-family:'Nunito',sans-serif;
+  background:radial-gradient(ellipse at 50% 0%,var(--bg1) 0%,var(--bg2) 55%,var(--bg3) 100%);
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  padding:10px 12px max(28px,env(safe-area-inset-bottom));user-select:none;overflow-x:hidden;overflow-y:auto;overscroll-behavior:none;
+}
+
+/* STARS */
+.star-dot{position:fixed;border-radius:50%;background:#fff;
+  animation:twinkle ease-in-out infinite alternate;pointer-events:none;z-index:0;}
+@keyframes twinkle{from{opacity:.1;transform:scale(.8)}to{opacity:.85;transform:scale(1.2)}}
+
+/* BOARD SIZE */
+:root{ --board-size:calc(var(--cell)*8); }
+
+/* HEADER — board-aligned, 3 עמודות */
+.hdr{display:flex;align-items:center;justify-content:space-between;
+  width:var(--board-size);margin-bottom:8px;z-index:1;}
+.stage-badge{font-family:'Fredoka One',cursive;font-size:.85rem;
+  background:rgba(244,208,63,.12);border:1.5px solid rgba(244,208,63,.35);
+  border-radius:50px;padding:3px 14px;color:var(--gold);letter-spacing:.5px;}
+.game-title-hdr{font-family:'Fredoka One',cursive;font-size:1.3rem;
+  color:#FFF8DC;text-shadow:0 0 20px rgba(244,208,63,.7);white-space:nowrap;}
+.score-right{display:flex;align-items:center;gap:8px;}
+
+/* MUTE BUTTON */
+.btn-mute{
+  background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.2);
+  border-radius:50%;width:36px;height:36px;font-size:1.1rem;
+  cursor:pointer;color:white;display:flex;align-items:center;justify-content:center;
+  transition:background .2s;touch-action:manipulation;flex-shrink:0;}
+.btn-mute:hover{background:rgba(255,255,255,.18);}
+
+/* COORD WRAP — unified standard */
+.coord-wrap{display:flex;align-items:flex-start;gap:5px;direction:ltr;}
+.rank-labels{display:flex;flex-direction:column;height:var(--board-size);
+  justify-content:space-around;font-family:'Fredoka One',cursive;font-size:.72rem;
+  color:var(--gold);opacity:.8;width:15px;text-align:center;}
+.file-labels{display:flex;justify-content:space-around;width:var(--board-size);
+  margin-top:4px;font-family:'Fredoka One',cursive;font-size:.72rem;
+  color:var(--gold);opacity:.8;}
+
+/* ═══ TARGET TRACKER ═══ */
+.tracker-row{
+  display:flex;align-items:center;gap:7px;margin-bottom:8px;z-index:1;
+}
+.tracker-label{
+  font-family:'Fredoka One',cursive;font-size:.8rem;color:#7a90a4;letter-spacing:.02em;
+}
+.tb{
+  font-family:'Fredoka One',cursive;font-size:.9rem;
+  width:31px;height:31px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  border:2px solid rgba(150,175,200,.25);color:#4d6275;
+  background:rgba(255,255,255,.035);transition:all .3s ease;
+}
+.tb.eaten{
+  border-color:var(--green);color:var(--green);
+  background:rgba(82,183,136,.1);font-size:.8rem;
+}
+.tb.active{
+  border-color:var(--gold);color:#111;background:var(--gold);
+  animation:tbGlow 1s ease-in-out infinite;
+}
+@keyframes tbGlow{
+  0%,100%{box-shadow:0 0 6px rgba(244,208,63,.5)}
+  50%{box-shadow:0 0 18px rgba(244,208,63,1),0 0 34px rgba(244,208,63,.35)}
+}
+
+/* ═══ BOARD ═══ */
+.board-section{display:flex;justify-content:center;z-index:1;margin-bottom:7px;}
+.board-outer{
+  position:relative;display:inline-block;direction:ltr;
+  border:3px solid var(--gold-dark);border-radius:6px;overflow:hidden;
+  box-shadow:0 0 40px rgba(244,208,63,.5),0 0 80px rgba(244,208,63,.18),0 8px 32px rgba(0,0,0,.7);
+}
+.board-grid{
+  display:grid;
+  grid-template-columns:repeat(8,var(--cell));
+  grid-template-rows:repeat(8,var(--cell));
+  direction:ltr;
+}
+.cell{width:var(--cell);height:var(--cell);position:relative;cursor:pointer;
+  touch-action:manipulation;display:flex;align-items:center;justify-content:center;}
+.cell.cl{background:var(--cell-light);}
+.cell.cd{background:var(--cell-dark);}
+.cell.err-flash{animation:errFlash .38s ease!important;}
+@keyframes errFlash{0%,100%{background:inherit;}35%,65%{background:rgba(231,76,60,.55)!important;}}
+
+/* ═══ BISHOP ═══ */
+.bishop-piece{
+  position:absolute;top:0;left:0;z-index:50;
+  width:var(--cell);height:var(--cell);          /* proportional to cell — always synced */
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;pointer-events:all;
+  filter:drop-shadow(0 0 10px rgba(255,255,255,.6)) drop-shadow(0 2px 6px rgba(0,0,0,.9));
+  transition:top .38s cubic-bezier(.4,0,.2,1),left .38s cubic-bezier(.4,0,.2,1);
+  visibility:hidden;
+}
+.bishop-piece img{width:90%;height:90%;object-fit:contain;display:block;pointer-events:none;}
+.bishop-piece.capture{animation:capturePulse .4s ease;}
+@keyframes capturePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.32)}}
+
+/* ═══ PAWNS ═══ */
+.pawn-wrap{
+  width:82%;height:82%;position:relative;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .35s cubic-bezier(.175,.885,.32,1.5),opacity .3s;
+  pointer-events:none;
+}
+.pawn-wrap.gone{transform:scale(0) rotate(200deg);opacity:0;}
+.pawn-img{
+  width:75%;height:75%;object-fit:contain;display:block;  /* גודל סופי לאחר כיוונון */
+  filter:drop-shadow(0 2px 5px rgba(0,0,0,.85));
+}
+.pawn-num{
+  position:absolute;top:-4px;right:-4px;
+  font-family:'Fredoka One',cursive;font-size:.64rem;
+  width:18px;height:18px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--red);color:#fff;
+  border:1.5px solid rgba(255,255,255,.75);
+  pointer-events:none;z-index:2;transition:all .3s;
+}
+.pawn-num.next{
+  background:var(--gold);color:#111;
+  width:22px;height:22px;font-size:.79rem;
+  top:-6px;right:-6px;
+  border-color:var(--gold-dark);
+  animation:numBlink .9s ease-in-out infinite;
+}
+@keyframes numBlink{
+  0%,100%{box-shadow:0 0 4px rgba(244,208,63,.5)}
+  50%{box-shadow:0 0 13px rgba(244,208,63,1),0 0 24px rgba(244,208,63,.4)}
+}
+
+/* ═══ TOAST (errors only) — מיד מתחת ללוח ═══ */
+.hint-area{
+  height:36px;display:flex;align-items:center;justify-content:center;
+  margin-top:4px;z-index:1;
+}
+.hint-toast{
+  background:rgba(8,18,35,.96);border:2px solid var(--blue);
+  color:#fff;font-weight:700;font-size:.87rem;
+  padding:7px 20px;border-radius:50px;
+  opacity:0;pointer-events:none;
+  transition:opacity .25s ease;
+  text-align:center;max-width:88vw;
+}
+.hint-toast.show{opacity:1;}
+.hint-toast.ok{border-color:var(--green);}
+.hint-toast.err{border-color:var(--red);}
+
+/* ═══ OVERLAYS ═══ */
+.overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.83);
+  z-index:500;display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .38s;
+}
+.overlay.show{opacity:1;pointer-events:all;}
+.ov-card{
+  background:linear-gradient(160deg,#1e3a5f,#0c1f35);
+  border:2px solid var(--gold);border-radius:20px;
+  padding:28px 34px;text-align:center;
+  animation:ovPop .45s cubic-bezier(.175,.885,.32,1.5);
+  max-width:320px;width:88%;
+}
+@keyframes ovPop{from{transform:scale(.5)}to{transform:scale(1)}}
+.ov-icon{font-size:3rem;margin-bottom:8px;}
+.ov-title{font-family:'Fredoka One',cursive;font-size:1.42rem;color:var(--gold);margin-bottom:5px;}
+.ov-sub{font-size:.9rem;color:#90aabf;margin-bottom:18px;}
+.btn-main{
+  font-family:'Fredoka One',cursive;font-size:1rem;
+  padding:11px 26px;border-radius:50px;border:none;cursor:pointer;touch-action:manipulation;
+  background:linear-gradient(135deg,var(--gold),var(--gold-dark));
+  color:#1a1a1a;box-shadow:0 4px 15px rgba(244,208,63,.35);
+  transition:transform .15s,box-shadow .15s;
+}
+.btn-main:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(244,208,63,.5);}
+.btn-retry{
+  background:transparent;color:rgba(255,255,255,.6);
+  border:1.5px solid rgba(255,255,255,.2);border-radius:14px;
+  padding:9px 26px;font-family:'Fredoka One',cursive;font-size:1rem;
+  cursor:pointer;touch-action:manipulation;
+  transition:color .2s,border-color .2s;margin-top:8px;}
+.btn-retry:hover{color:white;border-color:rgba(255,255,255,.5);}
+
+/* ═══ PARTICLES ═══ */
+.particle{
+  position:fixed;border-radius:50%;pointer-events:none;z-index:9999;
+  animation:burst ease-out forwards;
+}
+@keyframes burst{
+  0%{transform:translate(0,0);opacity:1}
+  100%{transform:translate(var(--px),var(--py));opacity:0}
+}
+</style>
+</head>
+<body>
+
+<!-- OVERLAYS (outside board-outer — safe from overflow:hidden) -->
+<div class="overlay" id="win-overlay">
+  <div class="ov-card">
+    <div class="ov-icon">🏆</div>
+    <div class="ov-title">שלב 3 הושלם!</div>
+    <div id="win-stars" style="font-size:2.2rem;letter-spacing:4px;margin-bottom:6px;">⭐⭐⭐</div>
+    <div id="win-msg" style="font-family:'Fredoka One',cursive;font-size:1.1rem;color:var(--blue);margin-bottom:12px;">ביצוע מושלם! 🏆</div>
+    <button class="btn-main" onclick="goNext()">לשלב 4 ←</button>
+    <br>
+    <button class="btn-retry" id="btn-retry" onclick="retryStage()">🔄 נסו שוב</button>
+  </div>
+</div>
+
+<!-- UI -->
+<div class="hdr">
+  <div class="stage-badge" id="stage-badge">שלב 3 · תרחיש 1/3</div>
+  <div class="game-title-hdr">אוכלים באופן מסודר! 🎯</div>
+  <div class="score-right">
+<div style="display:flex;gap:6px;align-items:center;"><div id="pd0" style="width:13px;height:13px;border-radius:50%;background:rgba(244,208,63,.2);border:2px solid rgba(244,208,63,.4);transition:background .3s;"></div><div id="pd1" style="width:13px;height:13px;border-radius:50%;background:rgba(244,208,63,.2);border:2px solid rgba(244,208,63,.4);transition:background .3s;"></div><div id="pd2" style="width:13px;height:13px;border-radius:50%;background:rgba(244,208,63,.2);border:2px solid rgba(244,208,63,.4);transition:background .3s;"></div></div>
+    <button class="btn-mute" id="btn-mute" onclick="toggleMute()">🔊</button>
+  </div>
+</div>
+
+<div class="tracker-row">
+  <span class="tracker-label">סדר אכילה:</span>
+  <div class="tb active" id="tb0">1</div>
+  <div class="tb"        id="tb1">2</div>
+  <div class="tb"        id="tb2">3</div>
+  <div class="tb"        id="tb3">4</div>
+</div>
+
+
+<div class="board-section">
+  <div class="coord-wrap">
+    <div class="rank-labels" id="ranks"></div>
+    <div>
+      <div class="board-outer" id="board-outer">
+        <div class="board-grid" id="board"></div>
+        <div class="bishop-piece" id="bishop-piece">
+          <img id="bishop-img" alt="רץ">
+        </div>
+      </div>
+      <div class="file-labels" id="files"></div>
+    </div>
+  </div>
+</div>
+
+<div class="hint-area">
+  <div class="hint-toast" id="hint-toast"></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// SVG ASSETS
+// ══════════════════════════════════════════
+const BISHOP_SVG=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g fill="none" fill-rule="evenodd" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><g fill="#fff" stroke-linecap="butt"><path d="M9 36c3.39-.97 10.11.43 13.5-2 3.39 2.43 10.11 1.03 13.5 2 0 0 1.65.54 3 2-.68.97-1.65.99-3 .5-3.39-.97-10.11.46-13.5-1-3.39 1.46-10.11.03-13.5 1-1.354.49-2.323.47-3-.5 1.354-1.94 3-2 3-2zm6-4c2.5 2.5 12.5 2.5 15 0 .5-1.5 0-2 0-2 0-2.5-2.5-4-2.5-4 5.5-1.5 6-11.5-5-15.5-11 4-10.5 14-5 15.5 0 0-2.5 1.5-2.5 4 0 0-.5.5 0 2zM25 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 1 1 5 0z"/></g><path d="M17.5 26h10M15 30h15m-7.5-14.5v5M20 18h5" stroke="#000" stroke-linejoin="miter"/></g></svg>`;
+
+// גרסה מעודכנת מהמודול של הרגלי (viewBox="13 7 20 30" — זום מדויק על גוף החייל)
+const PAWN_SVG=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="13 7 20 30"><path d="M22.5 9c-2.21 0-4 1.79-4 4 0 .89.29 1.71.78 2.38C17.33 16.5 16 18.59 16 21c0 2.03.94 3.84 2.41 5.03-3 1.06-7.41 5.55-7.41 13.47h23c0-7.92-4.41-12.41-7.41-13.47 1.47-1.19 2.41-3 2.41-5.03 0-2.41-1.33-4.5-3.28-5.62.49-.67.78-1.49.78-2.38 0-2.21-1.79-4-4-4z" fill="#000" stroke="none"/></svg>`;
+
+document.getElementById('bishop-img').src='data:image/svg+xml,'+encodeURIComponent(BISHOP_SVG);
+
+// ══════════════════════════════════════════
+// SCENARIOS
+// ══════════════════════════════════════════
+// תרחיש 1 — מאומת ✅
+//   רץ: F4 (row=4,col=5)
+//   ① F2 (row=6,col=5) · ② G7 (row=1,col=6) · ③ C7 (row=1,col=2) · ④ B4 (row=4,col=1)
+//   פתרון: ①F4→E3→F2  ②F2→G3→H4→G5→H6→G7  ③G7→H6→G5→F4→E5→D6→C7  ④C7→B6→A5→B4 ✅
+//
+// TODO תרחיש 2 — מאומת ✅  G4 | ①E4 ②D7 ③A6 ④B3
+// תרחיש 3 — מאומת ✅  C8 | ①C2 ②G2 ③F7 ④B5
+// ══════════════════════════════════════════
+const SCENARIOS=[
+  {
+    start:{row:4,col:5},       // F4
+    pawns:[
+      {row:6,col:5},           // ① F2
+      {row:1,col:6},           // ② G7
+      {row:1,col:2},           // ③ C7
+      {row:4,col:1},           // ④ B4
+    ]
+  },
+  {
+    // תרחיש 2 — מאומת ✅  (כולם בהירים: row+col זוגי)
+    //   רץ: G4 (row=4,col=6)
+    //   ① E4 (row=4,col=4) · ② D7 (row=1,col=3) · ③ A6 (row=2,col=0) · ④ B3 (row=5,col=1)
+    //   פתרון: ①G4→F3→E4  ②E4→D5→C6→D7  ③D7→C8→B7→A6  ④A6→B5→C4→B3 ✅
+    start:{row:4,col:6},       // G4
+    pawns:[
+      {row:4,col:4},           // ① E4
+      {row:1,col:3},           // ② D7
+      {row:2,col:0},           // ③ A6
+      {row:5,col:1},           // ④ B3
+    ]
+  },
+  {
+    // תרחיש 3 — מאומת ✅  (כולם בהירים: row+col זוגי)
+    //   רץ: C8 (row=0,col=2)
+    //   ① C2 (row=6,col=2) · ② G2 (row=6,col=6) · ③ F7 (row=1,col=5) · ④ B5 (row=3,col=1)
+    //   פתרון: ①C8→B7→C6→D5→E4→D3→C2  ②C2→E4→F3→G2  ③G2→E4→F5→G6→F7  ④F7→E6→D5→C4→B5 ✅
+    start:{row:0,col:2},       // C8
+    pawns:[
+      {row:6,col:2},           // ① C2
+      {row:6,col:6},           // ② G2
+      {row:1,col:5},           // ③ F7
+      {row:3,col:1},           // ④ B5
+    ]
+  },
+];
+const TOTAL=SCENARIOS.length;   // 3 תרחישים — הושלם ✅
+const ORIGINAL_SCENARIOS=JSON.parse(JSON.stringify(SCENARIOS));
+
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let scenIdx=0,bPos={},pawns=[],nextPawn=0;
+let busy=false,wrongClicks=0,totalWrong=0;
+let muted=false;
+function toggleMute(){muted=!muted;document.getElementById('btn-mute').textContent=muted?'🔇':'🔊';}
+
+// ══════════════════════════════════════════
+// AUDIO
+// ══════════════════════════════════════════
+let audioCtx=null;
+const ga=()=>{if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();return audioCtx;};
+document.addEventListener('click',()=>ga(),{once:true});
+function tone(f1,f2,d,type='sine',v=.17){
+  try{const c=ga(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type=type;o.frequency.setValueAtTime(f1,c.currentTime);if(f2)o.frequency.exponentialRampToValueAtTime(f2,c.currentTime+d);g.gain.setValueAtTime(v,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+d);o.start();o.stop(c.currentTime+d);}catch(e){}
+}
+const sndErr  = ()=>{if(!muted)tone(260,130,.35,'sawtooth',.12);};
+const sndStep = ()=>{if(!muted)tone(660,880,.15,'sine',.09);};
+const sndScene= ()=>{if(!muted)[0,200,400].forEach((d,i)=>setTimeout(()=>tone([880,1100,1320][i],[1100,1320,1760][i],.4),d));};
+const sndWin  = ()=>{if(!muted)[0,180,360,540].forEach((d,i)=>setTimeout(()=>tone([660,880,1100,1320][i],[1100,1320,1760,2000][i],.38),d));};
+
+function playCapture(){
+  if(muted)return;
+  try{
+    const ctx=ga(),n=ctx.currentTime;
+    const th=ctx.createOscillator(),thG=ctx.createGain();
+    th.connect(thG);thG.connect(ctx.destination);th.type='sine';
+    th.frequency.setValueAtTime(90,n);th.frequency.exponentialRampToValueAtTime(20,n+.5);
+    thG.gain.setValueAtTime(.9,n);thG.gain.exponentialRampToValueAtTime(.001,n+.55);th.start(n);th.stop(n+.6);
+    const pu=ctx.createOscillator(),puG=ctx.createGain();
+    pu.connect(puG);puG.connect(ctx.destination);pu.type='sine';
+    pu.frequency.setValueAtTime(200,n);pu.frequency.exponentialRampToValueAtTime(50,n+.18);
+    puG.gain.setValueAtTime(.5,n);puG.gain.exponentialRampToValueAtTime(.001,n+.2);pu.start(n);pu.stop(n+.22);
+    const bSz=Math.floor(ctx.sampleRate*.35),buf=ctx.createBuffer(1,bSz,ctx.sampleRate);
+    const bd=buf.getChannelData(0);for(let i=0;i<bSz;i++)bd[i]=Math.random()*2-1;
+    const ns=ctx.createBufferSource();ns.buffer=buf;
+    const nf=ctx.createBiquadFilter();nf.type='bandpass';nf.frequency.value=500;nf.Q.value=.5;
+    const ng=ctx.createGain();ng.gain.setValueAtTime(.55,n);ng.gain.exponentialRampToValueAtTime(.001,n+.32);
+    ns.connect(nf);nf.connect(ng);ng.connect(ctx.destination);ns.start(n);ns.stop(n+.35);
+    const cr=ctx.createOscillator(),crG=ctx.createGain();
+    cr.connect(crG);crG.connect(ctx.destination);cr.type='sawtooth';cr.frequency.value=900;
+    crG.gain.setValueAtTime(.5,n);crG.gain.exponentialRampToValueAtTime(.001,n+.05);cr.start(n);cr.stop(n+.06);
+  }catch(e){}
+}
+
+// ══════════════════════════════════════════
+// EXPLOSION CANVAS (chess-explosion-skill)
+// ══════════════════════════════════════════
+function showExplosion(row,col){
+  const SZ=getCellPx();
+  const boardOuter=document.getElementById('board-outer');
+  const W=SZ*8,H=SZ*8;
+  const cx=col*SZ+SZ/2,cy=row*SZ+SZ/2;
+  const canvas=document.createElement('canvas');
+  canvas.width=W;canvas.height=H;
+  canvas.style.cssText=`position:absolute;left:0;top:0;width:${W}px;height:${H}px;z-index:30;pointer-events:none;`;
+  boardOuter.appendChild(canvas);
+  const c=canvas.getContext('2d');
+  const COLS=['#FF6B00','#FF4500','#FFD700','#FFFFFF','#FF8C00','#FF2200','#FFA500','#FFEE44'];
+  const parts=Array.from({length:45},(_,i)=>{
+    const a=(i/45)*Math.PI*2+Math.random()*.4,spd=3.5+Math.random()*9;
+    return{x:cx,y:cy,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd-(1.5+Math.random()),
+      r:1.5+Math.random()*5,color:COLS[Math.floor(Math.random()*COLS.length)],
+      alpha:1,decay:.018+Math.random()*.022,gravity:.18+Math.random()*.12};
+  });
+  let frame=0;
+  function draw(){
+    c.clearRect(0,0,W,H);
+    if(frame<8){
+      const t=frame/7,r=SZ*.9*t;
+      const g=c.createRadialGradient(cx,cy,0,cx,cy,Math.max(r,1));
+      g.addColorStop(0,`rgba(255,255,255,${1-t})`);g.addColorStop(.35,`rgba(255,230,80,${(1-t)*.9})`);
+      g.addColorStop(.7,`rgba(255,100,0,${(1-t)*.5})`);g.addColorStop(1,'rgba(200,30,0,0)');
+      c.fillStyle=g;c.beginPath();c.arc(cx,cy,Math.max(r,1),0,Math.PI*2);c.fill();
+    }
+    if(frame>=1&&frame<22){
+      const t=(frame-1)/21,r=SZ*.75*t,a=1-t;
+      const g=c.createRadialGradient(cx,cy,0,cx,cy,Math.max(r,1));
+      g.addColorStop(0,`rgba(255,255,200,${a})`);g.addColorStop(.2,`rgba(255,180,0,${a*.95})`);
+      g.addColorStop(.55,`rgba(210,50,0,${a*.7})`);g.addColorStop(.85,`rgba(100,15,0,${a*.4})`);g.addColorStop(1,'rgba(40,5,0,0)');
+      c.fillStyle=g;c.beginPath();c.arc(cx,cy,Math.max(r,1),0,Math.PI*2);c.fill();
+    }
+    if(frame>=3&&frame<14){
+      const t=(frame-3)/11;
+      c.beginPath();c.arc(cx,cy,SZ*.5*t+SZ*.15,0,Math.PI*2);
+      c.strokeStyle=`rgba(255,180,50,${.6*(1-t)})`;c.lineWidth=3*(1-t);c.stroke();
+    }
+    if(frame>10){
+      const age=frame-10;
+      for(let i=0;i<4;i++){
+        const sa=Math.max(0,.18-age*.004);if(sa<=0)break;
+        c.beginPath();c.arc(cx+Math.sin(i*1.7+age*.04)*age*.5,cy-age*.35+i*4,age*2.8+i*9,0,Math.PI*2);
+        c.fillStyle=`rgba(55,55,55,${sa/(i*.4+1)})`;c.fill();
+      }
+    }
+    c.save();
+    parts.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;p.vy+=p.gravity;p.vx*=.95;
+      p.alpha=Math.max(0,p.alpha-p.decay);if(p.alpha<=0)return;
+      c.globalAlpha=p.alpha;c.beginPath();
+      c.arc(p.x,p.y,Math.max(.5,p.r*Math.sqrt(p.alpha)),0,Math.PI*2);
+      c.fillStyle=p.color;c.fill();
+    });
+    c.restore();
+    frame++;
+    if(frame<55)requestAnimationFrame(draw);else canvas.remove();
+  }
+  requestAnimationFrame(draw);
+}
+
+// ══════════════════════════════════════════
+// STARS
+// ══════════════════════════════════════════
+(function(){for(let i=0;i<55;i++){const s=document.createElement('div');s.className='star-dot';const sz=Math.random()*2.2+.7;s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}vw;top:${Math.random()*100}vh;animation-duration:${1.5+Math.random()*2.5}s;animation-delay:${Math.random()*3}s;`;document.body.appendChild(s);}})();
+
+// ══════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════
+const getCell=(r,c)=>document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+function getCellPx(){const w=window.innerWidth,h=window.innerHeight;if(h<=600)return Math.min(36,Math.floor((w-24)/8));if(w<=360)return 40;if(w<=390)return 44;if(w<=430)return 48;if(w<=480)return 53;return 58;}
+document.documentElement.style.setProperty('--cell',getCellPx()+'px');
+window.addEventListener('resize',()=>{
+  document.documentElement.style.setProperty('--cell',getCellPx()+'px');
+  if(bPos.row!=null)placeBishop(bPos.row,bPos.col,false);
+});
+
+// ══════════════════════════════════════════
+// BUILD COORDS — unified standard
+// ══════════════════════════════════════════
+function buildCoords(){
+  const rl=document.getElementById('ranks'),fl=document.getElementById('files');
+  rl.innerHTML='';fl.innerHTML='';
+  for(let r=0;r<8;r++){const d=document.createElement('div');d.textContent=8-r;rl.appendChild(d);}
+  'ABCDEFGH'.split('').forEach(f=>{const d=document.createElement('div');d.textContent=f;fl.appendChild(d);});
+}
+
+// ══════════════════════════════════════════
+// BUILD BOARD
+// ══════════════════════════════════════════
+function buildBoard(){
+  const b=document.getElementById('board');b.innerHTML='';
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    const cell=document.createElement('div');
+    cell.className='cell '+((r+c)%2===0?'cl':'cd');
+    cell.dataset.r=r;cell.dataset.c=c;
+    cell.addEventListener('click',()=>onCellClick(r,c));
+    b.appendChild(cell);
+  }
+}
+
+// ══════════════════════════════════════════
+// PLACE BISHOP
+// ══════════════════════════════════════════
+function placeBishop(r,c,animate){
+  const bp=document.getElementById('bishop-piece');
+  const px=getCellPx();
+  // גודל מוגדר ב-CSS כ-var(--cell) — ללא צורך בהגדרה ב-JS
+  if(!animate){
+    bp.style.transition='none';
+    bp.style.top=r*px+'px';bp.style.left=c*px+'px';
+    bp.style.visibility='visible';
+    setTimeout(()=>{bp.style.transition='top .38s cubic-bezier(.4,0,.2,1),left .38s cubic-bezier(.4,0,.2,1)';},50);
+  }else{
+    bp.style.top=r*px+'px';bp.style.left=c*px+'px';
+    bp.style.visibility='visible';
+  }
+}
+
+// ══════════════════════════════════════════
+// PLACE PAWNS (numbered, with next-target badge)
+// ══════════════════════════════════════════
+function placePawns(){
+  document.querySelectorAll('.pawn-wrap').forEach(e=>e.remove());
+  pawns.forEach((p,i)=>{
+    if(!p.alive)return;
+    const cell=getCell(p.row,p.col);if(!cell)return;
+    const wrap=document.createElement('div');
+    wrap.className='pawn-wrap';wrap.id='pw'+i;
+    const img=document.createElement('img');
+    img.className='pawn-img';
+    img.src='data:image/svg+xml,'+encodeURIComponent(PAWN_SVG);
+    img.alt='רגלי';
+    const num=document.createElement('div');
+    num.className='pawn-num'+(i===nextPawn?' next':'');
+    num.id='pn'+i;
+    num.textContent=i+1;
+    wrap.appendChild(img);wrap.appendChild(num);
+    cell.appendChild(wrap);
+  });
+}
+
+// ══════════════════════════════════════════
+// UPDATE TARGET TRACKER (after each capture)
+// ══════════════════════════════════════════
+function updateTarget(){
+  for(let i=0;i<4;i++){
+    const tb=document.getElementById('tb'+i);if(!tb)continue;
+    tb.classList.remove('active','eaten');
+    if(i<nextPawn){tb.classList.add('eaten');tb.textContent='✓';}
+    else if(i===nextPawn){tb.classList.add('active');tb.textContent=i+1;}
+    else{tb.textContent=i+1;}
+  }
+  pawns.forEach((p,i)=>{
+    if(!p.alive)return;
+    const num=document.getElementById('pn'+i);if(!num)return;
+    num.className='pawn-num'+(i===nextPawn?' next':'');
+  });
+}
+
+// ══════════════════════════════════════════
+// BISHOP DIAGONAL MOVE GENERATOR
+// (alive pawns block their diagonal — included (stops movement at pawn) but stop further movement)
+// ══════════════════════════════════════════
+function bishopMoves(r,c){
+  const moves=[];
+  for(const[dr,dc]of[[-1,-1],[-1,1],[1,-1],[1,1]]){
+    let nr=r+dr,nc=c+dc;
+    while(nr>=0&&nr<8&&nc>=0&&nc<8){
+      moves.push({row:nr,col:nc});
+      if(pawns.some(p=>p.alive&&p.row===nr&&p.col===nc))break;
+      nr+=dr;nc+=dc;
+    }
+  }
+  return moves;
+}
+
+// ══════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════
+/* ── BishopState — v2.1 (אחרון לתצוגה, שיא לצבירה) ── */
+const BishopState={
+  MODULE_KEY:'chess_bishop',
+  STAGE_KEYS:['stage1','stage2','stage3','stage4','stage5','stage6'],
+  PERFECT_THRESHOLD:5,   // 5/6 perfect = 3⭐  (⚠️ תלוי במספר השלבים בפועל)
+  save(stageKey,perfect){
+    try{
+      const d=JSON.parse(localStorage.getItem(this.MODULE_KEY)||'{}');
+      const prev=d[stageKey]||{};
+      // v2.1: אחרון מתעדכן תמיד; שיא נצבר ב-OR (כולל מיגרציה מ-perfect ישן)
+      const bestPerfect=(prev.bestPerfect||prev.perfect||false)||perfect;
+      d[stageKey]={done:true,perfect,lastPerfect:perfect,bestPerfect};
+      localStorage.setItem(this.MODULE_KEY,JSON.stringify(d));
+    }catch(e){}
+  },
+  // v2.1 — תצוגה כפולה: מחזיר { best, last } (כל אחד 0/2/3). תמיד last ≤ best.
+  getModuleStars(){
+    try{
+      const d=JSON.parse(localStorage.getItem(this.MODULE_KEY)||'{}');
+      const done=this.STAGE_KEYS.filter(k=>d[k]?.done).length;
+      if(done<this.STAGE_KEYS.length)return{best:0,last:0}; // לא הושלם — אין כוכב
+      const bestP=this.STAGE_KEYS.filter(k=>(d[k]?.bestPerfect??d[k]?.perfect)).length;
+      const lastP=this.STAGE_KEYS.filter(k=>(d[k]?.lastPerfect??d[k]?.perfect)).length;
+      const toStars=p=>p>=this.PERFECT_THRESHOLD?3:2; // אחרי השלמה: מינימום 2⭐
+      return{best:toStars(bestP),last:toStars(lastP)};
+    }catch(e){return{best:0,last:0};}
+  }
+};
+
+let toastTmr=null;
+function showToast(txt,type=''){
+  const t=document.getElementById('hint-toast');
+  t.textContent=txt;t.className='hint-toast show'+(type?' '+type:'');
+  clearTimeout(toastTmr);
+  toastTmr=setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ══════════════════════════════════════════
+// CLICK HANDLERS
+// ══════════════════════════════════════════
+function markDot(i){const el=document.getElementById("pd"+i);if(el){el.style.background="var(--gold)";el.style.borderColor="var(--gold)";el.style.transform="scale(1.2)";el.style.boxShadow="0 0 8px rgba(244,208,63,.7)";}}
+function markDotActive(i){const el=document.getElementById("pd"+i);if(el){el.style.background="rgba(244,208,63,.45)";el.style.borderColor="rgba(244,208,63,.85)";el.style.boxShadow="0 0 7px rgba(244,208,63,.55)";el.style.transform="";}}
+
+function onCellClick(r,c){
+  if(busy)return;
+  // Clicked the bishop itself — ignore
+  if(r===bPos.row&&c===bPos.col)return;
+
+  const moves=bishopMoves(bPos.row,bPos.col);
+  if(!moves.some(m=>m.row===r&&m.col===c)){
+    const cell=getCell(r,c);
+    if(cell){cell.classList.remove('err-flash');void cell.offsetWidth;cell.classList.add('err-flash');}
+    showToast('❌ הרץ זז רק באלכסון!','err');sndErr();wrongClicks++;totalWrong++;return;
+  }
+
+  const pi=pawns.findIndex(p=>p.alive&&p.row===r&&p.col===c);
+
+  if(pi<0){
+    // Valid move to empty square — non-capturing step
+    busy=true;
+    bPos={row:r,col:c};
+    placeBishop(r,c,true);
+    sndStep();
+    setTimeout(()=>{busy=false;},390);
+    return;
+  }
+
+  // Clicked a pawn
+  if(pi!==nextPawn){
+    wrongClicks++;totalWrong++;
+    const cell=getCell(r,c);
+    if(cell){cell.classList.remove('err-flash');void cell.offsetWidth;cell.classList.add('err-flash');}
+    showToast(`🤔 קודם תאכלו את רגלי ${nextPawn+1}!`,'err');
+    sndErr();return;
+  }
+
+  // Correct next pawn — capture!
+  capture(r,c,pi);
+}
+
+// ══════════════════════════════════════════
+// CAPTURE (bishop arrives → explosion → state update)
+// ══════════════════════════════════════════
+function capture(r,c,pi){
+  busy=true;
+  bPos={row:r,col:c};
+  placeBishop(r,c,true);
+
+  // Wait for bishop animation to arrive (~380ms)
+  setTimeout(()=>{
+    playCapture();
+    showExplosion(r,c);
+
+    const bp=document.getElementById('bishop-piece');
+    bp.classList.add('capture');
+    setTimeout(()=>bp.classList.remove('capture'),400);
+
+    // Trigger pawn disappear animation
+    const wrap=document.getElementById('pw'+pi);
+    if(wrap)wrap.classList.add('gone');
+
+    // After pawn animation completes (~420ms)
+    setTimeout(()=>{
+      pawns[pi].alive=false;
+      nextPawn=pi+1;
+      if(wrap)wrap.remove();
+
+      if(pawns.every(p=>!p.alive)){
+        // All 4 pawns eaten — scenario complete!
+        setTimeout(()=>scenarioComplete(scenIdx),450);
+      }else{
+        updateTarget();
+        busy=false;
+      }
+    },420);
+  },380);
+}
+
+// ══════════════════════════════════════════
+// SCENARIO COMPLETE
+// ══════════════════════════════════════════
+function scenarioComplete(doneIdx){
+  const nextIdx=doneIdx+1;
+  const isLast=nextIdx>=TOTAL;
+  markDot(doneIdx);
+  fireworks();
+  setTimeout(()=>{
+    if(isLast){showWin();}
+    else{loadScenario(nextIdx);busy=false;}
+  },800);
+}
+
+// ══════════════════════════════════════════
+// LOAD SCENARIO
+// ══════════════════════════════════════════
+function loadScenario(idx){
+  scenIdx=idx;wrongClicks=0;
+  const sc=SCENARIOS[idx];
+  bPos={...sc.start};
+  pawns=sc.pawns.map((p,i)=>({...p,id:i,alive:true}));
+  nextPawn=0;
+
+  document.getElementById('stage-badge').textContent=`שלב 3 · תרחיש ${idx+1}/${TOTAL}`;
+  markDotActive(idx);
+  // Reset tracker
+  for(let i=0;i<4;i++){
+    const tb=document.getElementById('tb'+i);if(!tb)continue;
+    tb.classList.remove('active','eaten');
+    tb.textContent=i+1;
+    if(i===0)tb.classList.add('active');
+  }
+  buildBoard();buildCoords();
+  placePawns();
+  placeBishop(bPos.row,bPos.col,false);
+}
+
+// ══════════════════════════════════════════
+// WIN
+// ══════════════════════════════════════════
+function showWin(){
+  const perfect=totalWrong<=2;
+  BishopState.save('stage3',perfect);
+  document.getElementById('win-stars').textContent=perfect?'⭐⭐⭐':'⭐⭐';
+  document.getElementById('win-msg').textContent=perfect?'ביצוע מושלם! 🏆':'כל הכבוד! 🎉';
+  document.getElementById('btn-retry').textContent=perfect?'🔄 שחקו שוב':'🔄 נסו שוב';
+  document.getElementById('win-overlay').classList.add('show');
+  fireworks();sndWin();
+}
+function goNext(){window.location.href='bishop-stage4.html';}
+function retryStage(){
+  document.getElementById('win-overlay').classList.remove('show');
+  totalWrong=0;
+  SCENARIOS.splice(0,SCENARIOS.length,...JSON.parse(JSON.stringify(ORIGINAL_SCENARIOS)));
+  Array.from({length:TOTAL},(_,i)=>i).forEach(i=>{const el=document.getElementById("pd"+i);if(el){el.style.background="rgba(244,208,63,.2)";el.style.borderColor="rgba(244,208,63,.4)";el.style.transform="";el.style.boxShadow="";}}) ;
+  loadScenario(0);busy=false;
+}
+
+// ══════════════════════════════════════════
+// FIREWORKS
+// ══════════════════════════════════════════
+function fireworks(){
+  const cols=['#F4D03F','#7EC8E3','#52B788','#FF6B35','#C39BD3'];
+  for(let i=0;i<30;i++)setTimeout(()=>{const p=document.createElement('div');p.className='particle';const sz=6+Math.random()*7,x=10+Math.random()*80,y=10+Math.random()*80;const a=Math.random()*Math.PI*2,d=70+Math.random()*110;p.style.cssText=`width:${sz}px;height:${sz}px;left:${x}vw;top:${y}vh;background:${cols[Math.floor(Math.random()*5)]};animation-duration:${.7+Math.random()*.6}s;`;p.style.setProperty('--px',Math.cos(a)*d+'px');p.style.setProperty('--py',Math.sin(a)*d+'px');document.body.appendChild(p);setTimeout(()=>p.remove(),1400);},i*60);
+}
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+loadScenario(0);
+</script>
+</body>
+</html>

@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#162D4A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>הרץ האלכסוני ♗</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+body{
+  font-family:'Nunito',sans-serif;
+  background:radial-gradient(ellipse at 50% 0%,#162D4A 0%,#0C1E30 55%,#060E1A 100%);
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;padding:16px 12px max(28px,env(safe-area-inset-bottom));
+  user-select:none;overflow-x:hidden;overflow-y:auto;overscroll-behavior:none;
+}
+
+/* STARS */
+.star-dot{position:fixed;border-radius:50%;background:white;
+  animation:twinkle ease-in-out infinite alternate;pointer-events:none;}
+@keyframes twinkle{from{opacity:.1;transform:scale(.8)}to{opacity:.85;transform:scale(1.2)}}
+
+/* TITLE */
+.main-title{
+  font-family:'Fredoka One',cursive;
+  font-size:2.4rem;color:var(--gold);
+  text-shadow:0 0 28px rgba(244,208,63,.9),0 0 60px rgba(244,208,63,.4),0 2px 8px rgba(0,0,0,.6);
+  text-align:center;margin-bottom:6px;margin-top:8px;
+  animation:sp-in .7s cubic-bezier(.175,.885,.32,1.5) both;
+}
+@keyframes sp-in{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+/* BISHOP ARENA */
+.bishop-arena{
+  position:relative;width:160px;height:160px;
+  margin-bottom:12px;flex-shrink:0;
+}
+.arena-svg{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none;}
+
+/* Diagonal beam lines */
+.beam-line{
+  stroke:var(--gold);stroke-width:2.5;stroke-linecap:round;
+  opacity:0;fill:none;
+  animation:beamPulse 3.2s ease-in-out infinite;
+}
+.beam-line:nth-child(1){stroke:var(--gold);animation-delay:0s;}
+.beam-line:nth-child(2){stroke:var(--blue);animation-delay:.8s;}
+.beam-line:nth-child(3){stroke:var(--gold);animation-delay:1.6s;}
+.beam-line:nth-child(4){stroke:var(--blue);animation-delay:2.4s;}
+@keyframes beamPulse{
+  0%  {opacity:0;stroke-width:1.5;}
+  15% {opacity:1;stroke-width:4;}
+  55% {opacity:.5;}
+  100%{opacity:0;stroke-width:1.5;}
+}
+
+/* Traveling dot along diagonal */
+.beam-dot{
+  r:5;fill:#FFD700;
+  filter:drop-shadow(0 0 6px rgba(255,215,0,.9));
+  opacity:0;
+  animation:dotFade 3.2s ease-in-out infinite;
+}
+.beam-dot:nth-child(5){animation-delay:.2s;}
+.beam-dot:nth-child(6){animation-delay:1.0s;}
+.beam-dot:nth-child(7){animation-delay:1.8s;}
+.beam-dot:nth-child(8){animation-delay:2.6s;}
+@keyframes dotFade{
+  0%  {opacity:0;}
+  10% {opacity:1;}
+  80% {opacity:1;}
+  100%{opacity:0;}
+}
+
+/* Bishop center — SVG */
+.bishop-center{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  z-index:5;
+  animation:bishopPulse 2.4s ease-in-out infinite;
+}
+@keyframes bishopPulse{
+  0%,100%{transform:scale(1);}
+  50%{transform:scale(1.08);
+    filter:drop-shadow(0 0 32px rgba(244,208,63,1)) drop-shadow(0 0 55px rgba(255,107,53,.6));}
+}
+
+/* CSS VARIABLES */
+:root{
+  --gold:#F4D03F;--gold-dark:#C9A227;--gold-deep:#9A7B1A;
+  --blue:#7EC8E3;--green:#52B788;--orange:#FF6B35;
+  --purple:#C39BD3;--pink:#F1948A;
+  --cell-light:#C9E4F5;--cell-dark:#4A7FA5;
+}
+
+/* BOARD */
+:root{--cell: min(44px, calc((100vw - 24px) / 8));}
+@media(min-width:600px) and (min-height:700px){:root{--cell: min(50px, calc((100vw - 24px) / 8));}}
+@media(max-height:600px){:root{--cell: min(36px, calc((100vw - 24px) / 8));}}
+
+.board-section{position:relative;margin-bottom:14px;}
+.board-wrap{
+  position:relative;
+  border:3px solid var(--gold-dark);border-radius:6px;overflow:hidden;
+  box-shadow:0 6px 28px rgba(0,0,0,.6),0 0 20px rgba(244,208,63,.15);
+}
+.board-grid{
+  display:grid;
+  grid-template-columns:repeat(8,var(--cell));
+  grid-template-rows:repeat(8,var(--cell));
+  direction:ltr;
+}
+.bishop-float{
+  position:absolute;
+  transform:translate(-50%,-50%);
+  width:var(--cell);height:var(--cell);
+  display:flex;align-items:center;justify-content:center;
+  filter:drop-shadow(0 0 6px rgba(255,255,255,.7)) drop-shadow(0 2px 4px rgba(0,0,0,.7));
+  z-index:10;pointer-events:none;
+  transition:left .5s ease-in-out, top .5s ease-in-out;
+}
+.sq{width:var(--cell);height:var(--cell);position:relative;
+  display:flex;align-items:center;justify-content:center;transition:background .25s;}
+.sq.l{background:var(--cell-light);}
+.sq.d{background:var(--cell-dark);}
+
+/* STAGE PILLS */
+.stages-wrap{display:flex;gap:6px;margin:4px 0 16px;flex-wrap:wrap;justify-content:center;}
+.stage-pill{
+  font-family:'Fredoka One',cursive;
+  font-size:.94rem;padding:5px 13px;
+  border-radius:50px;border:2px solid;
+  letter-spacing:.3px;white-space:nowrap;
+}
+.stage-pill.s1{color:var(--green);border-color:var(--green);background:rgba(82,183,136,.12);}
+.stage-pill.s2{color:var(--blue);border-color:var(--blue);background:rgba(126,200,227,.12);}
+.stage-pill.s3{color:var(--gold);border-color:var(--gold);background:rgba(244,208,63,.10);}
+.stage-pill.s4{color:var(--orange);border-color:var(--orange);background:rgba(255,107,53,.10);}
+.stage-pill.s5{color:var(--purple);border-color:var(--purple);background:rgba(195,155,211,.10);}
+.stage-pill.s6{color:var(--pink);border-color:var(--pink);background:rgba(241,148,138,.10);}
+
+/* BUTTON */
+.btn-start{
+  font-family:'Fredoka One',cursive;
+  font-size:1.5rem;padding:14px 50px;
+  border-radius:50px;border:none;cursor:pointer;
+  color:white;letter-spacing:1px;
+  background:linear-gradient(135deg,var(--gold) 0%,var(--gold-dark) 50%,var(--gold-deep) 100%);
+  box-shadow:0 0 28px rgba(244,208,63,.55),0 6px 20px rgba(0,0,0,.4);
+  transition:transform .15s ease,box-shadow .15s ease;
+  touch-action:manipulation;
+  position:relative;overflow:hidden;
+  animation:btnPop .6s .3s cubic-bezier(.175,.885,.32,1.5) both,btnPulse 2s ease-in-out 1.5s infinite;
+}
+.btn-start::before{content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.18) 0%,transparent 60%);
+  border-radius:inherit;}
+.btn-start:hover{transform:scale(1.06);}
+.btn-start:active{transform:scale(.97);}
+@keyframes btnPop{from{opacity:0;transform:scale(.4);}to{opacity:1;transform:scale(1);}}
+@keyframes btnPulse{
+  0%,100%{box-shadow:0 0 28px rgba(244,208,63,.55),0 6px 20px rgba(0,0,0,.4);}
+  50%{box-shadow:0 0 55px rgba(244,208,63,.9),0 6px 28px rgba(0,0,0,.4);}
+}
+
+/* SPARKS */
+.pspark{position:fixed;width:6px;height:6px;border-radius:50%;
+  pointer-events:none;animation:psparkFly ease-out forwards;z-index:999;}
+@keyframes psparkFly{
+  from{opacity:1;transform:translate(0,0) scale(1);}
+  to{opacity:0;transform:translate(var(--px),var(--py)) scale(.2);}
+}
+</style>
+</head>
+<body>
+
+<div class="main-title">רץ — רודף האלכסונים!</div>
+
+<!-- BISHOP ARENA -->
+<div class="bishop-arena">
+  <svg class="arena-svg" viewBox="0 0 160 160">
+    <!-- 4 diagonal beams -->
+    <line class="beam-line" x1="80" y1="80" x2="8"   y2="8"/>
+    <line class="beam-line" x1="80" y1="80" x2="152" y2="8"/>
+    <line class="beam-line" x1="80" y1="80" x2="152" y2="152"/>
+    <line class="beam-line" x1="80" y1="80" x2="8"   y2="152"/>
+    <!-- traveling dots -->
+    <circle class="beam-dot" id="bd-ul" cx="80" cy="80"/>
+    <circle class="beam-dot" id="bd-ur" cx="80" cy="80"/>
+    <circle class="beam-dot" id="bd-dr" cx="80" cy="80"/>
+    <circle class="beam-dot" id="bd-dl" cx="80" cy="80"/>
+  </svg>
+  <div class="bishop-center" id="arena-bishop"></div>
+</div>
+
+<!-- BOARD -->
+<div class="board-section">
+  <div class="board-wrap">
+    <div class="board-grid" id="board"></div>
+  </div>
+</div>
+
+<!-- STAGE PILLS -->
+<div class="stages-wrap">
+  <div class="stage-pill s1">שלב 1 — חגיגת האלכסונים 🪙</div>
+  <div class="stage-pill s2">שלב 2 — ריקוד 2 המהלכים 🎯</div>
+  <div class="stage-pill s3">שלב 3 — אוכלים באופן מסודר ♟</div>
+  <div class="stage-pill s4">שלב 4 — ציד המלכות 👑</div>
+  <div class="stage-pill s5">שלב 5 — פאקמן 🟡</div>
+  <div class="stage-pill s6">שלב 6 — מבחן מסכם ⚔️</div>
+</div>
+
+<!-- BUTTON -->
+<button class="btn-start" onclick="onStart(event)">בואו נשחק! 🎮</button>
+
+<script>
+// ── Bishop SVG (cburnett) ──
+const BISHOP_WHITE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g fill="none" fill-rule="evenodd" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><g fill="#fff" stroke-linecap="butt"><path d="M9 36c3.39-.97 10.11.43 13.5-2 3.39 2.43 10.11 1.03 13.5 2 0 0 1.65.54 3 2-.68.97-1.65.99-3 .5-3.39-.97-10.11.46-13.5-1-3.39 1.46-10.11.03-13.5 1-1.354.49-2.323.47-3-.5 1.354-1.94 3-2 3-2zm6-4c2.5 2.5 12.5 2.5 15 0 .5-1.5 0-2 0-2 0-2.5-2.5-4-2.5-4 5.5-1.5 6-11.5-5-15.5-11 4-10.5 14-5 15.5 0 0-2.5 1.5-2.5 4 0 0-.5.5 0 2zM25 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 1 1 5 0z"/></g><path d="M17.5 26h10M15 30h15m-7.5-14.5v5M20 18h5" stroke="#000" stroke-linejoin="miter"/></g></svg>`;
+
+function makeBishopImg(sizePct){
+  const img=document.createElement('img');
+  img.src='data:image/svg+xml,'+encodeURIComponent(BISHOP_WHITE_SVG);
+  img.style.cssText=`width:${sizePct}%;height:${sizePct}%;object-fit:contain;display:block;margin:auto;pointer-events:none;`;
+  return img;
+}
+
+// ── Arena bishop — SVG 91px עם glow ──
+const arenaImg=document.createElement('img');
+arenaImg.src='data:image/svg+xml,'+encodeURIComponent(BISHOP_WHITE_SVG);
+arenaImg.style.cssText='width:91px;height:91px;object-fit:contain;display:block;margin:auto;pointer-events:none;filter:drop-shadow(0 0 22px rgba(244,208,63,.8)) drop-shadow(0 0 40px rgba(244,208,63,.4));';
+document.getElementById('arena-bishop').appendChild(arenaImg);
+
+
+for(let i=0;i<55;i++){
+  const s=document.createElement('div'); s.className='star-dot';
+  const sz=Math.random()*2.2+.7;
+  s.style.cssText=`width:${sz}px;height:${sz}px;top:${Math.random()*100}vh;left:${Math.random()*100}vw;animation-duration:${2+Math.random()*3}s;animation-delay:${Math.random()*3}s`;
+  document.body.appendChild(s);
+}
+
+// Traveling dots along diagonals
+const DIAGS=[
+  {id:'bd-ul', tx:-72, ty:-72},
+  {id:'bd-ur', tx: 72, ty:-72},
+  {id:'bd-dr', tx: 72, ty: 72},
+  {id:'bd-dl', tx:-72, ty: 72},
+];
+const DELAYS=[0.2,1.0,1.8,2.6];
+const PERIOD=3200;
+
+function animateDot(dotId, tx, ty, delay){
+  const el=document.getElementById(dotId);
+  if(!el) return;
+  function run(){
+    let start=null; const dur=2600;
+    function step(ts){
+      if(!start) start=ts;
+      const t=Math.min((ts-start)/dur,1);
+      const ease=t<.5?2*t*t:-1+(4-2*t)*t;
+      el.setAttribute('cx', 80+tx*ease);
+      el.setAttribute('cy', 80+ty*ease);
+      if(t<1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+  setTimeout(()=>{ run(); setInterval(run, PERIOD); }, delay*1000);
+}
+DIAGS.forEach((d,i)=>animateDot(d.id,d.tx,d.ty,DELAYS[i]));
+
+// Build board
+const boardEl=document.getElementById('board');
+for(let r=0;r<8;r++) for(let c=0;c<8;c++){
+  const sq=document.createElement('div');
+  sq.className='sq '+((r+c)%2===0?'l':'d');
+  sq.id=`sq_${r}_${c}`;
+  boardEl.appendChild(sq);
+}
+function getSq(r,c){ return document.getElementById(`sq_${r}_${c}`); }
+
+// ── שני רצים צפים ──
+function getCELL(){
+  const raw=Math.floor((window.innerWidth-24)/8);
+  const cap=(window.innerWidth>=600&&window.innerHeight>=700)?50:
+             (window.innerHeight<=600)?36:44;
+  return Math.min(80,Math.max(raw,28),cap);
+}
+const CELL=getCELL();
+document.documentElement.style.setProperty('--cell',CELL+'px');
+
+function makeBishopFloat(){
+  const el=document.createElement('div');
+  el.className='bishop-float';
+  el.appendChild(makeBishopImg(90));
+  return el;
+}
+
+const bF1=makeBishopFloat();
+const bC1=makeBishopFloat();
+const boardWrap=document.querySelector('.board-wrap');
+boardWrap.appendChild(bF1);
+boardWrap.appendChild(bC1);
+
+// SVG שובל מעל הלוח
+const trailSvg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+trailSvg.setAttribute('viewBox',`0 0 ${8*CELL} ${8*CELL}`);
+trailSvg.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:5;overflow:visible;';
+boardWrap.appendChild(trailSvg);
+
+function placeAt(el,row,col,dur){
+  if(dur!=null) el.style.transition=`left ${dur}ms ease-in-out,top ${dur}ms ease-in-out`;
+  el.style.left=(col*CELL+CELL/2)+'px';
+  el.style.top =(row*CELL+CELL/2)+'px';
+}
+
+placeAt(bF1,7,5);
+placeAt(bC1,7,2);
+
+const ROUTE_F1=[{r:7,c:5},{r:2,c:0},{r:0,c:2},{r:5,c:7},{r:7,c:5}];
+const ROUTE_C1=[{r:7,c:2},{r:5,c:0},{r:0,c:5},{r:2,c:7},{r:7,c:2}];
+
+const sleep=ms=>new Promise(res=>setTimeout(res,ms));
+const MS_PER_SQ=192;
+
+function drawTrail(from,to,color,dur){
+  const x1=from.c*CELL+CELL/2, y1=from.r*CELL+CELL/2;
+  const x2=to.c*CELL+CELL/2,   y2=to.r*CELL+CELL/2;
+  const len=Math.hypot(x2-x1,y2-y1);
+
+  const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1',x1); line.setAttribute('y1',y1);
+  line.setAttribute('x2',x2); line.setAttribute('y2',y2);
+  line.setAttribute('stroke',color);
+  line.setAttribute('stroke-width','3');
+  line.setAttribute('stroke-linecap','round');
+  line.style.strokeDasharray=len;
+  line.style.strokeDashoffset=len;
+  line.style.opacity='1';
+  line.style.filter=`drop-shadow(0 0 5px ${color}) drop-shadow(0 0 10px ${color})`;
+  trailSvg.appendChild(line);
+
+  // מצייר את עצמו בזמן שהרץ זז
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    line.style.transition=`stroke-dashoffset ${dur}ms ease-in-out`;
+    line.style.strokeDashoffset='0';
+  }));
+
+  // דועך לאחר ההגעה
+  setTimeout(()=>{
+    line.style.transition='opacity 450ms ease-out';
+    line.style.opacity='0';
+    setTimeout(()=>line.remove(),480);
+  }, dur+200);
+}
+
+async function runRoute(el,route,color){
+  for(let i=0;i<route.length-1;i++){
+    const from=route[i],to=route[i+1];
+    const dur=Math.abs(to.r-from.r)*MS_PER_SQ;
+    drawTrail(from,to,color,dur);
+    placeAt(el,to.r,to.c,dur);
+    await sleep(dur+220);
+  }
+}
+
+async function boardBeamLoop(){
+  await sleep(600);
+  while(true){
+    await runRoute(bF1,ROUTE_F1,'#F4D03F');
+    await sleep(300);
+    await runRoute(bC1,ROUTE_C1,'#7EC8E3');
+    await sleep(300);
+  }
+}
+boardBeamLoop();
+
+// Button
+function onStart(e){
+  spawnSparks(e);
+  setTimeout(()=>{ window.location.href='bishop-stage1.html'; },350);
+}
+function spawnSparks(e){
+  const colors=['#F4D03F','#7EC8E3','#52B788','#FF6B35','#FFFFFF'];
+  const rect=e.target.getBoundingClientRect();
+  const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+  for(let i=0;i<18;i++){
+    const sp=document.createElement('div'); sp.className='pspark';
+    const a=Math.random()*Math.PI*2, d=60+Math.random()*80;
+    sp.style.cssText=`left:${cx}px;top:${cy}px;background:${colors[i%colors.length]};animation-duration:${.5+Math.random()*.4}s;`;
+    sp.style.setProperty('--px',Math.cos(a)*d+'px');
+    sp.style.setProperty('--py',Math.sin(a)*d+'px');
+    document.body.appendChild(sp);
+    setTimeout(()=>sp.remove(),900);
+  }
+}
+</script>
+</body>
+</html>

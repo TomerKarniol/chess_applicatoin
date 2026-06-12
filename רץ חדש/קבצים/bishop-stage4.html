@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="theme-color" content="#162D4A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>הרץ — שלב 4 👑 ציד המלכות</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+:root{
+  --gold:#F4D03F;--gold-dark:#C9A227;--green:#52B788;
+  --blue:#7EC8E3;--red:#E74C3C;
+  --bg1:#162D4A;--bg2:#0C1E30;--bg3:#060E1A;
+  --cell-light:#C9E4F5;--cell-dark:#4A7FA5;
+  --cell:58px;
+}
+@media(max-width:480px){:root{--cell:53px;}}
+@media(max-width:430px){:root{--cell:48px;}}
+@media(max-width:390px){:root{--cell:44px;}}
+@media(max-width:360px){:root{--cell:40px;}}
+@media(max-height:600px){:root{--cell:36px;}}
+
+body{
+  font-family:'Nunito',sans-serif;
+  background:radial-gradient(ellipse at 50% 0%,var(--bg1) 0%,var(--bg2) 55%,var(--bg3) 100%);
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  padding:10px 12px max(28px,env(safe-area-inset-bottom));user-select:none;overflow-x:hidden;overflow-y:auto;overscroll-behavior:none;
+}
+.star-dot{position:fixed;border-radius:50%;background:#fff;
+  animation:twinkle ease-in-out infinite alternate;pointer-events:none;z-index:0;}
+@keyframes twinkle{from{opacity:.1;transform:scale(.8)}to{opacity:.85;transform:scale(1.2)}}
+
+/* BOARD SIZE */
+:root{ --board-size:calc(var(--cell)*8); }
+
+/* HEADER — board-aligned */
+.hdr{display:flex;align-items:center;justify-content:space-between;
+  width:var(--board-size);margin-bottom:8px;z-index:1;}
+.stage-badge{font-family:'Fredoka One',cursive;font-size:.85rem;
+  background:rgba(244,208,63,.12);border:1.5px solid rgba(244,208,63,.35);
+  border-radius:50px;padding:3px 14px;color:var(--gold);letter-spacing:.5px;}
+.score-right{display:flex;align-items:center;gap:8px;}
+
+/* MUTE */
+.btn-mute{background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.2);
+  border-radius:50%;width:36px;height:36px;font-size:1.1rem;cursor:pointer;color:white;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .2s;touch-action:manipulation;flex-shrink:0;}
+.btn-mute:hover{background:rgba(255,255,255,.18);}
+
+/* COORD WRAP */
+.coord-wrap{display:flex;align-items:flex-start;gap:5px;direction:ltr;}
+.rank-labels{display:flex;flex-direction:column;height:var(--board-size);
+  justify-content:space-around;font-family:'Fredoka One',cursive;font-size:.72rem;
+  color:var(--gold);opacity:.8;width:15px;text-align:center;}
+.file-labels{display:flex;justify-content:space-around;width:var(--board-size);
+  margin-top:4px;font-family:'Fredoka One',cursive;font-size:.72rem;
+  color:var(--gold);opacity:.8;}
+
+/* MOVE COUNTER */
+.move-counter{display:flex;align-items:center;gap:6px;z-index:1;}
+.moves-label{font-family:'Fredoka One',cursive;font-size:.85rem;color:#7a90a4;}
+.moves-pips{display:flex;gap:3px;}
+.pip{width:13px;height:13px;border-radius:3px;
+  background:rgba(255,255,255,.1);border:1.5px solid rgba(150,175,200,.3);
+  transition:all .25s ease;}
+.pip.used{background:var(--gold);border-color:var(--gold-dark);
+  box-shadow:0 0 6px rgba(244,208,63,.6);}
+.pip.danger{background:var(--red)!important;border-color:#c0392b!important;
+  animation:pipPulse .5s ease-in-out infinite alternate;}
+@keyframes pipPulse{from{opacity:.7}to{opacity:1;box-shadow:0 0 8px rgba(231,76,60,.8);}}
+
+/* TITLE */
+.game-title{font-family:'Fredoka One',cursive;font-size:1.35rem;color:var(--gold);
+  text-shadow:0 0 22px rgba(244,208,63,.8);text-align:center;margin-bottom:7px;z-index:1;}
+
+/* QUEEN TRACKER */
+.tracker-row{display:flex;align-items:center;gap:6px;margin-bottom:7px;z-index:1;}
+.tracker-label{font-family:'Fredoka One',cursive;font-size:.78rem;color:#7a90a4;}
+.qb{width:34px;height:34px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  border:2px solid rgba(150,175,200,.2);background:rgba(255,255,255,.03);
+  transition:all .35s ease;font-size:1.1rem;}
+.qb.alive{border-color:rgba(231,76,60,.5);
+  animation:qPulse 2s ease-in-out infinite alternate;}
+@keyframes qPulse{from{box-shadow:0 0 4px rgba(231,76,60,.3)}to{box-shadow:0 0 14px rgba(231,76,60,.7)}}
+.qb.eaten{border-color:var(--green);background:rgba(82,183,136,.12);
+  animation:qPop .4s cubic-bezier(.175,.885,.32,1.5) both;}
+@keyframes qPop{0%{transform:scale(.5);opacity:0}60%{transform:scale(1.3)}100%{transform:scale(1);opacity:1}}
+
+/* BOARD */
+.board-section{display:flex;justify-content:center;z-index:1;margin-bottom:6px;}
+.board-outer{
+  position:relative;display:inline-block;direction:ltr;
+  border:3px solid var(--gold-dark);border-radius:6px;overflow:hidden;
+  box-shadow:0 0 40px rgba(244,208,63,.4),0 8px 32px rgba(0,0,0,.7);
+  transition:box-shadow .3s;
+}
+.board-outer.win-glow{
+  box-shadow:0 0 60px rgba(82,183,136,.7),0 0 120px rgba(82,183,136,.3),0 8px 32px rgba(0,0,0,.7)!important;}
+.board-grid{
+  display:grid;
+  grid-template-columns:repeat(8,var(--cell));
+  grid-template-rows:repeat(8,var(--cell));
+  direction:ltr;
+}
+.cell{width:var(--cell);height:var(--cell);position:relative;cursor:pointer;
+  touch-action:manipulation;
+  display:flex;align-items:center;justify-content:center;}
+.cell.cl{background:var(--cell-light);}
+.cell.cd{background:var(--cell-dark);}
+.cell.err-flash{animation:errFlash .38s ease!important;}
+@keyframes errFlash{0%,100%{background:inherit;}35%,65%{background:rgba(231,76,60,.6)!important;}}
+
+/* BISHOP (floating) */
+.bishop-piece{
+  position:absolute;top:0;left:0;z-index:50;
+  width:var(--cell);height:var(--cell);
+  display:flex;align-items:center;justify-content:center;
+  pointer-events:none;
+  filter:drop-shadow(0 0 10px rgba(255,255,255,.7)) drop-shadow(0 2px 6px rgba(0,0,0,.9));
+  transition:top .34s cubic-bezier(.4,0,.2,1),left .34s cubic-bezier(.4,0,.2,1);
+  visibility:hidden;
+}
+.bishop-piece img{width:88%;height:88%;object-fit:contain;pointer-events:none;}
+
+/* QUEENS (inline in cells) */
+.queen-wrap{width:82%;height:82%;display:flex;align-items:center;justify-content:center;
+  pointer-events:none;transition:transform .2s,opacity .2s;}
+.queen-wrap svg{width:100%;height:100%;}
+
+/* HINT */
+.hint-area{min-height:38px;display:flex;align-items:center;justify-content:center;z-index:1;margin-top:2px;}
+.hint-box{
+  background:rgba(6,14,26,.93);border:1.5px solid rgba(244,208,63,.5);
+  border-radius:14px;padding:7px 20px;font-size:.88rem;color:var(--gold);font-weight:700;
+  text-align:center;opacity:0;pointer-events:none;transition:opacity .3s;
+  max-width:460px;
+}
+.hint-box.show{opacity:1;pointer-events:all;}
+.hint-btn{background:rgba(244,208,63,.15);border:1.5px solid var(--gold-dark);
+  color:var(--gold);border-radius:10px;padding:5px 14px;
+  font-family:'Fredoka One',cursive;font-size:.85rem;cursor:pointer;margin-top:5px;
+  transition:background .2s;}
+.hint-btn:hover{background:rgba(244,208,63,.3);}
+
+/* ── TRY AGAIN OVERLAY ── */
+.particle{position:fixed;border-radius:50%;pointer-events:none;z-index:999;animation:pFly ease-out forwards;}
+@keyframes pFly{from{opacity:1;transform:translate(0,0) scale(1);}to{opacity:0;transform:translate(var(--px),var(--py)) scale(.1);}}
+@keyframes cardIn{from{transform:scale(.5);opacity:0;}to{transform:scale(1);opacity:1;}}
+.boom-overlay{position:fixed;inset:0;background:rgba(6,14,26,.88);
+  display:flex;align-items:center;justify-content:center;
+  z-index:700;opacity:0;pointer-events:none;transition:opacity .35s;}
+.boom-overlay.show{opacity:1;pointer-events:all;}
+.boom-card{background:linear-gradient(150deg,#1e3d5c,#0f2336);
+  border:2.5px solid var(--gold);border-radius:22px;
+  padding:26px 36px;text-align:center;
+  box-shadow:0 0 60px rgba(244,208,63,.35);
+  animation:cardIn .45s cubic-bezier(.175,.885,.32,1.5) both;}
+.boom-icon{font-size:4rem;animation:bumpBounce 1s ease-in-out infinite alternate;}
+@keyframes bumpBounce{from{transform:rotate(-8deg) scale(1);}to{transform:rotate(8deg) scale(1.12);}}
+.boom-title{font-family:'Fredoka One',cursive;font-size:1.85rem;color:var(--gold);margin:6px 0 4px;
+  text-shadow:0 0 18px rgba(244,208,63,.7);}
+.boom-sub{font-size:.95rem;color:#B0C4DE;font-weight:700;margin-bottom:16px;line-height:1.6;}
+.btn-retry{background:linear-gradient(160deg,var(--gold),var(--gold-dark));
+  color:#060E1A;border:none;border-radius:14px;
+  padding:11px 28px;font-family:'Fredoka One',cursive;font-size:1.15rem;
+  cursor:pointer;touch-action:manipulation;
+  box-shadow:0 4px 16px rgba(244,208,63,.45);transition:transform .15s;}
+.btn-retry:hover{transform:translateY(-2px);}
+
+/* ── WIN OVERLAY ── */
+.win-overlay{position:fixed;inset:0;background:rgba(6,14,26,.9);
+  display:flex;align-items:center;justify-content:center;
+  z-index:800;opacity:0;pointer-events:none;transition:opacity .4s;}
+.win-overlay.show{opacity:1;pointer-events:all;}
+.win-card{background:linear-gradient(150deg,#1e3d5c,#0f2336);
+  border:2.5px solid var(--gold);border-radius:22px;
+  padding:28px 38px;text-align:center;
+  box-shadow:0 0 80px rgba(244,208,63,.55);
+  animation:cardIn .45s cubic-bezier(.175,.885,.32,1.5) both;}
+.win-trophy{font-size:4rem;animation:trophy 1.1s ease-in-out infinite alternate;}
+@keyframes trophy{from{transform:translateY(0);}to{transform:translateY(-10px);}}
+.win-title{font-family:'Fredoka One',cursive;font-size:2rem;color:var(--gold);margin:8px 0 5px;}
+.win-stars{font-size:2.2rem;letter-spacing:4px;margin-bottom:6px;}
+.win-msg{font-family:'Fredoka One',cursive;font-size:1.1rem;color:var(--blue);margin-bottom:18px;}
+.win-sub{font-size:.95rem;color:var(--blue);font-weight:700;margin-bottom:6px;}
+.btn-next{background:linear-gradient(160deg,var(--gold),var(--gold-dark),#9A7B1A);
+  color:#060E1A;border:none;border-radius:14px;
+  padding:12px 32px;font-family:'Fredoka One',cursive;font-size:1.2rem;
+  cursor:pointer;touch-action:manipulation;
+  box-shadow:0 4px 18px rgba(244,208,63,.5);transition:transform .15s;}
+.btn-next:hover{transform:translateY(-2px);}
+.btn-replay{
+  background:transparent;color:rgba(255,255,255,.6);
+  border:1.5px solid rgba(255,255,255,.2);border-radius:14px;
+  padding:9px 26px;font-family:'Fredoka One',cursive;font-size:1rem;
+  cursor:pointer;touch-action:manipulation;
+  transition:color .2s,border-color .2s;margin-top:8px;}
+.btn-replay:hover{color:white;border-color:rgba(255,255,255,.5);}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="stage-badge" id="stage-badge">שלב 4 · תרחיש 1/3</div>
+  <div class="move-counter">
+    <span class="moves-label">מהלכים:</span>
+    <div class="moves-pips" id="pips"></div>
+  </div>
+  <div class="score-right">
+<div style="display:flex;gap:6px;align-items:center;"><div id="pd0" style="width:13px;height:13px;border-radius:50%;background:rgba(244,208,63,.2);border:2px solid rgba(244,208,63,.4);transition:background .3s;"></div><div id="pd1" style="width:13px;height:13px;border-radius:50%;background:rgba(244,208,63,.2);border:2px solid rgba(244,208,63,.4);transition:background .3s;"></div><div id="pd2" style="width:13px;height:13px;border-radius:50%;background:rgba(244,208,63,.2);border:2px solid rgba(244,208,63,.4);transition:background .3s;"></div></div>
+    <button class="btn-mute" id="btn-mute" onclick="toggleMute()">🔊</button>
+  </div>
+</div>
+
+<div class="game-title">👑 ציד המלכות ב-10 מהלכים! 👑</div>
+
+<div class="tracker-row">
+  <span class="tracker-label">מלכות:</span>
+  <div class="qb alive" id="qb0">♛</div>
+  <div class="qb alive" id="qb1">♛</div>
+  <div class="qb alive" id="qb2">♛</div>
+  <div class="qb alive" id="qb3">♛</div>
+  <div class="qb alive" id="qb4">♛</div>
+</div>
+
+
+<div class="board-section">
+  <div class="coord-wrap">
+    <div class="rank-labels" id="ranks"></div>
+    <div>
+      <div class="board-outer" id="board-outer">
+        <div class="board-grid" id="board"></div>
+        <div class="bishop-piece" id="bishop-piece">
+          <img id="bishop-img" src="" alt="רץ"/>
+        </div>
+      </div>
+      <div class="file-labels" id="files"></div>
+    </div>
+  </div>
+</div>
+
+<div class="hint-area" id="hint-area">
+  <div class="hint-box" id="hint-box">
+    <span id="hint-text"></span>
+    <br>
+    <button class="hint-btn" id="hint-btn" onclick="nextHint()">רמז נוסף 🔍</button>
+  </div>
+</div>
+
+<!-- TRY AGAIN -->
+<div class="boom-overlay" id="boom-overlay">
+  <div class="boom-card">
+    <div class="boom-icon">🤔</div>
+    <div class="boom-title">נגמרו 10 המהלכים!</div>
+    <button class="btn-retry" onclick="retryGame()">נסו שוב 💪</button>
+  </div>
+</div>
+
+<!-- WIN סופי (אחרי כל 3 תרחישים) -->
+<div class="win-overlay" id="win-overlay">
+  <div class="win-card">
+    <div class="win-trophy">🏆</div>
+    <div class="win-title">שלב 4 הושלם! 🎉</div>
+    <div class="win-stars" id="win-stars">⭐⭐⭐</div>
+    <div id="win-msg" class="win-msg">ביצוע מושלם! 🏆</div>
+    <button class="btn-next" onclick="nextStage()">לשלב 5 ←</button>
+    <br>
+    <button class="btn-replay" id="btn-replay" onclick="replayStage()">🔄 נסו שוב</button>
+  </div>
+</div>
+
+
+<script>
+// ══ BISHOP SVG ══
+const BISHOP_SVG=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g fill="none" fill-rule="evenodd" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><g fill="#fff" stroke-linecap="butt"><path d="M9 36c3.39-.97 10.11.43 13.5-2 3.39 2.43 10.11 1.03 13.5 2 0 0 1.65.54 3 2-.68.97-1.65.99-3 .5-3.39-.97-10.11.46-13.5-1-3.39 1.46-10.11.03-13.5 1-1.354.49-2.323.47-3-.5 1.354-1.94 3-2 3-2zm6-4c2.5 2.5 12.5 2.5 15 0 .5-1.5 0-2 0-2 0-2.5-2.5-4-2.5-4 5.5-1.5 6-11.5-5-15.5-11 4-10.5 14-5 15.5 0 0-2.5 1.5-2.5 4 0 0-.5.5 0 2zM25 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 1 1 5 0z"/></g><path d="M17.5 26h10M15 30h15m-7.5-14.5v5M20 18h5" stroke="#000" stroke-linejoin="miter"/></g></svg>`;
+
+// ══ QUEEN SVG (dark) ══
+const QUEEN_SVG=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g fill-rule="evenodd" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12a2 2 0 1 1 3.999 0A2 2 0 0 1 8 12zm16.5-4.5a2 2 0 1 1 4 0 2 2 0 0 1-4 0zM41 12a2 2 0 1 1 3.999 0A2 2 0 0 1 41 12zM16 8.5a2 2 0 1 1 4 0 2 2 0 0 1-4 0zM33 6a2 2 0 1 1 3.999 0A2 2 0 0 1 33 6z" fill="#3d1a5e" stroke="#3d1a5e"/><path d="M9 26c8.5-8.5 21-8.5 27 0l5-12.5-6.5 3.5-6-7-3.5 7.5-3.5-7.5-6 7-6.5-3.5 5 12.5z" fill="#5a2d82" stroke="#3d1a5e" stroke-linejoin="miter"/><path d="M9 26c0 2 1.5 2 2.5 4 1 1.5 1 1 .5 3.5-1.5 1-1.5 2.5-1.5 2.5-1.5 1.5.5 2.5.5 2.5 6.5 1 16.5 1 23 0 0 0 1.5-1 0-2.5 0 0 .5-1.5-1-2.5-.5-2.5-.5-2 .5-3.5 1-2 2.5-2 2.5-4-7-3.5-21-3.5-27 0z" fill="#5a2d82" stroke="#3d1a5e"/><path d="M11.5 30c3.5-1 18.5-1 22 0M12 33.5c4-1.5 17-1.5 21 0" stroke="#c9a0f0" fill="none"/></g></svg>`;
+
+document.getElementById('bishop-img').src='data:image/svg+xml,'+encodeURIComponent(BISHOP_SVG);
+
+// ══ SCENARIOS ══
+const SCENARIOS=[
+  {
+    bishop:{row:7,col:5},
+    queens:[{row:7,col:3},{row:0,col:4},{row:1,col:1},{row:1,col:7},{row:2,col:4}],
+    hints:[
+      'כל מלכה צריכה "תחנת ביניים" — הרץ לא מגיע אליה ישירות!',
+      'התחילו מהמלכה הכי קרובה — D1 קרובה לרץ שלכם 👀'
+    ]
+  },
+  {
+    bishop:{row:0,col:0},
+    queens:[{row:0,col:2},{row:0,col:6},{row:2,col:6},{row:4,col:0},{row:6,col:4}],
+    hints:[
+      'כל מלכה צריכה "תחנת ביניים" — הרץ לא מגיע אליה ישירות!',
+      'התחלו מהמלכות הקרובות בשורה העליונה 👀'
+    ]
+  },
+  {
+    bishop:{row:7,col:1},
+    queens:[{row:0,col:0},{row:0,col:2},{row:1,col:5},{row:3,col:1},{row:7,col:3}],
+    hints:[
+      'כל מלכה צריכה "תחנת ביניים" — הרץ לא מגיע אליה ישירות!',
+      'שתי מלכות בשורה העליונה — חפשו את הדרך האלכסונית אליהן 👀'
+    ]
+  }
+];
+const ORIGINAL_SCENARIOS=JSON.parse(JSON.stringify(SCENARIOS));
+
+// ══ STATE ══
+let sc, scIdx, bRow, bCol, queens, moveCount, failCount=0, scenarioFails=0, totalFails=0, hintLevel=0, hintsEverUsed=false, busy=false;
+/* ── BishopState — v2.1 (אחרון לתצוגה, שיא לצבירה) ── */
+const BishopState={
+  MODULE_KEY:'chess_bishop',
+  STAGE_KEYS:['stage1','stage2','stage3','stage4','stage5','stage6'],
+  PERFECT_THRESHOLD:5,   // 5/6 perfect = 3⭐  (⚠️ תלוי במספר השלבים בפועל)
+  save(stageKey,perfect){
+    try{
+      const d=JSON.parse(localStorage.getItem(this.MODULE_KEY)||'{}');
+      const prev=d[stageKey]||{};
+      // v2.1: אחרון מתעדכן תמיד; שיא נצבר ב-OR (כולל מיגרציה מ-perfect ישן)
+      const bestPerfect=(prev.bestPerfect||prev.perfect||false)||perfect;
+      d[stageKey]={done:true,perfect,lastPerfect:perfect,bestPerfect};
+      localStorage.setItem(this.MODULE_KEY,JSON.stringify(d));
+    }catch(e){}
+  },
+  // v2.1 — תצוגה כפולה: מחזיר { best, last } (כל אחד 0/2/3). תמיד last ≤ best.
+  getModuleStars(){
+    try{
+      const d=JSON.parse(localStorage.getItem(this.MODULE_KEY)||'{}');
+      const done=this.STAGE_KEYS.filter(k=>d[k]?.done).length;
+      if(done<this.STAGE_KEYS.length)return{best:0,last:0}; // לא הושלם — אין כוכב
+      const bestP=this.STAGE_KEYS.filter(k=>(d[k]?.bestPerfect??d[k]?.perfect)).length;
+      const lastP=this.STAGE_KEYS.filter(k=>(d[k]?.lastPerfect??d[k]?.perfect)).length;
+      const toStars=p=>p>=this.PERFECT_THRESHOLD?3:2; // אחרי השלמה: מינימום 2⭐
+      return{best:toStars(bestP),last:toStars(lastP)};
+    }catch(e){return{best:0,last:0};}
+  }
+};
+
+
+let muted=false;
+function toggleMute(){muted=!muted;document.getElementById('btn-mute').textContent=muted?'🔇':'🔊';}
+
+// ══ AUDIO ══
+let audioCtx=null;
+function ga(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();return audioCtx;}
+document.addEventListener('click',()=>{try{ga();}catch(e){}},{once:true});
+function tone(f1,f2,d,type='sine',v=.15){try{const c=ga(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type=type;o.frequency.setValueAtTime(f1,c.currentTime);if(f2)o.frequency.exponentialRampToValueAtTime(f2,c.currentTime+d);g.gain.setValueAtTime(v,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+d);o.start();o.stop(c.currentTime+d);}catch(e){}}
+const sndMove  =()=>{if(!muted)tone(440,660,.18,'sine',.10);};
+const sndErr   =()=>{if(!muted)tone(220,110,.3,'sawtooth',.12);};
+const sndWin   =()=>{if(!muted)[0,160,320,480].forEach((d,i)=>setTimeout(()=>tone([660,880,1100,1320][i],[880,1100,1320,1760][i],.38),d));};
+
+// ══ EXPLOSION (capture effect) ══
+function playCapture(){if(muted)return;try{const c=ga(),n=c.currentTime;
+  const th=c.createOscillator(),tg=c.createGain();th.connect(tg);tg.connect(c.destination);
+  th.type='sine';th.frequency.setValueAtTime(90,n);th.frequency.exponentialRampToValueAtTime(20,n+.5);
+  tg.gain.setValueAtTime(.8,n);tg.gain.exponentialRampToValueAtTime(.001,n+.55);th.start(n);th.stop(n+.6);
+  const pu=c.createOscillator(),pg=c.createGain();pu.connect(pg);pg.connect(c.destination);
+  pu.type='sine';pu.frequency.setValueAtTime(200,n);pu.frequency.exponentialRampToValueAtTime(50,n+.18);
+  pg.gain.setValueAtTime(.45,n);pg.gain.exponentialRampToValueAtTime(.001,n+.2);pu.start(n);pu.stop(n+.22);
+  const bs=Math.floor(c.sampleRate*.3),nb=c.createBuffer(1,bs,c.sampleRate),nd=nb.getChannelData(0);
+  for(let i=0;i<bs;i++)nd[i]=Math.random()*2-1;
+  const ns=c.createBufferSource();ns.buffer=nb;
+  const nf=c.createBiquadFilter();nf.type='bandpass';nf.frequency.value=500;nf.Q.value=.5;
+  const ng=c.createGain();ng.gain.setValueAtTime(.5,n);ng.gain.exponentialRampToValueAtTime(.001,n+.3);
+  ns.connect(nf);nf.connect(ng);ng.connect(c.destination);ns.start(n);ns.stop(n+.32);
+}catch(e){}}
+
+function showExplosion(row,col){
+  const SZ=getCellPx();
+  const bo=document.getElementById('board-outer');
+  const W=SZ*8+6,H=SZ*8+6;
+  const cx=col*SZ+SZ/2+3,cy=row*SZ+SZ/2+3;
+  const cv=document.createElement('canvas');
+  cv.width=W;cv.height=H;
+  cv.style.cssText=`position:absolute;left:0;top:0;width:${W}px;height:${H}px;z-index:40;pointer-events:none;`;
+  bo.appendChild(cv);
+  const c=cv.getContext('2d');
+  const COLS=['#FF6B00','#FF4500','#FFD700','#FFFFFF','#FF8C00','#FF2200','#FFA500'];
+  const parts=Array.from({length:40},(_,i)=>{
+    const a=(i/40)*Math.PI*2+Math.random()*.4,spd=3+Math.random()*8;
+    return{x:cx,y:cy,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd-1.5,r:1.5+Math.random()*4,
+      color:COLS[Math.floor(Math.random()*COLS.length)],alpha:1,decay:.02+Math.random()*.02,grav:.17};
+  });
+  let frame=0;
+  function draw(){
+    c.clearRect(0,0,W,H);
+    if(frame<8){const t=frame/7,r=SZ*.9*t;const g=c.createRadialGradient(cx,cy,0,cx,cy,Math.max(r,1));
+      g.addColorStop(0,`rgba(255,255,255,${1-t})`);g.addColorStop(.5,`rgba(255,180,0,${(1-t)*.8})`);g.addColorStop(1,'rgba(200,30,0,0)');
+      c.fillStyle=g;c.beginPath();c.arc(cx,cy,Math.max(r,1),0,Math.PI*2);c.fill();}
+    if(frame>=1&&frame<20){const t=(frame-1)/19,r=SZ*.65*t,a=1-t;const g=c.createRadialGradient(cx,cy,0,cx,cy,Math.max(r,1));
+      g.addColorStop(0,`rgba(255,220,100,${a})`);g.addColorStop(.4,`rgba(220,80,0,${a*.7})`);g.addColorStop(1,'rgba(100,20,0,0)');
+      c.fillStyle=g;c.beginPath();c.arc(cx,cy,Math.max(r,1),0,Math.PI*2);c.fill();}
+    c.save();parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=p.grav;p.vx*=.94;p.alpha=Math.max(0,p.alpha-p.decay);
+      if(p.alpha<=0)return;c.globalAlpha=p.alpha;c.beginPath();c.arc(p.x,p.y,Math.max(.5,p.r*Math.sqrt(p.alpha)),0,Math.PI*2);c.fillStyle=p.color;c.fill();});
+    c.restore();frame++;
+    if(frame<50)requestAnimationFrame(draw);else cv.remove();
+  }
+  requestAnimationFrame(draw);
+}
+
+// ══ STARS ══
+for(let i=0;i<55;i++){const s=document.createElement('div');s.className='star-dot';const sz=Math.random()*2.2+.7;s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}vw;top:${Math.random()*100}vh;animation-duration:${1.5+Math.random()*2.5}s;animation-delay:${Math.random()*3}s;`;document.body.appendChild(s);}
+
+// ══ UTILS ══
+function getCellPx(){const w=window.innerWidth,h=window.innerHeight;if(h<=600)return Math.min(36,Math.floor((w-24)/8));if(w<=360)return 40;if(w<=390)return 44;if(w<=430)return 48;if(w<=480)return 53;return 58;}
+document.documentElement.style.setProperty('--cell',getCellPx()+'px');
+window.addEventListener('resize',()=>{
+  document.documentElement.style.setProperty('--cell',getCellPx()+'px');
+  if(bRow!=null)render();
+});
+function getCell(r,c){return document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);}
+function onDiag(r1,c1,r2,c2){return Math.abs(r1-r2)===Math.abs(c1-c2);}
+
+// ══ PATH CLEARANCE ══
+function pathClear(fr,fc,tr,tc){
+  const dr=Math.sign(tr-fr),dc=Math.sign(tc-fc);
+  let r=fr+dr,c=fc+dc;
+  while(r!==tr||c!==tc){
+    // Check if a living queen is on this square
+    if(queens.some(q=>q.alive&&q.row===r&&q.col===c))return false;
+    r+=dr;c+=dc;
+  }
+  return true;
+}
+
+// ══ BUILD COORDS ══
+function buildCoords(){
+  const rl=document.getElementById('ranks'),fl=document.getElementById('files');
+  rl.innerHTML='';fl.innerHTML='';
+  for(let r=0;r<8;r++){const d=document.createElement('div');d.textContent=8-r;rl.appendChild(d);}
+  'ABCDEFGH'.split('').forEach(f=>{const d=document.createElement('div');d.textContent=f;fl.appendChild(d);});
+}
+
+// ══ BUILD BOARD ══
+function buildBoard(){
+  const board=document.getElementById('board');
+  board.innerHTML='';
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    const cell=document.createElement('div');
+    cell.className='cell '+((r+c)%2===0?'cl':'cd');
+    cell.dataset.r=r;cell.dataset.c=c;
+    cell.addEventListener('click',()=>onCellClick(r,c));
+    board.appendChild(cell);
+  }
+}
+
+// ══ RENDER STATE ══
+function render(){
+  // Clear queens
+  document.querySelectorAll('.cell').forEach(c=>{
+    const qw=c.querySelector('.queen-wrap');if(qw)c.removeChild(qw);
+  });
+  // Place living queens
+  queens.forEach(q=>{
+    if(!q.alive)return;
+    const cell=getCell(q.row,q.col);if(!cell)return;
+    const wrap=document.createElement('div');wrap.className='queen-wrap';
+    wrap.innerHTML=QUEEN_SVG;
+    cell.appendChild(wrap);
+  });
+  // Position bishop
+  const SZ=getCellPx();
+  const bp=document.getElementById('bishop-piece');
+  bp.style.left=bCol*SZ+'px';
+  bp.style.top=bRow*SZ+'px';
+  bp.style.visibility='visible';
+  // Pips
+  updatePips();
+  // Tracker
+  queens.forEach((q,i)=>{
+    const qb=document.getElementById('qb'+i);
+    if(q.alive){qb.classList.add('alive');qb.classList.remove('eaten');qb.textContent='♛';}
+    else{qb.classList.remove('alive');qb.classList.add('eaten');qb.textContent='✓';}
+  });
+}
+
+function updatePips(){
+  const container=document.getElementById('pips');
+  container.innerHTML='';
+  for(let i=0;i<10;i++){
+    const p=document.createElement('div');
+    const used=i<moveCount;
+    const danger=used&&moveCount>=8;
+    p.className='pip'+(used?' '+(danger?'danger':'used'):'');
+    container.appendChild(p);
+  }
+}
+
+// ══ CELL CLICK — direct move, no selection needed ══
+function onCellClick(r,c){
+  if(busy)return;
+  if(r===bRow&&c===bCol)return;  // clicked on bishop itself
+
+  // Validate diagonal
+  if(!onDiag(bRow,bCol,r,c)){
+    sndErr();
+    const cell=getCell(r,c);cell?.classList.add('err-flash');
+    setTimeout(()=>cell?.classList.remove('err-flash'),400);
+    return;
+  }
+  // Check path clearance
+  if(!pathClear(bRow,bCol,r,c)){
+    sndErr();
+    const cell=getCell(r,c);cell?.classList.add('err-flash');
+    setTimeout(()=>cell?.classList.remove('err-flash'),400);
+    return;
+  }
+
+  const captureQ=queens.find(q=>q.alive&&q.row===r&&q.col===c);
+  moveBishop(r,c,captureQ);
+}
+
+// ══ MOVE BISHOP ══
+function moveBishop(tr,tc,captureQ){
+  busy=true;
+  sndMove();
+  bRow=tr;bCol=tc;
+  moveCount++;
+  render();
+
+  if(captureQ){
+    setTimeout(()=>{
+      playCapture();
+      showExplosion(tr,tc);
+      captureQ.alive=false;
+      setTimeout(()=>{
+        render();
+        busy=false;
+        checkState();
+      },80);
+    },340);// after animation
+  }else{
+    setTimeout(()=>{
+      busy=false;
+      checkState();
+    },380);
+  }
+}
+
+// ══ CHECK WIN/FAIL ══
+function checkState(){
+  const alive=queens.filter(q=>q.alive).length;
+  if(alive===0){showWin();return;}
+  if(moveCount>=10){showBoom(alive);}
+}
+
+// ══ WIN ══
+function markDot(i){const el=document.getElementById("pd"+i);if(el){el.style.background="var(--gold)";el.style.borderColor="var(--gold)";el.style.transform="scale(1.2)";el.style.boxShadow="0 0 8px rgba(244,208,63,.7)";}}
+function markDotActive(i){const el=document.getElementById("pd"+i);if(el){el.style.background="rgba(244,208,63,.45)";el.style.borderColor="rgba(244,208,63,.85)";el.style.boxShadow="0 0 7px rgba(244,208,63,.55)";el.style.transform="";}}
+
+function showWin(){
+  busy=true;
+  sndWin();
+  markDot(scIdx);
+  document.getElementById('board-outer').classList.add('win-glow');
+  spawnParticles();
+  const isLast=(scIdx===SCENARIOS.length-1);
+  if(isLast){
+    setTimeout(()=>{
+      const perfect=totalFails<=2&&!hintsEverUsed;
+      BishopState.save('stage4',perfect);
+      document.getElementById('win-stars').textContent=perfect?'⭐⭐⭐':'⭐⭐';
+      document.getElementById('win-msg').textContent=perfect?'ביצוע מושלם! 🏆':'כל הכבוד! 🎉';
+      document.getElementById('btn-replay').textContent=perfect?'🔄 שחקו שוב':'🔄 נסו שוב';
+      document.getElementById('win-overlay').classList.add('show');
+    },800);
+  } else {
+    setTimeout(()=>{initGame(scIdx+1);},800);
+  }
+}
+
+// ══ BOOM ══
+function showBoom(aliveCount){
+  busy=true;
+  failCount++;scenarioFails++;totalFails++;
+  document.getElementById('boom-overlay').classList.add('show');
+  if(failCount>=3)showHint();
+}
+
+// ══ HINT SYSTEM ══
+function showHint(){
+  // כל רמז — גם אוטומטי — משמעותו שהילד לא פתר לבד → לא perfect
+  hintsEverUsed=true;
+  const box=document.getElementById('hint-box');
+  if(!box.classList.contains('show')) hintLevel=0;
+  document.getElementById('hint-text').textContent=sc.hints[hintLevel];
+  box.classList.add('show');
+  const isLast=hintLevel>=sc.hints.length-1;
+  const btn=document.getElementById('hint-btn');
+  if(isLast){btn.textContent='אין יותר רמזים 😊';btn.disabled=true;btn.style.opacity='.5';}
+  else{btn.textContent='רמז נוסף 🔍';btn.disabled=false;btn.style.opacity='1';}
+}
+
+const maxHints=2;
+function nextHint(){
+  hintsEverUsed=true; // לחיצה אקטיבית של הילד — כן פוגעת ב-perfect
+  if(hintLevel>=maxHints-1)return;
+  hintLevel++;
+  document.getElementById('hint-text').textContent=sc.hints[hintLevel];
+  const btn=document.getElementById('hint-btn');
+  if(hintLevel>=maxHints-1){btn.textContent='אין יותר רמזים 😊';btn.disabled=true;btn.style.opacity='.5';}
+  else{btn.textContent='רמז נוסף 🔍';btn.disabled=false;btn.style.opacity='1';}
+}
+
+// ══ PARTICLES ══
+function spawnParticles(){
+  const colors=['#F4D03F','#52B788','#7EC8E3','#FF6B35','#ffffff'];
+  for(let i=0;i<60;i++){
+    const p=document.createElement('div');p.className='particle';
+    const sz=5+Math.random()*8;
+    const angle=Math.random()*Math.PI*2;
+    const dist=120+Math.random()*200;
+    p.style.cssText=`width:${sz}px;height:${sz}px;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      left:50vw;top:40vh;
+      --px:${Math.cos(angle)*dist}px;--py:${Math.sin(angle)*dist}px;
+      animation-duration:${1+Math.random()*1.2}s;
+      animation-delay:${Math.random()*.4}s;`;
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(),2400);
+  }
+}
+
+// ══ INIT GAME ══
+function initGame(idx){
+  scIdx=idx; sc=SCENARIOS[idx];
+  bRow=sc.bishop.row; bCol=sc.bishop.col;
+  queens=sc.queens.map(q=>({...q,alive:true}));
+  moveCount=0; busy=false; hintLevel=0; failCount=0; scenarioFails=0;
+  document.getElementById('stage-badge').textContent=`שלב 4 · תרחיש ${idx+1}/${SCENARIOS.length}`;
+  markDotActive(idx);
+  document.getElementById('hint-box').classList.remove('show');
+  document.getElementById('board-outer').classList.remove('win-glow');
+
+  // הנח את הרץ מיידית — ללא אנימציה
+  const bp=document.getElementById('bishop-piece');
+  const SZ=getCellPx();
+  bp.style.transition='none';
+  bp.style.left=bCol*SZ+'px';
+  bp.style.top=bRow*SZ+'px';
+  bp.style.visibility='visible';
+  // החזר transition אחרי frame אחד
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    bp.style.transition='';
+  }));
+
+  render();
+  buildCoords();
+}
+
+function retryGame(){
+  document.getElementById('boom-overlay').classList.remove('show');
+  initGame(scIdx);
+}
+
+function replayStage(){
+  document.getElementById('win-overlay').classList.remove('show');
+  totalFails=0; hintsEverUsed=false;
+  SCENARIOS.splice(0,SCENARIOS.length,...JSON.parse(JSON.stringify(ORIGINAL_SCENARIOS)));
+  Array.from({length:SCENARIOS.length},(_,i)=>i).forEach(i=>{const el=document.getElementById("pd"+i);if(el){el.style.background="rgba(244,208,63,.2)";el.style.borderColor="rgba(244,208,63,.4)";el.style.transform="";el.style.boxShadow="";}});
+  initGame(0);busy=false;
+}
+
+function nextStage(){window.location.href='bishop-stage5.html';}
+
+// ══ START ══
+buildBoard();
+initGame(0);  // תמיד מתחיל מתרחיש 1
+</script>
+</body>
+</html>

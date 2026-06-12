@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>משׂחקים שחמט!</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Heebo:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg1:#0a1626; --bg2:#0f2740; --gold:#F4D03F; --gold-soft:#f6e08a;
+    --cell:#7EC8E3; --cell-deep:#3E9BC8; --ink:#0b2238;
+    --card:#13294a; --card-line:rgba(126,200,227,.22);
+    --lock:#5a6a80;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{
+    margin:0; min-height:100vh; font-family:'Heebo',sans-serif;
+    background:radial-gradient(1200px 700px at 50% -10%, #173a5e 0%, var(--bg2) 42%, var(--bg1) 100%);
+    color:#eaf6ff; padding:22px 14px calc(28px + env(safe-area-inset-bottom)); text-align:center;
+  }
+  .title{ font-family:'Fredoka',cursive; font-weight:700; font-size:clamp(2rem,7vw,3.4rem);
+    color:var(--gold); text-shadow:0 0 26px rgba(244,208,63,.45), 0 3px 0 #9c7f12; letter-spacing:1px; margin:6px 0 2px; }
+  .subtitle{ font-family:'Fredoka',cursive; font-size:clamp(.95rem,3.2vw,1.25rem); color:#bfe0f2; margin:0 0 22px; }
+  .grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; max-width:920px; margin:0 auto; }
+  @media (max-width:760px){ .grid{ grid-template-columns:repeat(2,1fr); gap:13px; } }
+  .card{ position:relative; background:linear-gradient(180deg,#163056,#0f2240); border:2px solid var(--card-line);
+    border-radius:20px; padding:16px 12px 14px; cursor:pointer; transition:transform .14s, box-shadow .14s, border-color .14s;
+    display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .card .order{ position:absolute; top:8px; inset-inline-start:10px; font-family:'Fredoka',cursive; font-size:.8rem; color:#6f8bb0; }
+  .avatar-wrap{ position:relative; width:84px; height:84px; }
+  .avatar-wrap svg{ width:84px; height:84px; display:block; filter:drop-shadow(0 4px 10px rgba(0,0,0,.35)); }
+  .flag{ position:absolute; bottom:-2px; inset-inline-end:-4px; width:30px; height:21px; border-radius:4px;
+    overflow:hidden; border:2px solid #0f2240; box-shadow:0 2px 6px rgba(0,0,0,.4); }
+  .flag svg{ width:100%; height:100%; display:block; filter:none; }
+  .name{ font-family:'Fredoka',cursive; font-weight:600; font-size:1.12rem; color:#eaf6ff; margin-top:2px; }
+  .rating{ display:inline-flex; align-items:center; gap:5px; font-family:'Fredoka',cursive; font-weight:600;
+    font-size:.95rem; color:var(--ink); background:linear-gradient(180deg,var(--gold-soft),var(--gold));
+    padding:3px 12px; border-radius:50px; box-shadow:0 2px 8px rgba(244,208,63,.3); }
+  .cta{ font-family:'Fredoka',cursive; font-size:.85rem; color:#9fd0ea; }
+
+  /* OPEN (next to play) */
+  .card.open{ border-color:var(--gold); box-shadow:0 0 0 1px var(--gold), 0 8px 26px rgba(244,208,63,.22); }
+  .card.open .cta{ color:var(--gold); font-weight:600; }
+  .card.open:hover{ transform:translateY(-4px); box-shadow:0 0 0 1px var(--gold), 0 12px 30px rgba(244,208,63,.35); }
+  .pulse{ position:absolute; inset:-2px; border-radius:20px; border:2px solid var(--gold);
+    animation:pulse 1.6s ease-out infinite; pointer-events:none; }
+  @keyframes pulse{ 0%{opacity:.7; transform:scale(1);} 100%{opacity:0; transform:scale(1.05);} }
+
+  /* WON */
+  .card.won{ border-color:#37d39a; }
+  .card.won .check{ position:absolute; top:-12px; inset-inline-end:-10px; width:38px; height:38px; border-radius:50%;
+    background:linear-gradient(180deg,#46e6a8,#1fae7b); display:flex; align-items:center; justify-content:center;
+    color:#06351f; font-size:1.3rem; font-weight:900; border:3px solid #0f2240; box-shadow:0 3px 10px rgba(31,174,123,.5); }
+  .stars{ font-size:1rem; letter-spacing:1px; color:var(--gold); height:18px; }
+
+  /* LOCKED */
+  .card.locked{ cursor:not-allowed; filter:grayscale(.6) brightness(.62); border-color:rgba(120,140,170,.25); }
+  .card.locked .name,.card.locked .rating,.card.locked .avatar-wrap{ opacity:.5; }
+  .card.locked .cta{ color:#9fb3cc; font-weight:600; }
+
+  .note{ max-width:680px; margin:26px auto 0; font-size:.9rem; color:#8fb0cc; line-height:1.7; font-family:'Heebo'; }
+.map-back{position:fixed;top:12px;right:14px;z-index:60;font-family:'Fredoka',cursive;font-weight:700;font-size:.92rem;color:#cfe3f5;background:rgba(255,255,255,.09);border:1.5px solid rgba(126,200,227,.45);border-radius:40px;padding:8px 15px;cursor:pointer;text-decoration:none;transition:transform .15s,background .15s,border-color .15s}
+.map-back:hover{background:rgba(126,200,227,.2);border-color:#7ec8e3;transform:scale(1.05)}
+</style>
+</head>
+<body>
+  <a class="map-back" href="../../מסך הפתיחה/index.html">🗺️ חזרה למפה</a>
+  <div class="title">♟️ מְשַׂחֲקִים שַׁחְמָט!</div>
+  <div class="subtitle">בחרו יריב והתחילו לשחק — נצחו כדי לפתוח את הבא!</div>
+
+  <div class="grid" id="grid"></div>
+
+
+<script>
+const AV = [
+  {name:'בּוֹבִּי פִישֶׁר',        flag:'us', skin:'#f0c9a0', hair:'#5a3a22', style:'short', acc:'none',    game:1},
+  {name:'מָגְנוּס קַרְלְסֶן',      flag:'no', skin:'#f3c79a', hair:'#d9b84a', style:'short', acc:'none',    game:2},
+  {name:'הִיקָארוּ נָקָמוּרָה',    flag:'us', skin:'#d9a878', hair:'#161616', style:'short', acc:'cap',     game:3},
+  {name:'אָנָטוֹלִי קַרְפּוֹב',    flag:'ru', skin:'#f1cba0', hair:'#7a5a3a', style:'short', acc:'glasses', game:4},
+  {name:'וִישְׂוָואנָתָן אָנָאנְד', flag:'in', skin:'#c98a52', hair:'#1a120c', style:'short', acc:'none',    game:5},
+  {name:'גָּארִי קַסְפָּארוֹב',    flag:'ru', skin:'#d8a878', hair:'#2a1a12', style:'curly', acc:'none',    game:6},
+  {name:'סוֹפִיָה פּוֹלְגָר',      flag:'hu', skin:'#f0bd92', hair:'#7a4a22', style:'pony',  acc:'none',    game:7},
+  {name:'בּוֹרִיס גֶּלְפַנְד',     flag:'il', skin:'#e8c49a', hair:'#3a3a3a', style:'short', acc:'glasses', game:8},
+];
+
+/* ── התקדמות אמיתית מתוך chess_tofeset (סכימת v2.1) ── */
+function loadProgress(){
+  let d={};
+  try{ d=JSON.parse(localStorage.getItem('chess_tofeset')||'{}')||{}; }catch(e){ d={}; }
+  return d;
+}
+function computeState(a, prog){
+  const me   = prog['stage'+a.game];
+  const prev = a.game===1 ? {done:true} : prog['stage'+(a.game-1)];
+  const unlocked = a.game===1 || !!(prev && prev.done);
+  if(me && me.done){
+    const perfect = (me.bestPerfect ?? me.perfect);
+    return {state:'won', stars: perfect?3:2};
+  }
+  if(unlocked) return {state:'open'};
+  return {state:'locked'};
+}
+
+function avatarSVG(a){
+  const s=a.skin, h=a.hair;
+  let hair='';
+  if(a.style==='short') hair=`<path d="M16 40 Q16 14 42 14 Q68 14 68 40 Q68 28 42 26 Q16 28 16 40Z" fill="${h}"/>`;
+  if(a.style==='pony')  hair=`<path d="M15 42 Q15 12 42 12 Q69 12 69 42 Q69 26 42 24 Q15 26 15 42Z" fill="${h}"/><ellipse cx="70" cy="50" rx="8" ry="16" fill="${h}"/>`;
+  if(a.style==='fro')   hair=`<circle cx="42" cy="26" r="24" fill="${h}"/>`;
+  if(a.style==='bob')   hair=`<path d="M14 54 Q12 12 42 12 Q72 12 70 54 L62 54 Q66 28 42 26 Q18 28 22 54Z" fill="${h}"/>`;
+  if(a.style==='curly') hair=`<circle cx="26" cy="24" r="10" fill="${h}"/><circle cx="42" cy="18" r="11" fill="${h}"/><circle cx="58" cy="24" r="10" fill="${h}"/>`;
+  let acc='';
+  if(a.acc==='glasses') acc=`<circle cx="33" cy="46" r="8" fill="none" stroke="#23303f" stroke-width="2.5"/><circle cx="51" cy="46" r="8" fill="none" stroke="#23303f" stroke-width="2.5"/><line x1="41" y1="46" x2="43" y2="46" stroke="#23303f" stroke-width="2.5"/>`;
+  if(a.acc==='cap')     acc=`<path d="M14 30 Q42 6 70 30 L70 26 Q42 4 14 26Z" fill="#e0533a"/><path d="M14 30 Q6 31 4 36 L20 34 Z" fill="#c33f29"/>`;
+  if(a.acc==='crown')   acc=`<path d="M24 16 L30 26 L42 14 L54 26 L60 16 L58 30 L26 30Z" fill="#F4D03F" stroke="#b8951a" stroke-width="1"/>`;
+  if(a.acc==='freckle') acc=`<circle cx="30" cy="52" r="1.4" fill="#b97b4a"/><circle cx="35" cy="55" r="1.4" fill="#b97b4a"/><circle cx="49" cy="55" r="1.4" fill="#b97b4a"/><circle cx="54" cy="52" r="1.4" fill="#b97b4a"/>`;
+  return `<svg viewBox="0 0 84 84" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="42" cy="46" r="30" fill="${s}"/>
+    ${hair}
+    <circle cx="33" cy="46" r="3.2" fill="#2a2118"/>
+    <circle cx="51" cy="46" r="3.2" fill="#2a2118"/>
+    <path d="M34 58 Q42 65 50 58" fill="none" stroke="#a8553a" stroke-width="2.6" stroke-linecap="round"/>
+    <ellipse cx="28" cy="55" rx="4" ry="2.6" fill="#f298a0" opacity=".5"/>
+    <ellipse cx="56" cy="55" rx="4" ry="2.6" fill="#f298a0" opacity=".5"/>
+    ${acc}
+  </svg>`;
+}
+
+const FLAGS = {
+  no:`<svg viewBox="0 0 30 21"><rect width="30" height="21" fill="#c8102e"/><rect x="9" width="4" height="21" fill="#fff"/><rect y="8.5" width="30" height="4" fill="#fff"/><rect x="10" width="2" height="21" fill="#003087"/><rect y="9.5" width="30" height="2" fill="#003087"/></svg>`,
+  in:`<svg viewBox="0 0 30 21"><rect width="30" height="7" fill="#ff9933"/><rect y="7" width="30" height="7" fill="#fff"/><rect y="14" width="30" height="7" fill="#138808"/><circle cx="15" cy="10.5" r="2.6" fill="none" stroke="#054" stroke-width="1"/></svg>`,
+  ar:`<svg viewBox="0 0 30 21"><rect width="30" height="7" fill="#74acdf"/><rect y="7" width="30" height="7" fill="#fff"/><rect y="14" width="30" height="7" fill="#74acdf"/><circle cx="15" cy="10.5" r="2.4" fill="#f6b40e"/></svg>`,
+  ng:`<svg viewBox="0 0 30 21"><rect width="10" height="21" fill="#008751"/><rect x="10" width="10" height="21" fill="#fff"/><rect x="20" width="10" height="21" fill="#008751"/></svg>`,
+  jp:`<svg viewBox="0 0 30 21"><rect width="30" height="21" fill="#fff"/><circle cx="15" cy="10.5" r="6" fill="#bc002d"/></svg>`,
+  br:`<svg viewBox="0 0 30 21"><rect width="30" height="21" fill="#009b3a"/><path d="M15 2 L28 10.5 L15 19 L2 10.5Z" fill="#fedf00"/><circle cx="15" cy="10.5" r="4" fill="#002776"/></svg>`,
+  fr:`<svg viewBox="0 0 30 21"><rect width="10" height="21" fill="#0055a4"/><rect x="10" width="10" height="21" fill="#fff"/><rect x="20" width="10" height="21" fill="#ef4135"/></svg>`,
+  us:`<svg viewBox="0 0 30 21"><rect width="30" height="21" fill="#fff"/><g fill="#b22234"><rect width="30" height="2.3"/><rect y="4.6" width="30" height="2.3"/><rect y="9.2" width="30" height="2.3"/><rect y="13.8" width="30" height="2.3"/><rect y="18.4" width="30" height="2.3"/></g><rect width="13" height="11.5" fill="#3c3b6e"/></svg>`,
+  ru:`<svg viewBox="0 0 30 21"><rect width="30" height="7" fill="#fff"/><rect y="7" width="30" height="7" fill="#0039a6"/><rect y="14" width="30" height="7" fill="#d52b1e"/></svg>`,
+  hu:`<svg viewBox="0 0 30 21"><rect width="30" height="7" fill="#ce2939"/><rect y="7" width="30" height="7" fill="#fff"/><rect y="14" width="30" height="7" fill="#477050"/></svg>`,
+  il:`<svg viewBox="0 0 30 21"><rect width="30" height="21" fill="#fff"/><rect y="3" width="30" height="2.6" fill="#0038b8"/><rect y="15.4" width="30" height="2.6" fill="#0038b8"/><path d="M15 7.4 L17.1 11 L12.9 11 Z M15 13.6 L17.1 10 L12.9 10 Z" fill="none" stroke="#0038b8" stroke-width="0.9"/></svg>`,
+};
+
+const grid=document.getElementById('grid');
+const prog=loadProgress();
+AV.forEach((a)=>{
+  const st=computeState(a,prog);
+  const card=document.createElement('div');
+  card.className='card '+st.state;
+  let badge='';
+  if(st.state==='open')   badge=`<div class="pulse"></div>`;
+  if(st.state==='won')    badge=`<div class="check">✓</div>`;
+  const stars = st.state==='won' ? '⭐'.repeat(st.stars) : '';
+  const cta = st.state==='open' ? 'שׂחקו! ▶' : st.state==='won' ? 'נוצח! שׂחקו שוב' : '🔒';
+  card.innerHTML = `
+    <span class="order">משחק ${a.game}</span>
+    ${badge}
+    <div class="avatar-wrap">${avatarSVG(a)}<span class="flag">${FLAGS[a.flag]}</span></div>
+    <div class="name">${a.name}</div>
+    <div class="stars">${stars}</div>
+    <div class="cta">${cta}</div>`;
+  if(st.state!=='locked') card.onclick=()=>{ window.location.href='tofeset-game'+a.game+'.html'; };
+  grid.appendChild(card);
+});
+</script>
+</body>
+</html>

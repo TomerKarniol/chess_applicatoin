@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#162D4A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>הפרש הקופץ — שלב 3 ⏱️</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{-webkit-text-size-adjust:100%;}
+:root{
+  --gold:#F4D03F;--gold-dark:#C9A227;--green:#52B788;--blue:#7EC8E3;
+  --orange:#FF6B35;--red:#E74C3C;
+  --bg1:#162D4A;--bg2:#0C1E30;--bg3:#060E1A;
+  /* נוסחה פלואידית דו-כיוונית (סקיל הפריסה): cap 58px, מתכווץ לפי רוחב/גובה ללא breakpoints.
+     260px = chrome אנכי מקסימלי (header + top-row עם טיימר + level-panel + hint-bar) */
+  --cell:58px;
+  --cell-light:#C9E4F5;--cell-dark:#4A7FA5;
+}
+body{
+  font-family:'Nunito',sans-serif;
+  direction:rtl;
+  background:radial-gradient(ellipse at 50% 0%,var(--bg1) 0%,var(--bg2) 55%,var(--bg3) 100%);
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  padding:12px 10px calc(24px + env(safe-area-inset-bottom));user-select:none;overflow-x:hidden;
+  overscroll-behavior:none;
+}
+.star-dot{position:fixed;border-radius:50%;background:#fff;pointer-events:none;
+  animation:twinkle ease-in-out infinite alternate;}
+@keyframes twinkle{from{opacity:.08;transform:scale(.7)}to{opacity:.9;transform:scale(1.3)}}
+
+/* ── Header ── */
+.hdr{width:100%;max-width:640px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.stage-badge{
+  font-family:'Fredoka One',cursive;font-size:.9rem;color:var(--bg2);
+  background:var(--gold);padding:4px 14px;border-radius:50px;
+  box-shadow:0 0 14px rgba(244,208,63,.6);
+}
+
+/* ── Progress dots ── */
+.prog-row{display:flex;gap:8px;margin-bottom:8px;}
+.prog-dot{
+  width:12px;height:12px;border-radius:50%;
+  background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.25);transition:background .3s;
+}
+.prog-dot.done{background:var(--green);border-color:var(--green);}
+.prog-dot.active{background:var(--gold);border-color:var(--gold);animation:dotPulse .8s ease infinite alternate;}
+@keyframes dotPulse{from{transform:scale(1)}to{transform:scale(1.4)}}
+
+/* ── Top row: hearts + timer ── */
+.top-row{
+  display:flex;align-items:center;gap:16px;margin-bottom:8px;
+  width:100%;max-width:500px;justify-content:center;flex-wrap:wrap;
+}
+/* Hearts strip */
+.hearts-strip{
+  display:flex;gap:4px;align-items:center;flex-wrap:wrap;justify-content:center;
+  background:rgba(231,76,60,.08);border:2px solid rgba(231,76,60,.25);
+  padding:6px 14px;border-radius:50px;width:fit-content;
+}
+.heart-pip{
+  font-size:1.3rem;line-height:1;
+  transition:all .35s cubic-bezier(.175,.885,.32,1.5);
+}
+.heart-pip.collected{
+  filter:grayscale(1) brightness(0.3);
+  transform:scale(0.65);
+}
+/* Timer */
+.timer-wrap{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.timer-label{font-family:'Fredoka One',cursive;font-size:.78rem;color:var(--blue);}
+#timer-svg{transition:filter .4s;}
+@keyframes timerFlash{0%,100%{opacity:1}50%{opacity:.25}}
+#timer-arc.danger{animation:timerFlash .38s ease infinite;}
+
+/* ── Board layout ── */
+.coord-wrap{display:flex;align-items:center;gap:8px;direction:ltr;}
+.rank-labels{
+  display:flex;flex-direction:column;align-items:center;justify-content:space-around;
+  height:calc(var(--cell)*8);
+  font-family:'Fredoka One',cursive;font-size:.8rem;font-weight:900;color:#F4D03F;
+  width:18px;
+}
+.file-labels{
+  display:flex;justify-content:space-around;
+  width:calc(var(--cell)*8);
+  font-family:'Fredoka One',cursive;font-size:.8rem;font-weight:900;color:#F4D03F;
+  margin-top:3px;
+}
+.board-outer{
+  position:relative;
+  border:3px solid var(--gold-dark);border-radius:8px;
+  overflow:visible;
+  box-shadow:0 8px 40px rgba(0,0,0,.7),0 0 30px rgba(244,208,63,.12);
+}
+.board{
+  display:grid;
+  grid-template-columns:repeat(8,var(--cell));
+  grid-template-rows:repeat(8,var(--cell));
+  border-radius:5px;overflow:hidden;
+}
+.cell{
+  width:var(--cell);height:var(--cell);
+  position:relative;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:background .13s,filter .13s;touch-action:manipulation;
+}
+.cell.light{background:var(--cell-light);}
+.cell.dark{background:var(--cell-dark);}
+.cell.reachable{
+  background:rgba(82,183,136,.38)!important;
+  cursor:pointer;
+  animation:reachPulse 1s ease infinite;
+}
+@keyframes reachPulse{
+  0%,100%{box-shadow:inset 0 0 0 2px rgba(82,183,136,.45);}
+  50%{box-shadow:inset 0 0 0 3px rgba(82,183,136,.9);}
+}
+.cell.reachable:hover{filter:brightness(1.3);}
+.cell.wrong{animation:shake .35s ease;}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* ── Heart on board ── */
+.board-heart{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  font-size:1.55rem;z-index:5;pointer-events:none;
+  animation:heartBob 1.1s ease-in-out infinite alternate;
+}
+@keyframes heartBob{
+  from{transform:translate(-50%,-50%) scale(.88);}
+  to{transform:translate(-50%,-50%) scale(1.12);}
+}
+@keyframes heartCollect{
+  0%{opacity:1;transform:translate(-50%,-50%) scale(1);}
+  55%{opacity:.7;transform:translate(-50%,-90%) scale(1.6);}
+  100%{opacity:0;transform:translate(-50%,-130%) scale(.1);}
+}
+.board-heart.collecting{animation:heartCollect .42s ease forwards!important;}
+
+/* ── X mark ── */
+.x-mark{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  font-size:1.7rem;color:#FF4444;font-weight:900;
+  z-index:15;pointer-events:none;
+  animation:xPop .4s ease forwards;
+}
+@keyframes xPop{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.2)}
+  50%{opacity:1;transform:translate(-50%,-50%) scale(1.3)}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(1)}
+}
+
+/* ── Floating knight ── */
+#floating-knight{
+  position:absolute;font-size:2.65rem;line-height:1;
+  pointer-events:none;z-index:20;
+  transform:translate(-50%,-50%);
+  filter:drop-shadow(0 0 14px rgba(244,208,63,.9)) drop-shadow(0 2px 4px rgba(0,0,0,.8));
+  transition:left .35s cubic-bezier(.4,0,.2,1),top .35s cubic-bezier(.4,0,.2,1);
+  will-change:left,top;
+}
+
+/* ── Hint bar ── */
+.hint-bar{
+  margin-top:9px;width:fit-content;max-width:480px;text-align:center;
+  direction:rtl; unicode-bidi:bidi-override;
+  font-family:'Fredoka One',cursive;font-size:1rem;
+  padding:8px 18px;border-radius:50px;min-height:42px;
+  background:rgba(126,200,227,.12);color:var(--blue);
+  border:2px solid rgba(126,200,227,.3);
+  transition:color .3s,border-color .3s,background .3s;
+}
+.hint-bar.ok{color:var(--green);border-color:var(--green);background:rgba(82,183,136,.12);}
+.hint-bar.bad{color:var(--orange);border-color:var(--orange);background:rgba(255,107,53,.12);}
+.hint-bar.warn{color:var(--gold);border-color:var(--gold);background:rgba(244,208,63,.12);}
+
+/* ── Confetti ── */
+.confetti-dot{
+  position:fixed;border-radius:3px;pointer-events:none;z-index:999;
+  animation:confettiFall linear forwards;
+}
+@keyframes confettiFall{
+  0%{transform:translateY(0) rotate(0deg);opacity:1;}
+  100%{transform:translateY(110vh) rotate(720deg);opacity:0;}
+}
+
+/* ── Overlays ── */
+.overlay{
+  display:none;position:fixed;inset:0;background:rgba(6,14,26,.88);
+  z-index:300;align-items:center;justify-content:center;
+}
+.overlay.show{display:flex;}
+.ov-card{
+  background:linear-gradient(160deg,#162D4A,#0C1E30);
+  border:2px solid var(--gold);border-radius:24px;
+  padding:34px 40px;text-align:center;
+  box-shadow:0 0 60px rgba(244,208,63,.22);
+  animation:popIn .42s cubic-bezier(.175,.885,.32,1.5) both;
+  max-width:360px;width:92%;
+}
+.ov-card.red-border{border-color:var(--red);box-shadow:0 0 60px rgba(231,76,60,.2);}
+@keyframes popIn{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+.ov-icon{font-size:3.5rem;margin-bottom:10px;display:block;}
+.ov-title{font-family:'Fredoka One',cursive;font-size:1.9rem;color:var(--gold);margin-bottom:6px;}
+.ov-sub{font-family:'Nunito',sans-serif;font-size:1rem;color:rgba(255,255,255,.85);
+  margin-bottom:20px;line-height:1.55;}
+.diamond-badge{
+  font-family:'Fredoka One',cursive;font-size:1.3rem;color:#00E6FF;
+  text-shadow:0 0 18px rgba(0,230,255,.85), 0 0 8px rgba(0,230,255,.6);
+  margin-bottom:16px;letter-spacing:1.5px;
+  animation:diamondPulse 1.6s ease-in-out infinite alternate;
+}
+@keyframes diamondPulse{
+  from{transform:scale(1);text-shadow:0 0 12px rgba(0,230,255,.6);}
+  to  {transform:scale(1.06);text-shadow:0 0 22px rgba(0,230,255,1),0 0 8px rgba(0,230,255,.8);}
+}
+.btn-main{
+  font-family:'Fredoka One',cursive;font-size:1.15rem;
+  padding:12px 32px;border-radius:50px;border:none;cursor:pointer;color:#0C1E30;
+  background:linear-gradient(135deg,var(--gold),#e8b820);
+  box-shadow:0 4px 18px rgba(244,208,63,.4);
+  transition:transform .15s;display:block;width:100%;margin-bottom:10px;
+  touch-action:manipulation;
+}
+.btn-main:hover{transform:scale(1.04);}
+.btn-secondary{
+  font-family:'Fredoka One',cursive;font-size:1rem;
+  padding:10px 24px;border-radius:50px;border:2px solid rgba(255,255,255,.28);
+  cursor:pointer;color:#fff;background:transparent;
+  transition:transform .15s;display:block;width:100%;
+  touch-action:manipulation;
+}
+/* ── Level buttons (DualSense style) ── */
+.level-panel{
+  display:flex;flex-direction:column;gap:12px;
+  justify-content:center;align-items:center;
+  margin-right:8px;
+}
+.btn-level{
+  font-family:'Fredoka One',cursive;
+  font-size:1rem;padding:0;border-radius:16px;
+  border:1.5px solid rgba(126,200,227,.25);
+  cursor:pointer;width:78px;height:78px;
+  text-align:center;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:4px;
+  transition:all .22s ease;position:relative;overflow:hidden;
+  touch-action:manipulation;
+  background:linear-gradient(160deg,#1c2e42 0%,#0e1c2b 60%,#091420 100%);
+  color:rgba(126,200,227,.45);
+  box-shadow:0 4px 18px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06),inset 0 -1px 0 rgba(0,0,0,.4);
+}
+.btn-level::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:42%;
+  background:linear-gradient(180deg,rgba(255,255,255,.09) 0%,transparent 100%);
+  border-radius:16px 16px 0 0;pointer-events:none;
+}
+.btn-level:hover{transform:scale(1.07) translateY(-1px);}
+.btn-level:active{transform:scale(.96) translateY(1px);}
+.btn-level.help{color:rgba(82,183,136,.4);border-color:rgba(82,183,136,.15);}
+.btn-level.solo{color:rgba(126,200,227,.4);border-color:rgba(126,200,227,.15);}
+.btn-level.help.active{
+  color:#fff;
+  background:linear-gradient(160deg,#1d3d30 0%,#0f2820 60%,#07160f 100%);
+  border-color:rgba(82,183,136,.8);
+  box-shadow:0 0 0 1px rgba(82,183,136,.3),0 0 22px rgba(82,183,136,.5),0 0 42px rgba(82,183,136,.2),0 6px 20px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.1);
+  text-shadow:0 0 12px rgba(82,183,136,.9);
+}
+.btn-level.solo.active{
+  color:#fff;
+  background:linear-gradient(160deg,#162840 0%,#0b1c30 60%,#060f1e 100%);
+  border-color:rgba(94,184,226,.9);
+  box-shadow:0 0 0 1px rgba(94,184,226,.35),0 0 26px rgba(94,184,226,.6),0 0 50px rgba(94,184,226,.25),0 6px 20px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.1);
+  text-shadow:0 0 14px rgba(126,200,227,1);
+}
+.btn-icon{font-size:1.5rem;line-height:1;}
+.btn-label{font-size:.88rem;line-height:1;letter-spacing:.3px;}
+
+/* הפאנל יורד מתחת ללוח במסכים צרים, לפני שהפריסה לידו הייתה נחתכת (≤540) */
+@media (max-width:767px){
+  :root{ --cell:44px; }
+}
+@media (max-width:540px){
+  .coord-wrap{ flex-wrap:wrap; justify-content:center; gap:4px; }
+  .level-panel{
+    flex-direction:row !important;
+    width:calc(var(--cell)*8);
+    justify-content:center;
+    gap:14px;
+    margin-top:3px;
+    margin-right:0;
+  }
+}
+@media (max-width:479px){
+  :root{ --cell:40px; }
+  /* צמצום padding ו-margins — מניעת חריגת גובה על iPhone SE */
+  body{ padding:6px 8px calc(12px + env(safe-area-inset-bottom)); }
+  .hdr{ margin-bottom:4px; }
+  .prog-row{ margin-bottom:4px; }
+  .top-row{ gap:8px; margin-bottom:4px; }
+  /* timer קטן יותר — חוסך 20px */
+  #timer-svg{ width:48px !important; height:48px !important; }
+  .timer-label{ font-size:1.5rem !important; margin-bottom:0 !important; }
+  /* hint bar דחוס */
+  .hint-bar{ margin-top:5px; font-size:.88rem; padding:5px 12px; min-height:34px; }
+  .btn-level{ width:56px; height:56px; }
+  .btn-icon{ font-size:1.2rem; }
+  .btn-label{ font-size:.75rem; }
+}
+.btn-mute{
+  background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.2);
+  border-radius:50%;width:36px;height:36px;
+  font-size:1.1rem;cursor:pointer;color:white;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .2s;touch-action:manipulation;flex-shrink:0;
+}
+.btn-mute:hover{background:rgba(255,255,255,.18);}
+</style>
+</head>
+<body>
+
+<!-- Stars -->
+<div id="stars-bg"></div>
+
+<!-- Header -->
+<div class="hdr">
+  <div class="stage-badge" id="stage-badge">שלב 3 · תרחיש 1/4</div>
+  <button class="btn-mute" id="muteBtn" aria-label="השתק" title="השתק">🔊</button>
+</div>
+
+<!-- Progress dots -->
+<div class="prog-row" id="prog-row"></div>
+
+<!-- Hearts strip + Timer -->
+<div class="top-row">
+  <div class="hearts-strip" id="hearts-strip"></div>
+  <div class="timer-wrap">
+    <div class="timer-label" style="font-size:2.4rem;line-height:1;margin-bottom:2px;">⏱️</div>
+    <svg id="timer-svg" width="68" height="68" viewBox="0 0 68 68">
+      <circle cx="34" cy="34" r="28" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="5"/>
+      <circle id="timer-arc" cx="34" cy="34" r="28" fill="none"
+        stroke="#52B788" stroke-width="5" stroke-linecap="round"
+        stroke-dasharray="175.9" stroke-dashoffset="0"
+        transform="rotate(-90 34 34)"/>
+      <text id="timer-text" x="34" y="41" text-anchor="middle"
+        font-family="Fredoka One,cursive" font-size="19" fill="white">60</text>
+    </svg>
+  </div>
+</div>
+
+<!-- Board + coords -->
+<div class="coord-wrap">
+  <div class="rank-labels" id="rank-labels"></div>
+  <div>
+    <div class="board-outer" id="board-outer">
+      <div class="board" id="board"></div>
+      <div id="floating-knight"></div>
+    </div>
+    <div class="file-labels" id="file-labels"></div>
+  </div>
+  <!-- Level buttons -->
+  <div class="level-panel">
+    <button class="btn-level help active" id="btn-help">
+      <span class="btn-icon">💡</span>
+      <span class="btn-label">מתחיל</span>
+    </button>
+    <button class="btn-level solo" id="btn-solo">
+      <span class="btn-icon">🧠</span>
+      <span class="btn-label">מתקדם</span>
+    </button>
+  </div>
+</div>
+
+<!-- Hint bar -->
+<div class="hint-bar" id="hint-bar">🐴 אספו את כל הלבבות לפני שהזמן נגמר!</div>
+
+<!-- ── Timeout overlay ── -->
+<div class="overlay" id="timeout-overlay">
+  <div class="ov-card red-border">
+    <span class="ov-icon">⏰</span>
+    <div class="ov-title">הזמן נגמר!</div>
+    <div class="ov-sub" id="timeout-sub">אספתם X לבבות. המורה ברוך מאמין בכם!</div>
+    <button class="btn-main" id="btn-timeout-retry">נסו שוב 💪</button>
+    <button class="btn-secondary" id="btn-timeout-next">המשיכו ←</button>
+  </div>
+</div>
+
+<!-- ── Scenario-complete overlay ── -->
+<div class="overlay" id="scen-overlay">
+  <div class="ov-card">
+    <span class="ov-icon" id="scen-icon">🎉</span>
+    <div class="ov-title" id="scen-title">כל הלבבות!</div>
+    <div class="ov-sub" id="scen-sub">מדהים!</div>
+    <div id="scen-stars" style="font-size:2rem;letter-spacing:4px;margin:6px 0;display:none;"></div>
+    <button class="btn-main" id="scen-btn">המשיכו ←</button>
+    <button class="btn-secondary" id="btn-scen-retry">שחקו שוב 🔄</button>
+    <button class="btn-secondary" id="btn-restart-all" style="display:none;margin-top:8px;">
+      מהתחלה (כל התרחישים) 🔁
+    </button>
+  </div>
+</div>
+
+<script>
+(function(){
+// ══════════════════════════════════════════════════════
+// CHESS STATE — מתוך chess-scoring-skill
+// ══════════════════════════════════════════════════════
+/* ── KnightState v2.1 — canonical (bishop model) ── */
+const KnightState={
+  STAGE_KEYS:['stage1','stage2','stage3','stage4','final'], // ⚠️ inert בשלב ביניים — לאשר בשלב המסכם + index
+  PERFECT_THRESHOLD:5,                                       // N (5/5) — מיושר לקנון; inert בשלב 3
+  save(stageKey,perfect){
+    try{
+      const d=JSON.parse(localStorage.getItem('chess_knight')||'{}');
+      const prev=d[stageKey]||{};
+      // bestPerfect צובר ב-OR (לעולם לא יורד) + מהגר perfect ישן
+      const bestPerfect=!!(prev.bestPerfect || prev.perfect || perfect);
+      d[stageKey]={done:true, perfect:!!perfect, lastPerfect:!!perfect, bestPerfect};
+      localStorage.setItem('chess_knight',JSON.stringify(d));
+    }catch(e){}
+  },
+  getModuleStars(){
+    let best=0,last=0;
+    try{
+      const d=JSON.parse(localStorage.getItem('chess_knight')||'{}');
+      this.STAGE_KEYS.forEach(k=>{
+        const s=d[k]; if(!s) return;
+        if(s.bestPerfect) best++;
+        if(s.lastPerfect) last++;
+      });
+    }catch(e){}
+    return {best,last};
+  }
+};
+
+// Stage 3: 4 תרחישים
+
+// ── Difficulty levels ──
+const LEVELS         = ['help', 'solo'];
+const ADVANCED_LEVEL = 'solo';
+
+// ══════════════════════════════════════════════════════
+// קואורדינטות: row=0 → דרגה 8 | col=0 → עמודה A
+// sq(file, rank) → {row, col}
+// ══════════════════════════════════════════════════════
+function sq(file, rank){
+  return { row: 8-rank, col: 'ABCDEFGH'.indexOf(file.toUpperCase()) };
+}
+
+// ── פרש לבן — cburnett SVG קנוני (מקור: knight-final-exam) ──
+const WHITE_KNIGHT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g style="fill:#fff;stroke:#000;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><path d="M22,10c10.5,1,16.5,8,16,29H15c0-9,10-12.5,8-18" style="fill:#fff;stroke:#000"/><path d="M24,18c.38,2.91-5.55,7.37-8,9-3,2-3.18,4.34-5,4-.96-.96,1.41-3.04,0-3-1,0,.19,1.23-1,2-1,0-4,.003-4-5,0-2,6-12,6-12s1.89-1.9,2-3.5c-.73-1-2.5-1-2.5-1.5,1-1,3,3,3,3s1.28-2,3-3c1,0,1,3,1,3"/><path d="M9.5,25.5A.5.5,0,1,1,8.5,25.5.5.5,0,1,1,9.5,25.5z" style="fill:#000;stroke:#000"/><path d="M15,15.5A.5,1.5,0,1,1,14,15.5.5,1.5,0,1,1,15,15.5z" style="fill:#000;stroke:#000" transform="rotate(30,14.5,15.5)"/></g></svg>`;
+(function(){
+  const fk=document.getElementById('floating-knight');
+  if(fk){
+    const img=document.createElement('img');
+    img.src='data:image/svg+xml,'+encodeURIComponent(WHITE_KNIGHT_SVG);
+    img.alt='פרש'; img.draggable=false;
+    img.style.cssText='width:calc(var(--cell)*0.92);height:calc(var(--cell)*0.92);object-fit:contain;display:block;pointer-events:none;';
+    fk.appendChild(img);
+  }
+})();
+
+// ── תרחישים ────────────────────────────────────────────
+// BFS ✅: כל הלבבות נגישים בכל תרחיש
+const SCENARIOS = [
+  {
+    // תרחיש 0: פרש ב-A8, 8 לבבות — תרחיש כניסה, מפינה
+    // זמן: 30 שניות
+    title: 'תרחיש 1 — כניסה לעניינים 🐴',
+    knight: sq('A',8),
+    hearts: [sq('E',8),sq('G',7),sq('B',6),sq('H',5),sq('C',4),sq('G',3),sq('D',2),sq('F',1)],
+    time: 30
+  },
+  {
+    // תרחיש 1: פרש ב-E4, 8 לבבות — כולם נגישים ישירות! (דפוס כוכב)
+    // זמן: 45 שניות (מתחיל) / 35 שניות (מתקדם)
+    title: 'תרחיש 2 — כוכב לבבות ⭐',
+    knight: sq('E',4),
+    hearts: [sq('C',3),sq('C',5),sq('D',6),sq('F',6),sq('G',5),sq('G',3),sq('F',2),sq('D',2)],
+    time: 45
+  },
+  {
+    // תרחיש 2: פרש ב-A1, 9 לבבות — מהפינה לאמצע
+    // זמן: 45 שניות (מתחיל) / 35 שניות (מתקדם)
+    title: 'תרחיש 3 — מרוץ לאמצע 🏃',
+    knight: sq('A',1),
+    hearts: [sq('B',3),sq('C',2),sq('D',3),sq('C',4),sq('E',3),sq('D',5),sq('F',4),sq('G',3),sq('E',2)],
+    time: 45
+  },
+  {
+    // תרחיש 3: פרש ב-H8, 10 לבבות מפוזרים — כולם על משבצות שחורות (כמו H8),
+    // אין שני לבבות במרחק קפיצה אחד מהשני → חובה מהלך-מעבר בין כל שתי אכילות.
+    // 4 רבעים מיוצגים. פתרון אופטימלי = 20 מהלכים.
+    // זמן: 50 שניות (מתחיל) / 40 שניות (מתקדם)
+    title: 'תרחיש 4 — מסע על הלוח 🗺️',
+    knight: sq('H',8),
+    hearts: [sq('A',1),sq('C',3),sq('D',2),sq('F',4),sq('G',3),sq('A',5),sq('B',8),sq('C',7),sq('E',5),sq('G',7)],
+    time: 50
+  }
+];
+const ORIGINAL_SCENARIOS = JSON.parse(JSON.stringify(SCENARIOS));
+
+// ── STATE ──────────────────────────────────────────────
+function getCellSize(){
+  // קורא את הגודל המרונדר בפועל מה-DOM — לעולם לא מחשב מ-breakpoints קשיחים
+  const cell=document.querySelector('.cell');
+  if(cell){ const w=cell.getBoundingClientRect().width; if(w) return w; }
+  const cssVar=getComputedStyle(document.documentElement).getPropertyValue('--cell');
+  const parsed=parseFloat(cssVar);
+  return parsed||52;
+}
+const CIRC     = 2 * Math.PI * 28;          // SVG arc circumference ≈ 175.9
+
+let scenIdx      = 0;
+let knightRow    = 0;
+let knightCol    = 0;
+let hearts       = [];                       // [{row,col,collected}]
+
+let busy         = false;
+let timerHandle  = null;
+let timeLeft     = 0;
+let illegalMoves=0;
+let scenIllegals={};   // רישום שגיאות פר-תרחיש (retry דורס ערך קיים → אין כפילות)
+let timedOutSkip=false; // נדלק אם דילגו על תרחיש שנכשל בזמן → חוסם 3 כוכבים (עד fullReset)
+let level        = 'help';
+let helpUsed     = false;   // יידלק רק אם הילד בחר בפועל במצב 'מתחיל'
+
+function getTime(sc){
+  return level === 'solo' ? sc.time - 10 : sc.time;
+}
+
+// ── COORD BUILD ────────────────────────────────────────
+function buildCoords(){
+  const rl = document.getElementById('rank-labels');
+  const fl = document.getElementById('file-labels');
+  rl.innerHTML = ''; fl.innerHTML = '';
+  ['8','7','6','5','4','3','2','1'].forEach(r=>{
+    const d = document.createElement('div'); d.textContent = r; rl.appendChild(d);
+  });
+  ['A','B','C','D','E','F','G','H'].forEach(f=>{
+    const d = document.createElement('div'); d.textContent = f; fl.appendChild(d);
+  });
+}
+
+// ── BUILD BOARD ────────────────────────────────────────
+function buildBoard(){
+  const sc    = SCENARIOS[scenIdx];
+  knightRow   = sc.knight.row;
+  knightCol   = sc.knight.col;
+
+  // reset hearts (deep copy)
+  hearts = sc.hearts.map(h=>({ row:h.row, col:h.col, collected:false }));
+  illegalMoves = 0;
+
+  // stop any running timer
+  clearInterval(timerHandle);
+  timerHandle = null;
+  timeLeft    = getTime(sc);
+  renderTimer();
+
+  // build grid
+  const boardEl  = document.getElementById('board');
+  boardEl.innerHTML = '';
+  const heartSet = new Set(sc.hearts.map(h=>`${h.row},${h.col}`));
+
+  for(let r=0; r<8; r++){
+    for(let c=0; c<8; c++){
+      const cell = document.createElement('div');
+      // CRITICAL: (r+c)%2===0 → light (A1 = light square)
+      cell.className = 'cell ' + ((r+c)%2===0 ? 'light' : 'dark');
+      cell.id        = `cell_${r}_${c}`;
+      cell.dataset.r = r;
+      cell.dataset.c = c;
+      cell.addEventListener('click', ()=> handleClick(r,c));
+
+      if(heartSet.has(`${r},${c}`)){
+        const h   = document.createElement('div');
+        h.className = 'board-heart';
+        h.id        = `heart_${r}_${c}`;
+        h.textContent = '❤️';
+        cell.appendChild(h);
+      }
+      boardEl.appendChild(cell);
+    }
+  }
+
+  // place floating knight (no animation on reset)
+  const fk = document.getElementById('floating-knight');
+  const sz = getCellSize();
+  fk.style.transition = 'none';
+  fk.style.left = knightCol * sz + sz/2 + 'px';
+  fk.style.top  = knightRow * sz + sz/2 + 'px';
+  void fk.offsetWidth;
+  fk.style.transition = '';
+
+  refreshReachable();
+  renderHeartsStrip();
+  renderProgDots();
+  updateStageBadge();
+  setHint(`❤️ אספו את כל ${sc.hearts.length} הלבבות לפני שהזמן נגמר!`);
+  busy = false;
+}
+
+// ── KNIGHT MOVEMENT ────────────────────────────────────
+const KNIGHT_DELTAS = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+
+function getReachable(r, c){
+  return KNIGHT_DELTAS
+    .map(([dr,dc])=>({ row:r+dr, col:c+dc }))
+    .filter(m=> m.row>=0 && m.row<8 && m.col>=0 && m.col<8);
+}
+
+function isReachable(r, c){
+  return getReachable(knightRow, knightCol).some(m=>m.row===r && m.col===c);
+}
+
+function refreshReachable(){
+  document.querySelectorAll('.cell.reachable').forEach(el=>el.classList.remove('reachable'));
+  if(level === 'solo') return;
+  getReachable(knightRow, knightCol).forEach(({row,col})=>{
+    const el = document.getElementById(`cell_${row}_${col}`);
+    if(el) el.classList.add('reachable');
+  });
+}
+
+function jumpKnight(r, c, onDone){
+  const fk = document.getElementById('floating-knight');
+  const sz = getCellSize();
+  fk.style.left = c * sz + sz/2 + 'px';
+  fk.style.top  = r * sz + sz/2 + 'px';
+  setTimeout(()=>{ if(onDone) onDone(); }, 370);
+}
+
+// מיקום מיידי (ללא אנימציה) — לשימוש ב-resize/סיבוב מסך
+function repositionKnight(){
+  const fk = document.getElementById('floating-knight');
+  if(!fk) return;
+  const sz = getCellSize();
+  fk.style.transition = 'none';
+  fk.style.left = knightCol * sz + sz/2 + 'px';
+  fk.style.top  = knightRow * sz + sz/2 + 'px';
+  void fk.offsetWidth;
+  fk.style.transition = '';
+}
+
+// ── CLICK HANDLER ──────────────────────────────────────
+function handleClick(r, c){
+  if(busy) return;
+
+  // אם הילד לוחץ בזמן שמצב 'מתחיל' פעיל — סמן שימוש בעזרה
+  if(level === 'help') helpUsed = true;
+
+  // הזמן מתחיל עם הלחיצה הראשונה
+  if(!timerHandle){ startTimer(); }
+
+  if(!isReachable(r, c)){
+    // לחיצה על הפרש עצמו — הילד מנסה "לבחור" אותו. זו אינה טעות, רק הכוונה.
+    if(r === knightRow && c === knightCol){
+      setHint(level === 'solo'
+        ? '🐴 התחילו לאכול לבבות! לחצו על משבצת שהפרש יכול לקפוץ אליה'
+        : '🐴 התחילו לאכול לבבות! לחצו על משבצת ירוקה');
+      return;  // ללא ✕ וללא ספירת טעות
+    }
+    // משבצת שאינה מהלך-פרש חוקי — הכוונה עדינה (לא "טעות")
+    illegalMoves++;
+    const cell = document.getElementById(`cell_${r}_${c}`);
+    cell.classList.add('wrong');
+    const x = document.createElement('div');
+    x.className = 'x-mark'; x.textContent = '✕';
+    cell.appendChild(x);
+    setTimeout(()=>{ x.remove(); cell.classList.remove('wrong'); }, 680);
+    setHint(level === 'solo'
+      ? '🐴 לחצו על משבצת שהפרש יכול לקפוץ אליה'
+      : '🐴 לחצו על משבצת ירוקה כדי לאכול לב!', 'bad');
+    return;
+  }
+
+  busy = true;
+  jumpKnight(r, c, ()=>{
+    knightRow = r;
+    knightCol = c;
+
+    const heartIdx = hearts.findIndex(h=>h.row===r && h.col===c && !h.collected);
+
+    if(heartIdx !== -1){
+      // Collected a heart!
+      const heartEl = document.getElementById(`heart_${r}_${c}`);
+      if(heartEl){
+        heartEl.classList.add('collecting');
+        setTimeout(()=> heartEl.remove(), 430);
+      }
+      hearts[heartIdx].collected = true;
+      renderHeartsStrip();
+      playCollect();
+
+      const remaining = hearts.filter(h=>!h.collected).length;
+
+      if(remaining === 0){
+        // All collected!
+        clearInterval(timerHandle);
+        timerHandle = null;
+        setTimeout(onAllCollected, 300);
+        busy = false;
+        return;
+      }
+    }
+
+    refreshReachable();
+    busy = false;
+  });
+}
+
+// ── ALL COLLECTED ──────────────────────────────────────
+function onAllCollected(){
+  spawnConfetti(55);
+  playSuccess();
+
+  // ניקוד: +50 לתרחיש מושלם + +10 בונוס אם כל המהלכים היו חוקיים
+  const perfectScen = (illegalMoves === 0);
+  scenIllegals[scenIdx] = illegalMoves;   // דורס ערך קודם של אותו תרחיש — מונע ספירה כפולה ב-retry
+  const totalIllegal = Object.values(scenIllegals).reduce((a,b)=>a+b,0);
+  const isLast  = (scenIdx === SCENARIOS.length - 1);
+  const perfect = totalIllegal <= 2 && !helpUsed && !timedOutSkip;  // scope-פונקציה: נדרש גם בבלוק ה-isLast השני (subText)
+  if(isLast){
+    KnightState.save('stage3', perfect);
+    const stEl = document.getElementById('scen-stars');
+    if(stEl){stEl.textContent=perfect?'⭐⭐⭐':'⭐⭐';stEl.style.display='block';}
+  }
+  document.getElementById('scen-icon').textContent  = isLast ? '🏆' : '🎉';
+  document.getElementById('scen-title').textContent = isLast ? 'שלב 3 הושלם!' : 'כל הלבבות!';
+
+  let subText;
+  if(isLast){
+    if(perfect)            subText = 'מושלם! ⭐';
+    else if(helpUsed)      subText = 'יפה! בחרו ברמת המתקדם כדי לזכות ב-3 כוכבים';
+    else if(timedOutSkip)  subText = 'יפה! סיימו כל תרחיש בזמן כדי לזכות ב-3 כוכבים';
+    else                   subText = 'כל הכבוד! 🎉';
+  } else {
+    subText = perfectScen ? 'מושלם! ⭐' : 'כל הכבוד! 🎉';
+  }
+  document.getElementById('scen-sub').textContent = subText;
+
+  const scBtn = document.getElementById('scen-btn');
+  if(isLast){
+    scBtn.textContent = 'שלב הבא ←';
+  } else {
+    scBtn.textContent = 'תרחיש הבא ←';
+  }
+
+  // כפתור "מהתחלה" — מופיע רק בתרחיש האחרון
+  const btnRestart = document.getElementById('btn-restart-all');
+  btnRestart.style.display = isLast ? 'block' : 'none';
+
+  document.getElementById('scen-overlay').classList.add('show');
+}
+
+// ── TIMER ──────────────────────────────────────────────
+function startTimer(){
+  clearInterval(timerHandle);
+  timerHandle = setInterval(()=>{
+    timeLeft--;
+    renderTimer();
+    if(timeLeft <= 0){
+      clearInterval(timerHandle);
+      timerHandle = null;
+      onTimeout();
+    }
+  }, 1000);
+}
+
+function renderTimer(){
+  const sc     = SCENARIOS[scenIdx];
+  const ratio  = Math.max(0, timeLeft / getTime(SCENARIOS[scenIdx]));
+  const arc    = document.getElementById('timer-arc');
+  const txt    = document.getElementById('timer-text');
+
+  arc.setAttribute('stroke-dashoffset', CIRC * (1 - ratio));
+  txt.textContent = Math.max(0, timeLeft);
+
+  if(ratio > 0.5){
+    arc.setAttribute('stroke', '#52B788');
+    arc.classList.remove('danger');
+    document.getElementById('timer-svg').style.filter =
+      'drop-shadow(0 0 8px rgba(82,183,136,.55))';
+  } else if(ratio > 0.25){
+    arc.setAttribute('stroke', '#F4D03F');
+    arc.classList.remove('danger');
+    document.getElementById('timer-svg').style.filter =
+      'drop-shadow(0 0 8px rgba(244,208,63,.6))';
+  } else {
+    arc.setAttribute('stroke', '#E74C3C');
+    arc.classList.add('danger');
+    document.getElementById('timer-svg').style.filter =
+      'drop-shadow(0 0 12px rgba(231,76,60,.75))';
+  }
+}
+
+function onTimeout(){
+  busy = true;
+  const collected = hearts.filter(h=>h.collected).length;
+  const total     = hearts.length;
+  playBoom();
+
+  document.getElementById('timeout-sub').textContent =
+    `אספתם ${collected} מתוך ${total} לבבות. המורה ברוך מאמין בכם! 💪`;
+
+  // "המשך" button: hide on last scenario after timeout
+  const btnNext = document.getElementById('btn-timeout-next');
+  btnNext.style.display = (scenIdx === SCENARIOS.length-1) ? 'none' : 'block';
+
+  document.getElementById('timeout-overlay').classList.add('show');
+}
+
+// ── NAVIGATION ────────────────────────────────────────
+function nextScenario(){
+  hideAllOverlays();
+  if(scenIdx >= SCENARIOS.length - 1){
+    goStage4();
+    return;
+  }
+  scenIdx++;
+  buildBoard();
+}
+
+function retryScenario(){
+  hideAllOverlays();
+  buildBoard();
+}
+
+function hideAllOverlays(){
+  document.getElementById('timeout-overlay').classList.remove('show');
+  document.getElementById('scen-overlay').classList.remove('show');
+}
+
+function setLevel(l){
+  if(level === l) return;
+  level = l;
+  if(l === 'help') helpUsed = true;
+  // עבר ל-solo — helpUsed נשמר (אם השתמשו בעבר ב-help, לא מאפסים)
+  document.getElementById('btn-help').classList.toggle('active', l === 'help');
+  document.getElementById('btn-solo').classList.toggle('active', l === 'solo');
+  // מאפס ומתחיל מחדש את התרחיש הנוכחי עם הזמן החדש
+  hideAllOverlays();
+  buildBoard();
+}
+
+function goStage4(){
+  window.location.href = 'knight-stage4.html';
+}
+
+function fullReset(){
+  hideAllOverlays();
+  scenIdx = 0;
+  scenIllegals = {};   // איפוס מצבר השגיאות לריצה נקייה
+  helpUsed = false;    // התחלה נקייה — מאפשר 3 כוכבים בריצה חדשה (יידלק שוב אם לוחצים במצב מתחיל)
+  timedOutSkip = false; // איפוס דגל דילוג-בכישלון
+  buildBoard();
+}
+
+// ── UI HELPERS ────────────────────────────────────────
+function setHint(txt, cls){
+  const h = document.getElementById('hint-bar');
+  h.textContent = txt;
+  h.className   = 'hint-bar' + (cls ? ' '+cls : '');
+}
+
+
+function renderHeartsStrip(){
+  const strip = document.getElementById('hearts-strip');
+  strip.innerHTML = '';
+  hearts.forEach(h=>{
+    const pip = document.createElement('span');
+    pip.className = 'heart-pip' + (h.collected ? ' collected' : '');
+    pip.textContent = '❤️';
+    strip.appendChild(pip);
+  });
+}
+
+function renderProgDots(){
+  const row = document.getElementById('prog-row');
+  row.innerHTML = '';
+  SCENARIOS.forEach((_,i)=>{
+    const d = document.createElement('div');
+    d.className = 'prog-dot' +
+      (i < scenIdx ? ' done' : i === scenIdx ? ' active' : '');
+    row.appendChild(d);
+  });
+}
+
+function updateStageBadge(){
+  document.getElementById('stage-badge').textContent =
+    `שלב 3 · תרחיש ${scenIdx+1}/${SCENARIOS.length}`;
+}
+
+// ── CONFETTI ──────────────────────────────────────────
+function spawnConfetti(n=55){
+  const cols = ['#F4D03F','#52B788','#7EC8E3','#FF6B35','#fff','#FF69B4','#E74C3C'];
+  for(let i=0; i<n; i++){
+    const dot = document.createElement('div');
+    dot.className = 'confetti-dot';
+    const sz = 6 + Math.random()*8;
+    dot.style.cssText =
+      `width:${sz}px;height:${sz}px;left:${Math.random()*100}vw;top:-${sz}px;` +
+      `background:${cols[Math.floor(Math.random()*cols.length)]};` +
+      `animation-duration:${1.2+Math.random()*1.5}s;` +
+      `animation-delay:${Math.random()*.55}s;`;
+    document.body.appendChild(dot);
+    setTimeout(()=> dot.remove(), 3200);
+  }
+}
+
+// ── SOUNDS ────────────────────────────────────────────
+let audioCtx = null;
+let isMuted  = ['true','1'].includes(localStorage.getItem('chess_muted')); // קריאה סובלנית: מקבל true/false וגם 1/0
+function getCtx(){
+  if(!audioCtx) audioCtx = new(window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended') audioCtx.resume();  // iOS: לחייב חידוש על מחווה
+  return audioCtx;
+}
+
+// לב נאסף — ארפג׳יו C-E-G-C
+function playCollect(){
+  try{
+    if(isMuted) return;
+    const ctx=getCtx(), t=ctx.currentTime;
+    [523.25, 659.25, 783.99, 1046.5].forEach((freq,i)=>{
+      const osc=ctx.createOscillator(), gain=ctx.createGain();
+      osc.type='sine'; osc.frequency.value=freq;
+      const st=t+i*0.085;
+      gain.gain.setValueAtTime(0,st);
+      gain.gain.linearRampToValueAtTime(0.2,st+0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001,st+0.28);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(st); osc.stop(st+0.3);
+    });
+  }catch(e){}
+}
+
+// הזמן נגמר — BOOM
+function playBoom(){
+  try{
+    if(isMuted) return;
+    const ctx=getCtx(), t=ctx.currentTime;
+    const buf=ctx.createBuffer(1,ctx.sampleRate*0.4,ctx.sampleRate);
+    const data=buf.getChannelData(0);
+    for(let i=0;i<data.length;i++)
+      data[i]=(Math.random()*2-1)*Math.pow(1-i/data.length,2.2);
+    const src=ctx.createBufferSource();
+    src.buffer=buf;
+    const gain=ctx.createGain();
+    gain.gain.setValueAtTime(0.5,t);
+    gain.gain.exponentialRampToValueAtTime(0.001,t+0.4);
+    src.connect(gain); gain.connect(ctx.destination);
+    src.start(t);
+  }catch(e){}
+}
+
+// ניצחון — fanfare G-B-D-G
+function playSuccess(){
+  try{
+    if(isMuted) return;
+    const ctx=getCtx(), t=ctx.currentTime;
+    [392, 493.88, 587.33, 783.99].forEach((freq,i)=>{
+      const osc=ctx.createOscillator(), gain=ctx.createGain();
+      osc.type='triangle'; osc.frequency.value=freq;
+      const st=t+i*0.11;
+      gain.gain.setValueAtTime(0,st);
+      gain.gain.linearRampToValueAtTime(0.25,st+0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001,st+0.38);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(st); osc.stop(st+0.4);
+    });
+  }catch(e){}
+}
+
+// ── STARS ─────────────────────────────────────────────
+(function makeStars(){
+  const bg = document.getElementById('stars-bg');
+  for(let i=0; i<60; i++){
+    const s  = document.createElement('div');
+    s.className = 'star-dot';
+    const sz = Math.random()*2.4+0.8;
+    s.style.cssText =
+      `width:${sz}px;height:${sz}px;` +
+      `top:${Math.random()*100}%;left:${Math.random()*100}%;` +
+      `animation-duration:${2+Math.random()*3}s;` +
+      `animation-delay:${Math.random()*3}s;`;
+    bg.appendChild(s);
+  }
+})();
+
+// ── INIT ──────────────────────────────────────────────
+buildCoords();
+buildBoard();
+
+// ── EVENT LISTENERS (במקום onclick — מונע חשיפה ב-global scope) ──
+document.getElementById('btn-help').addEventListener('click', ()=>setLevel('help'));
+document.getElementById('btn-solo').addEventListener('click', ()=>setLevel('solo'));
+document.getElementById('btn-timeout-retry').addEventListener('click', retryScenario);
+document.getElementById('btn-timeout-next').addEventListener('click', ()=>{ timedOutSkip=true; nextScenario(); });
+document.getElementById('btn-scen-retry').addEventListener('click', retryScenario);
+document.getElementById('btn-restart-all').addEventListener('click', fullReset);
+// scen-btn מנוהל דינמית ב-onAllCollected (nextScenario / goStage4)
+document.getElementById('scen-btn').addEventListener('click', ()=>{
+  (scenIdx >= SCENARIOS.length-1 ? goStage4 : nextScenario)();
+});
+
+// ── Mute toggle ──
+const muteBtn=document.getElementById('muteBtn');
+function syncMuteIcon(){ muteBtn.textContent = isMuted ? '🔇' : '🔊'; }
+syncMuteIcon();
+muteBtn.addEventListener('click', ()=>{
+  isMuted=!isMuted;
+  localStorage.setItem('chess_muted', isMuted);
+  syncMuteIcon();
+  if(!isMuted){ try{ getCtx(); }catch(e){} }   // unlock על מחוות ביטול-השתקה
+});
+// iOS: נעילת אודיו על המחווה הראשונה
+document.addEventListener('click', ()=>{ try{ getCtx(); }catch(e){} }, {once:true});
+// סיבוב/שינוי גודל מסך — מיקום מחדש של הפרש הצף
+window.addEventListener('resize', repositionKnight);
+})();
+</script>
+</body>
+</html>
