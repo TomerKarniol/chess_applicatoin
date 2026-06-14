@@ -14,29 +14,32 @@ services:
     name: chess-karniol
     runtime: docker
     repo: # optional — leave blank to use the repo you connect in the dashboard
-    region: frankfurt          # closest Render region to Israel
+    region: frankfurt # closest Render region to Israel
     plan: free
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /healthz
-    autoDeploy: true           # redeploy on every push to the connected branch
+    autoDeploy: true # redeploy on every push to the connected branch
     envVars:
       - key: NODE_ENV
         value: production
       - key: STATIC_ROOT
-        value: ".."            # server runs from /app/server; ".." = repo root (lessons)
+        value: ".." # server runs from /app/server; ".." = repo root (lessons)
       - key: DB_PATH
-        value: /data/chess.db  # writable but ephemeral on free tier (resets on sleep)
+        value: /data/chess.db # writable but ephemeral on free tier (resets on sleep)
       - key: COOKIE_SECRET
-        generateValue: true    # Render generates a strong random value for you
+        generateValue: true # Render generates a strong random value for you
       - key: ADMIN_USERNAME
         value: admin
       - key: ADMIN_PASSWORD
-        sync: false            # you enter this in the dashboard; never stored in the repo
-      # Optional — uncomment + fill in the dashboard to enable password-reset emails:
-      # - key: SMTP_HOST
-      #   sync: false
-      # - key: SMTP_USER
-      #   sync: false
-      # - key: SMTP_PASS
-      #   sync: false
+        sync: false # you enter this in the dashboard; never stored in the repo
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: APP_PUBLIC_NAME
+        sync: false
