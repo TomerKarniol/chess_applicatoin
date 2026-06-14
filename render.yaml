@@ -1,0 +1,42 @@
+# render.yaml — Render Blueprint for אני מפלצת שחמט!
+#
+# One-click deploy of the Docker image (frontend lessons + API in one service).
+# FREE TIER NOTE: no persistent disk and the service sleeps after ~15 min idle,
+# so users/progress reset on sleep or redeploy. That's fine for TESTING — the
+# server re-seeds the admin on every boot. For real persistence, bump to a paid
+# plan and add a `disk:` mounted at /data.
+#
+# Deploy: push this repo to GitHub → render.com → New → Blueprint → pick the repo.
+# Render reads this file; you'll be asked to fill ADMIN_PASSWORD (sync: false).
+
+services:
+  - type: web
+    name: chess-karniol
+    runtime: docker
+    repo: # optional — leave blank to use the repo you connect in the dashboard
+    region: frankfurt          # closest Render region to Israel
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /healthz
+    autoDeploy: true           # redeploy on every push to the connected branch
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: STATIC_ROOT
+        value: ".."            # server runs from /app/server; ".." = repo root (lessons)
+      - key: DB_PATH
+        value: /data/chess.db  # writable but ephemeral on free tier (resets on sleep)
+      - key: COOKIE_SECRET
+        generateValue: true    # Render generates a strong random value for you
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_PASSWORD
+        sync: false            # you enter this in the dashboard; never stored in the repo
+      # Optional — uncomment + fill in the dashboard to enable password-reset emails:
+      # - key: SMTP_HOST
+      #   sync: false
+      # - key: SMTP_USER
+      #   sync: false
+      # - key: SMTP_PASS
+      #   sync: false
