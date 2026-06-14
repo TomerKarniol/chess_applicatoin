@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#060E1A">
+<title>👑 ניהול תלמידים - אני מפלצת שחמט!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100%;background:#060e1a;font-family:'Nunito',sans-serif;direction:rtl;color:#e6edf5}
+body{background:radial-gradient(ellipse at 50% 0%,#162d4a 0%,#0c1e30 55%,#060e1a 100%);min-height:100vh;padding-bottom:60px}
+button{-webkit-appearance:none;cursor:pointer;font-family:inherit}
+
+header{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:10px 22px;background:rgba(5,12,22,.78);border-bottom:1px solid rgba(244,208,63,.2);backdrop-filter:blur(8px);min-height:62px}
+.app-title{font-family:'Fredoka One',cursive;font-size:clamp(1.3rem,2.6vw,1.9rem);color:#F4D03F;text-shadow:0 0 18px rgba(244,208,63,.65)}
+.header-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.greeting{font-family:'Fredoka One',cursive;font-size:1rem;color:#F4D03F;padding:6px 14px;border-radius:50px;background:rgba(244,208,63,.08);border:1.5px solid rgba(244,208,63,.35);text-shadow:0 0 10px rgba(244,208,63,.4)}
+.btn-ghost{font-family:'Fredoka One',cursive;font-size:1rem;color:#F4D03F;background:transparent;border:2px solid #F4D03F;border-radius:50px;padding:7px 18px;min-height:42px;cursor:pointer;box-shadow:0 0 10px rgba(244,208,63,.25);transition:all .2s}
+.btn-ghost:hover{box-shadow:0 0 22px rgba(244,208,63,.55);transform:scale(1.04)}
+
+main{max-width:980px;margin:0 auto;padding:24px}
+.panel{background:linear-gradient(160deg, rgba(16,30,52,.85) 0%, rgba(6,14,26,.85) 100%);border:1.5px solid rgba(244,208,63,.3);border-radius:22px;padding:22px 22px 18px;margin-bottom:22px;box-shadow:0 12px 30px rgba(0,0,0,.4)}
+.panel h2{font-family:'Fredoka One',cursive;color:#F4D03F;font-size:1.3rem;margin-bottom:14px}
+
+.create-row{display:flex;gap:10px;flex-wrap:wrap}
+.create-row .field{flex:1;min-width:200px;display:flex;align-items:center;gap:10px;background:rgba(5,12,22,.85);border:2px solid rgba(244,208,63,.35);border-radius:12px;padding:10px 14px;transition:border-color .2s,box-shadow .2s}
+.create-row .field:focus-within{border-color:#F4D03F;box-shadow:0 0 0 4px rgba(244,208,63,.18)}
+.create-row input{flex:1;background:transparent;border:0;outline:0;color:#f4f7fb;font-weight:700;font-size:1rem;direction:ltr;text-align:right}
+.create-row input::placeholder{color:rgba(220,230,242,.5);font-weight:700}
+.create-btn{font-family:'Fredoka One',cursive;font-size:1.05rem;background:linear-gradient(160deg,#F4D03F,#C9A227 60%,#9A7B1A);color:#060E1A;border:none;border-radius:12px;padding:10px 22px;cursor:pointer;box-shadow:0 6px 18px rgba(244,208,63,.4);transition:transform .15s, box-shadow .15s}
+.create-btn:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(244,208,63,.6)}
+.create-btn[disabled]{filter:grayscale(.4) brightness(.85);cursor:not-allowed}
+
+table{width:100%;border-collapse:separate;border-spacing:0;background:rgba(8,16,28,.55);border-radius:12px;overflow:hidden}
+thead th{font-family:'Fredoka One',cursive;font-size:.85rem;color:#aac1de;background:rgba(244,208,63,.06);text-align:right;padding:10px 14px;letter-spacing:.02em;border-bottom:1px solid rgba(244,208,63,.2)}
+tbody td{padding:10px 14px;font-size:.95rem;border-bottom:1px solid rgba(244,208,63,.08);vertical-align:middle}
+tbody tr:hover{background:rgba(244,208,63,.04)}
+tbody tr:last-child td{border-bottom:none}
+
+.badge{display:inline-block;font-size:.72rem;padding:2px 8px;border-radius:50px;font-weight:900;letter-spacing:.02em}
+.badge-admin{background:rgba(244,208,63,.18);color:#F4D03F;border:1px solid rgba(244,208,63,.4)}
+.badge-setup{background:rgba(231,76,60,.16);color:#ffb6ad;border:1px solid rgba(231,76,60,.4)}
+.badge-ok{background:rgba(82,183,136,.16);color:#a4f0c8;border:1px solid rgba(82,183,136,.4)}
+
+.row-btn{font-size:.8rem;font-family:'Fredoka One',cursive;background:transparent;color:#7EC8E3;border:1.5px solid rgba(126,200,227,.45);border-radius:50px;padding:4px 12px;cursor:pointer;transition:all .15s}
+.row-btn:hover{background:rgba(126,200,227,.1);border-color:#7EC8E3}
+
+.alert-pill{margin-top:14px;border-radius:12px;padding:10px 14px;font-weight:800;font-size:.95rem;opacity:0;transform:translateY(-4px);transition:opacity .25s, transform .25s;min-height:1px}
+.alert-pill.show{opacity:1;transform:translateY(0)}
+.alert-pill.error{background:rgba(231,76,60,.13);border:1.5px solid rgba(231,76,60,.55);color:#ffb6ad}
+.alert-pill.success{background:rgba(82,183,136,.12);border:1.5px solid rgba(82,183,136,.55);color:#a4f0c8}
+
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:60;align-items:center;justify-content:center;padding:16px}
+.modal-bg.open{display:flex}
+.modal{width:min(96vw,460px);background:linear-gradient(160deg, rgba(16,30,52,.98) 0%, rgba(6,14,26,.98) 100%);border:2px solid #F4D03F;border-radius:22px;padding:26px 24px 20px;box-shadow:0 24px 60px rgba(0,0,0,.6),0 0 60px rgba(244,208,63,.4);text-align:center}
+.modal h3{font-family:'Fredoka One',cursive;color:#F4D03F;font-size:1.3rem;margin-bottom:8px}
+.modal p{font-size:.95rem;color:#aac1de;margin-bottom:12px;line-height:1.5}
+.modal .warn{color:#ffb6ad;font-weight:900;font-size:.92rem;background:rgba(231,76,60,.12);border:1.5px dashed rgba(231,76,60,.5);border-radius:10px;padding:8px 12px;margin-bottom:14px}
+.password-show{font-family:'Fredoka One',cursive;font-size:1.6rem;letter-spacing:.16em;color:#F4D03F;background:rgba(5,12,22,.85);border:2px solid rgba(244,208,63,.5);border-radius:14px;padding:14px;direction:ltr;text-align:center;margin-bottom:12px;user-select:all;cursor:text}
+.modal-actions{display:flex;gap:10px;justify-content:center}
+.copy-btn{font-family:'Fredoka One',cursive;font-size:1rem;background:linear-gradient(160deg,#F4D03F,#C9A227 60%,#9A7B1A);color:#060E1A;border:none;border-radius:12px;padding:10px 22px;cursor:pointer;box-shadow:0 6px 18px rgba(244,208,63,.4)}
+.close-btn{font-family:'Fredoka One',cursive;font-size:1rem;background:transparent;color:#aac1de;border:2px solid rgba(170,193,222,.5);border-radius:12px;padding:10px 22px;cursor:pointer}
+
+@media(max-width:560px){
+  .header-actions .greeting{display:none}
+  thead{display:none}
+  tbody tr{display:block;background:rgba(8,16,28,.55);margin-bottom:8px;border-radius:10px;padding:8px 12px}
+  tbody td{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border:none}
+  tbody td::before{content:attr(data-label);color:#aac1de;font-size:.78rem;font-family:'Fredoka One',cursive}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="app-title">👑 ניהול תלמידים</span>
+  <div class="header-actions">
+    <span class="greeting" id="greeting">שלום</span>
+    <button class="btn-ghost" id="roadmapBtn">🗺️ למפה</button>
+    <button class="btn-ghost" id="logoutBtn">👋 צא</button>
+  </div>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>הוספת תלמיד חדש</h2>
+    <form class="create-row" id="createForm">
+      <label class="field" for="newUsername">
+        <input id="newUsername" type="text" placeholder="username (אותיות / מספרים / . _ -)" required minlength="1" maxlength="64" pattern="[A-Za-z0-9_.\-]{1,64}" dir="ltr">
+      </label>
+      <button class="create-btn" type="submit" id="createBtn">➕ צור תלמיד</button>
+    </form>
+    <div class="alert-pill" id="createAlert" role="alert" aria-live="polite"></div>
+  </section>
+
+  <section class="panel">
+    <h2>תלמידים רשומים</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>שם משתמש</th>
+          <th>אימייל</th>
+          <th>סטטוס</th>
+          <th>נוצר</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="usersBody"></tbody>
+    </table>
+    <div class="alert-pill" id="listAlert" role="alert" aria-live="polite"></div>
+  </section>
+</main>
+
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <h3 id="modalTitle">סיסמה זמנית נוצרה</h3>
+    <p id="modalIntro">העבירו את הסיסמה הזמנית לתלמיד. בעת ההתחברות הראשונה תידרש בחירת סיסמה חדשה.</p>
+    <div class="warn">⚠️ הסיסמה הזמנית מוצגת פעם אחת בלבד ולא ניתן לשחזר אותה לאחר סגירת החלון.</div>
+    <div class="password-show" id="modalPassword" tabindex="0">····</div>
+    <div class="modal-actions">
+      <button class="copy-btn" id="copyBtn">📋 העתק</button>
+      <button class="close-btn" id="closeBtn">סגור</button>
+    </div>
+  </div>
+</div>
+
+<script src="/auth/js/api.js"></script>
+<script>
+(function(){
+  'use strict';
+
+  // ── Guard: only logged-in admins past first-time setup may view this page. ──
+  (async function guard(){
+    try {
+      var r = await window.ChessApi.get('/auth/me');
+      var u = r && r.data && r.data.user;
+      if (!u || !u.isAdmin) {
+        window.location.replace('/' + encodeURIComponent('מסך הפתיחה') + '/index.html');
+        return;
+      }
+      if (r.data.mustChangePassword) {
+        window.location.replace('/auth/setup.html');
+        return;
+      }
+      document.getElementById('greeting').textContent = 'שלום ' + u.username + ' 👋';
+      loadUsers();
+    } catch (_e) {
+      window.location.replace('/auth/login.html');
+    }
+  }());
+
+  document.getElementById('logoutBtn').addEventListener('click', async function(){
+    try { await window.ChessApi.post('/auth/logout'); } catch(_e) {}
+    try { localStorage.removeItem('chess_owner_id'); } catch(_e) {}
+    window.location.replace('/auth/login.html');
+  });
+  document.getElementById('roadmapBtn').addEventListener('click', function(){
+    window.location.href = '/' + encodeURIComponent('מסך הפתיחה') + '/index.html';
+  });
+
+  var usersBody = document.getElementById('usersBody');
+  var listAlert = document.getElementById('listAlert');
+
+  function addCell(row, label, value, bold){
+    var td = document.createElement('td');
+    td.setAttribute('data-label', label);
+    if (value instanceof Node) {
+      td.appendChild(value);
+    } else if (bold) {
+      var b = document.createElement('b');
+      b.textContent = value == null ? '' : String(value);
+      td.appendChild(b);
+    } else {
+      td.textContent = value == null ? '' : String(value);
+    }
+    row.appendChild(td);
+  }
+
+  function makeBadge(user){
+    var span = document.createElement('span');
+    span.className = 'badge ' + (user.isAdmin ? 'badge-admin' : (user.mustChangePassword ? 'badge-setup' : 'badge-ok'));
+    span.textContent = user.isAdmin ? 'אדמין' : (user.mustChangePassword ? 'הקמה נדרשת' : 'פעיל');
+    return span;
+  }
+
+  function shortDate(iso){
+    if (!iso) return '—';
+    var d = new Date(iso); if (isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString('he-IL') + ' ' + d.toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'});
+  }
+
+  function makeRegenButton(user){
+    var btn = document.createElement('button');
+    btn.className = 'row-btn';
+    btn.textContent = 'סיסמה חדשה';
+    btn.addEventListener('click', function(){ regenerate(user.id, user.username); });
+    return btn;
+  }
+
+  function renderRows(users){
+    // Replace tbody contents safely: clear + append per-row DOM nodes.
+    while (usersBody.firstChild) usersBody.removeChild(usersBody.firstChild);
+    users.forEach(function(u){
+      var tr = document.createElement('tr');
+      addCell(tr, '#', u.id);
+      addCell(tr, 'שם משתמש', u.username, true);
+      addCell(tr, 'אימייל', u.email || '—');
+      addCell(tr, 'סטטוס', makeBadge(u));
+      addCell(tr, 'נוצר', shortDate(u.createdAt));
+      var actions = document.createElement('td');
+      actions.setAttribute('data-label', 'פעולות');
+      if (!u.isAdmin) actions.appendChild(makeRegenButton(u));
+      tr.appendChild(actions);
+      usersBody.appendChild(tr);
+    });
+  }
+
+  async function loadUsers(){
+    try {
+      var r = await window.ChessApi.get('/admin/users');
+      renderRows((r.data && r.data.users) || []);
+    } catch (err) {
+      listAlert.className = 'alert-pill error show';
+      listAlert.textContent = (err && err.message) || 'שגיאה בטעינת רשימת המשתמשים.';
+    }
+  }
+
+  // ── Create student ──
+  var createForm = document.getElementById('createForm');
+  var newUser = document.getElementById('newUsername');
+  var createBtn = document.getElementById('createBtn');
+  var createAlert = document.getElementById('createAlert');
+
+  function showCreateAlert(kind, msg){
+    createAlert.classList.remove('error','success');
+    createAlert.classList.add(kind);
+    createAlert.textContent = msg;
+    createAlert.classList.add('show');
+  }
+  function clearCreateAlert(){ createAlert.classList.remove('show'); createAlert.textContent=''; }
+
+  createForm.addEventListener('submit', async function(ev){
+    ev.preventDefault();
+    clearCreateAlert();
+    var u = (newUser.value||'').trim();
+    if (!u) { showCreateAlert('error','יש להזין שם משתמש'); return; }
+    createBtn.disabled = true; createBtn.textContent = 'יוצר…';
+    try {
+      var r = await window.ChessApi.post('/admin/users', { username: u });
+      openModal('סיסמה זמנית עבור ' + r.data.user.username, r.data.temporaryPassword);
+      newUser.value = '';
+      showCreateAlert('success','התלמיד '+u+' נוצר בהצלחה.');
+      await loadUsers();
+    } catch (err) {
+      if (err && err.code === 'conflict') showCreateAlert('error','שם המשתמש כבר קיים.');
+      else if (err && err.code === 'validation_failed') showCreateAlert('error', err.message || 'שם משתמש לא תקין.');
+      else showCreateAlert('error','אירעה שגיאה. נסו שוב.');
+    } finally {
+      createBtn.disabled = false; createBtn.textContent = '➕ צור תלמיד';
+    }
+  });
+
+  // ── Regenerate temp password ──
+  async function regenerate(userId, username){
+    if (!confirm('להחליף את הסיסמה הזמנית של '+username+'? הסיסמה הקודמת לא תהיה תקפה יותר.')) return;
+    try {
+      var r = await window.ChessApi.post('/admin/users/'+userId+'/regenerate-password');
+      openModal('סיסמה זמנית חדשה עבור '+username, r.data.temporaryPassword);
+      await loadUsers();
+    } catch (err) {
+      alert((err && err.message) || 'שגיאה בעת איפוס הסיסמה.');
+    }
+  }
+
+  // ── Modal ──
+  var modal = document.getElementById('modal');
+  var modalTitle = document.getElementById('modalTitle');
+  var modalPassword = document.getElementById('modalPassword');
+  function openModal(title, password){
+    modalTitle.textContent = title;
+    modalPassword.textContent = password;
+    modal.classList.add('open');
+  }
+  document.getElementById('closeBtn').addEventListener('click', function(){ modal.classList.remove('open'); });
+  document.getElementById('copyBtn').addEventListener('click', async function(){
+    try {
+      await navigator.clipboard.writeText(modalPassword.textContent);
+      var btn = document.getElementById('copyBtn');
+      var old = btn.textContent;
+      btn.textContent = '✅ הועתק';
+      setTimeout(function(){ btn.textContent = old; }, 1500);
+    } catch (_e) {
+      var range = document.createRange();
+      range.selectNodeContents(modalPassword);
+      var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+    }
+  });
+}());
+</script>
+</body>
+</html>

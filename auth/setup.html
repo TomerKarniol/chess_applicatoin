@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#060E1A">
+<title>♟ הקמת חשבון - אני מפלצת שחמט!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:#060e1a;font-family:'Nunito',sans-serif;direction:rtl;overscroll-behavior:none}
+body{
+  min-height:100vh;
+  background:radial-gradient(ellipse at 50% 0%,#162d4a 0%,#0c1e30 55%,#060e1a 100%);
+  display:flex;align-items:center;justify-content:center;position:relative;
+  -webkit-tap-highlight-color:transparent;
+}
+button{-webkit-appearance:none;cursor:pointer;font-family:inherit}
+
+#stars{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.star{position:absolute;border-radius:50%;background:#fff;animation:twinkle var(--td) ease-in-out infinite var(--tdelay)}
+@keyframes twinkle{0%,100%{opacity:.1}50%{opacity:var(--tmax)}}
+
+#boardFloor{
+  position:fixed;left:50%;bottom:-25vh;transform:translateX(-50%) perspective(900px) rotateX(72deg);
+  width:170vw;height:120vh;
+  background-image:
+    linear-gradient(rgba(244,208,63,.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(244,208,63,.12) 1px, transparent 1px),
+    repeating-conic-gradient(#0b1b30 0% 25%, #11243c 0% 50%);
+  background-size: 12vw 12vw, 12vw 12vw, 24vw 24vw;
+  opacity:.55;z-index:0;pointer-events:none;
+  mask-image: linear-gradient(to top, #000 0%, transparent 78%);
+  -webkit-mask-image: linear-gradient(to top, #000 0%, transparent 78%);
+}
+
+.crown{
+  position:absolute;top:-46px;left:50%;transform:translateX(-50%);z-index:3;
+  font-size:60px;line-height:1;
+  filter: drop-shadow(0 0 12px rgba(244,208,63,.6));
+  animation: crownBob 4s ease-in-out infinite;
+}
+@keyframes crownBob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)}}
+
+.card{
+  position:relative;z-index:2;
+  width:min(94vw, 460px);
+  background:linear-gradient(160deg, rgba(16,30,52,.96) 0%, rgba(6,14,26,.96) 100%);
+  border:2px solid rgba(244,208,63,.5);
+  border-radius:28px;
+  padding:50px 32px 28px;
+  box-shadow:0 0 0 1px rgba(244,208,63,.15) inset,0 28px 60px rgba(0,0,0,.55),0 0 60px rgba(244,208,63,.18);
+  text-align:center;
+  animation: cardIn .8s cubic-bezier(.16,.84,.32,1.18) both;
+  max-height:96vh;overflow:auto;
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(20px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+.title{font-family:'Fredoka One',cursive;font-size:clamp(1.5rem,3.6vw,2rem);color:#F4D03F;text-shadow:0 0 16px rgba(244,208,63,.65), 0 0 36px rgba(244,208,63,.25);margin-bottom:2px}
+.subtitle{font-family:'Fredoka One',cursive;font-size:clamp(.95rem,2.2vw,1.1rem);color:#aac1de;margin-bottom:22px}
+
+.field{
+  display:flex;align-items:center;gap:10px;
+  background:rgba(5,12,22,.85);
+  border:2px solid rgba(244,208,63,.35);
+  border-radius:14px;
+  padding:11px 14px;
+  transition:border-color .2s, box-shadow .2s, transform .15s;
+  margin-bottom:14px;
+}
+.field:focus-within{border-color:#F4D03F;box-shadow:0 0 0 4px rgba(244,208,63,.18), 0 0 22px rgba(244,208,63,.25);transform:translateY(-1px)}
+.field-ico{font-size:1.3rem;line-height:1;color:#F4D03F}
+.field input{flex:1;background:transparent;border:0;outline:0;color:#f4f7fb;font-family:inherit;font-size:1.05rem;font-weight:700;direction:rtl}
+.field input::placeholder{color:rgba(220,230,242,.45);font-weight:700}
+.field input[type="email"]{direction:ltr;text-align:right}
+
+.policy{
+  font-size:.78rem;color:#7f9bbd;text-align:right;padding:4px 4px 8px;line-height:1.45
+}
+.policy b{color:#aac1de}
+
+.primary-btn{
+  width:100%;font-family:'Fredoka One',cursive;font-size:1.2rem;
+  background:linear-gradient(160deg,#F4D03F,#C9A227 60%,#9A7B1A);color:#060E1A;
+  border:none;border-radius:18px;padding:14px 16px;cursor:pointer;
+  box-shadow:0 8px 22px rgba(244,208,63,.45), 0 0 30px rgba(244,208,63,.2) inset;
+  transition:transform .15s, box-shadow .15s, filter .15s;margin-top:6px;
+  touch-action:manipulation;
+}
+.primary-btn:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(244,208,63,.6)}
+.primary-btn[disabled]{filter:grayscale(.3) brightness(.85);cursor:not-allowed}
+
+.alert-pill{
+  margin-top:14px;border-radius:12px;padding:10px 14px;font-weight:800;font-size:.95rem;
+  opacity:0;transform:translateY(-4px);transition:opacity .25s, transform .25s;min-height:1px;
+}
+.alert-pill.show{opacity:1;transform:translateY(0)}
+.alert-pill.error{background:rgba(231,76,60,.13);border:1.5px solid rgba(231,76,60,.55);color:#ffb6ad}
+.alert-pill.success{background:rgba(82,183,136,.12);border:1.5px solid rgba(82,183,136,.55);color:#a4f0c8}
+
+.logout-link{
+  display:block;margin-top:16px;color:#6f8aab;font-size:.85rem;text-decoration:underline;
+  background:transparent;border:none;cursor:pointer;
+}
+.logout-link:hover{color:#aac1de}
+
+@media(max-width:420px){.card{padding:46px 22px 22px;border-radius:24px}.crown{top:-42px;font-size:52px}}
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+<div id="boardFloor"></div>
+
+<form class="card" id="setupForm" novalidate>
+  <div class="crown" aria-hidden="true">🛡️</div>
+  <h1 class="title">הקמת חשבון</h1>
+  <div class="subtitle">תהליך חד-פעמי לפני שמתחילים לשחק</div>
+
+  <label class="field" for="email">
+    <span class="field-ico">📧</span>
+    <input id="email" name="email" type="email" placeholder="אימייל" required autocomplete="email" dir="ltr">
+  </label>
+
+  <label class="field" for="newPassword">
+    <span class="field-ico">🔒</span>
+    <input id="newPassword" name="newPassword" type="password" placeholder="סיסמה חדשה" required minlength="6" maxlength="256" autocomplete="new-password">
+  </label>
+
+  <label class="field" for="confirmPassword">
+    <span class="field-ico">✅</span>
+    <input id="confirmPassword" name="confirmPassword" type="password" placeholder="אימות סיסמה חדשה" required minlength="6" maxlength="256" autocomplete="new-password">
+  </label>
+
+  <div class="policy">
+    הסיסמה חייבת להכיל <b>לפחות 6 תווים</b>, מתוכם <b>אות אחת לפחות</b> ו<b>ספרה אחת לפחות</b>.
+  </div>
+
+  <button class="primary-btn" id="submitBtn" type="submit">⚔️ שמירה והתחלת המסע</button>
+
+  <div class="alert-pill" id="alertPill" role="alert" aria-live="polite"></div>
+
+  <button type="button" id="logoutLink" class="logout-link">לא אני? התנתקות</button>
+</form>
+
+<script src="/auth/js/api.js"></script>
+<script>
+(function(){
+  'use strict';
+
+  (function drawStars(){
+    var wrap = document.getElementById('stars');
+    for (var i=0;i<70;i++){
+      var s=document.createElement('div'); s.className='star';
+      var r=(0.35+Math.random()*1.15).toFixed(2);
+      s.style.cssText='left:'+(Math.random()*100).toFixed(1)+'%;top:'+(Math.random()*100).toFixed(1)+'%;width:'+(r*2)+'px;height:'+(r*2)+'px;--tmax:'+(0.45+Math.random()*0.55).toFixed(2)+';--td:'+(2+Math.random()*3).toFixed(1)+'s;--tdelay:-'+(Math.random()*4).toFixed(1)+'s';
+      wrap.appendChild(s);
+    }
+  }());
+
+  // If we're not logged in OR we already finished setup → bounce to the right place.
+  (async function guard(){
+    try {
+      var r = await window.ChessApi.get('/auth/me');
+      if (r && r.data && r.data.mustChangePassword === false) {
+        var dest = (r.data.user && r.data.user.isAdmin) ? '/admin/' : ('/' + encodeURIComponent('מסך הפתיחה') + '/index.html');
+        window.location.replace(dest);
+      }
+    } catch (e) {
+      window.location.replace('/auth/login.html');
+    }
+  }());
+
+  var form = document.getElementById('setupForm');
+  var emailEl = document.getElementById('email');
+  var p1 = document.getElementById('newPassword');
+  var p2 = document.getElementById('confirmPassword');
+  var btn = document.getElementById('submitBtn');
+  var pill = document.getElementById('alertPill');
+
+  function showAlert(kind, msg){
+    pill.classList.remove('error','success');
+    pill.classList.add(kind);
+    pill.textContent = msg;
+    pill.classList.add('show');
+  }
+  function clearAlert(){ pill.classList.remove('show'); pill.textContent=''; }
+
+  document.getElementById('logoutLink').addEventListener('click', async function(){
+    try { await window.ChessApi.post('/auth/logout'); } catch(_e) {}
+    window.location.replace('/auth/login.html');
+  });
+
+  form.addEventListener('submit', async function(ev){
+    ev.preventDefault();
+    clearAlert();
+    var email = (emailEl.value||'').trim();
+    var pw1 = p1.value||'';
+    var pw2 = p2.value||'';
+    if (!email) { showAlert('error','יש להזין כתובת אימייל'); return; }
+    if (pw1.length < 6) { showAlert('error','הסיסמה צריכה להיות לפחות 6 תווים'); return; }
+    if (!/[A-Za-zא-ת]/.test(pw1) || !/[0-9]/.test(pw1)) { showAlert('error','הסיסמה צריכה להכיל לפחות אות אחת וספרה אחת'); return; }
+    if (pw1 !== pw2) { showAlert('error','שתי הסיסמאות אינן זהות'); p2.focus(); return; }
+
+    btn.disabled = true;
+    btn.textContent = 'שומר…';
+    try {
+      var res = await window.ChessApi.post('/auth/complete-setup', {
+        email: email,
+        newPassword: pw1,
+        confirmPassword: pw2,
+      });
+      showAlert('success','החשבון מוכן! מעבירים אותך לאפליקציה...');
+      try { localStorage.removeItem('chess_owner_id'); } catch(_e) {}
+      setTimeout(function(){
+        var isAdmin = res && res.data && res.data.user && res.data.user.isAdmin;
+        var dest = isAdmin ? '/admin/' : ('/' + encodeURIComponent('מסך הפתיחה') + '/index.html');
+        window.location.replace(dest);
+      }, 700);
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = '⚔️ שמירה והתחלת המסע';
+      if (err && err.code === 'conflict') {
+        showAlert('error','האימייל כבר בשימוש בחשבון אחר');
+      } else if (err && err.code === 'validation_failed') {
+        showAlert('error', err.message || 'הקלט אינו תקין');
+      } else if (err && err.status === 401) {
+        window.location.replace('/auth/login.html');
+      } else {
+        showAlert('error','אירעה שגיאה. נסו שוב.');
+      }
+    }
+  });
+}());
+</script>
+</body>
+</html>

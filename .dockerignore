@@ -1,0 +1,13 @@
+# Keep the build context small and never bake host artifacts/secrets into the image.
+**/node_modules
+server/dist
+server/data
+data
+**/.env
+**/.env.*
+!**/.env.example
+.git
+.gitignore
+*.log
+npm-debug.log*
+.DS_Store

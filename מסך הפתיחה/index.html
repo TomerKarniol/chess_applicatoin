@@ -314,6 +314,10 @@ header{position:relative;z-index:10;display:flex;justify-content:space-between;a
 </style>
 <script>if(localStorage.getItem("chess_just_completed"))document.documentElement.classList.add("skip-splash");</script>
 <style>.skip-splash #splashOv{display:none!important}</style>
+<!-- ── Auth + per-user progress glue (added by the server backend integration) ── -->
+<script src="/auth/js/api.js"></script>
+<script src="/auth/js/bridge.js"></script>
+<script src="/auth/js/auth-guard.js"></script>
 </head>
 <body>
 
@@ -377,7 +381,7 @@ const MODULES = [
 ];
 
 const STICKER = {
-  rook:'rook.png', bishop:'bishop.png', queen:'queen.png', pawn:'pawn.png',
+  rook:'rook.png', bishop:'bishop.png', queen:'QUEEN.png', pawn:'pawn.png',
   knight:'knight.png', king:'king.png', check:'check.png',
   defense:'defence.png', checkmate:'checkmate.png',
   'officers-game':'officer.png',

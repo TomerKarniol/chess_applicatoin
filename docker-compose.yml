@@ -1,0 +1,43 @@
+# אני מפלצת שחמט! — one-command run.
+#
+#   docker compose up --build      # build image + start (http://localhost:3000)
+#   docker compose up -d           # detached
+#   docker compose down            # stop (named volume keeps the SQLite DB)
+#
+# Secrets: put real values in a `.env` file next to this file (NOT committed).
+# Only COOKIE_SECRET is strictly required; the rest have sane defaults.
+#   COOKIE_SECRET=please-use-a-32+-char-random-secret
+#   ADMIN_PASSWORD=change-me
+#   SMTP_HOST=smtp.gmail.com
+#   SMTP_USER=...
+#   SMTP_PASS=...
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: chess-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      DB_PATH: /data/chess.db
+      STATIC_ROOT: ".."
+      # Pulled from a sibling .env file (override or add SMTP_* there).
+      COOKIE_SECRET: ${COOKIE_SECRET:?set COOKIE_SECRET (>=16 chars) in a .env file}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+    volumes:
+      # Persists the SQLite database across container rebuilds.
+      - chess-data:/data
+
+volumes:
+  chess-data:

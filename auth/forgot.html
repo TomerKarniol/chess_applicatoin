@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#060E1A">
+<title>♟ שכחתי סיסמה - אני מפלצת שחמט!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:#060e1a;font-family:'Nunito',sans-serif;direction:rtl;overscroll-behavior:none}
+body{min-height:100vh;background:radial-gradient(ellipse at 50% 0%,#162d4a 0%,#0c1e30 55%,#060e1a 100%);display:flex;align-items:center;justify-content:center;position:relative;-webkit-tap-highlight-color:transparent}
+button{-webkit-appearance:none;cursor:pointer;font-family:inherit}
+
+#stars{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.star{position:absolute;border-radius:50%;background:#fff;animation:twinkle var(--td) ease-in-out infinite var(--tdelay)}
+@keyframes twinkle{0%,100%{opacity:.1}50%{opacity:var(--tmax)}}
+
+#boardFloor{
+  position:fixed;left:50%;bottom:-25vh;transform:translateX(-50%) perspective(900px) rotateX(72deg);
+  width:170vw;height:120vh;
+  background-image:
+    linear-gradient(rgba(244,208,63,.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(244,208,63,.12) 1px, transparent 1px),
+    repeating-conic-gradient(#0b1b30 0% 25%, #11243c 0% 50%);
+  background-size: 12vw 12vw, 12vw 12vw, 24vw 24vw;
+  opacity:.55;z-index:0;pointer-events:none;
+  mask-image: linear-gradient(to top, #000 0%, transparent 78%);
+  -webkit-mask-image: linear-gradient(to top, #000 0%, transparent 78%);
+}
+
+.crown{position:absolute;top:-46px;left:50%;transform:translateX(-50%);z-index:3;font-size:60px;line-height:1;filter: drop-shadow(0 0 12px rgba(244,208,63,.6));animation: crownBob 4s ease-in-out infinite}
+@keyframes crownBob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)}}
+
+.card{position:relative;z-index:2;width:min(94vw, 460px);background:linear-gradient(160deg, rgba(16,30,52,.96) 0%, rgba(6,14,26,.96) 100%);border:2px solid rgba(244,208,63,.5);border-radius:28px;padding:50px 32px 28px;box-shadow:0 0 0 1px rgba(244,208,63,.15) inset,0 28px 60px rgba(0,0,0,.55),0 0 60px rgba(244,208,63,.18);text-align:center;animation: cardIn .8s cubic-bezier(.16,.84,.32,1.18) both;max-height:96vh;overflow:auto}
+@keyframes cardIn{from{opacity:0;transform:translateY(20px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+.title{font-family:'Fredoka One',cursive;font-size:clamp(1.5rem,3.6vw,2rem);color:#F4D03F;text-shadow:0 0 16px rgba(244,208,63,.65), 0 0 36px rgba(244,208,63,.25);margin-bottom:2px}
+.subtitle{font-family:'Fredoka One',cursive;font-size:clamp(.9rem,2.2vw,1.05rem);color:#aac1de;margin-bottom:22px}
+
+.steps{display:flex;justify-content:center;gap:8px;margin:-6px 0 18px}
+.step-dot{width:30px;height:5px;border-radius:5px;background:rgba(244,208,63,.18)}
+.step-dot.active{background:#F4D03F;box-shadow:0 0 12px rgba(244,208,63,.6)}
+.step-dot.done{background:#52B788}
+
+.field{display:flex;align-items:center;gap:10px;background:rgba(5,12,22,.85);border:2px solid rgba(244,208,63,.35);border-radius:14px;padding:11px 14px;transition:border-color .2s, box-shadow .2s, transform .15s;margin-bottom:14px}
+.field:focus-within{border-color:#F4D03F;box-shadow:0 0 0 4px rgba(244,208,63,.18), 0 0 22px rgba(244,208,63,.25);transform:translateY(-1px)}
+.field-ico{font-size:1.3rem;line-height:1;color:#F4D03F}
+.field input{flex:1;background:transparent;border:0;outline:0;color:#f4f7fb;font-family:inherit;font-size:1.05rem;font-weight:700;direction:rtl}
+.field input.code{letter-spacing:.6em;font-size:1.4rem;text-align:center;direction:ltr;font-family:'Fredoka One',cursive}
+.field input::placeholder{color:rgba(220,230,242,.45);font-weight:700}
+
+.primary-btn{width:100%;font-family:'Fredoka One',cursive;font-size:1.2rem;background:linear-gradient(160deg,#F4D03F,#C9A227 60%,#9A7B1A);color:#060E1A;border:none;border-radius:18px;padding:14px 16px;cursor:pointer;box-shadow:0 8px 22px rgba(244,208,63,.45), 0 0 30px rgba(244,208,63,.2) inset;transition:transform .15s, box-shadow .15s, filter .15s;margin-top:6px;touch-action:manipulation}
+.primary-btn:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(244,208,63,.6)}
+.primary-btn[disabled]{filter:grayscale(.3) brightness(.85);cursor:not-allowed}
+
+.secondary-link{display:block;margin-top:14px;color:#6f8aab;font-size:.85rem;text-decoration:underline;background:transparent;border:none;cursor:pointer}
+.secondary-link:hover{color:#aac1de}
+
+.alert-pill{margin-top:14px;border-radius:12px;padding:10px 14px;font-weight:800;font-size:.95rem;opacity:0;transform:translateY(-4px);transition:opacity .25s, transform .25s;min-height:1px}
+.alert-pill.show{opacity:1;transform:translateY(0)}
+.alert-pill.error{background:rgba(231,76,60,.13);border:1.5px solid rgba(231,76,60,.55);color:#ffb6ad}
+.alert-pill.info{background:rgba(126,200,227,.12);border:1.5px solid rgba(126,200,227,.55);color:#bfe7f5}
+.alert-pill.success{background:rgba(82,183,136,.12);border:1.5px solid rgba(82,183,136,.55);color:#a4f0c8}
+
+.policy{font-size:.78rem;color:#7f9bbd;text-align:right;padding:4px 4px 8px;line-height:1.45}
+.policy b{color:#aac1de}
+
+[data-step]{display:none}
+[data-step].active{display:block}
+
+@media(max-width:420px){.card{padding:46px 22px 22px;border-radius:24px}.crown{top:-42px;font-size:52px}}
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+<div id="boardFloor"></div>
+
+<div class="card" id="card">
+  <div class="crown" aria-hidden="true">🔑</div>
+  <h1 class="title">איפוס סיסמה</h1>
+  <div class="subtitle" id="subtitle">נתחיל בלזהות אותך</div>
+
+  <div class="steps" aria-hidden="true">
+    <span class="step-dot active" id="dot-1"></span>
+    <span class="step-dot" id="dot-2"></span>
+    <span class="step-dot" id="dot-3"></span>
+  </div>
+
+  <!-- ─────────────────────────────── -->
+  <!--  Step 1: identifier             -->
+  <!-- ─────────────────────────────── -->
+  <form data-step="1" class="active" id="step1">
+    <label class="field" for="identifier">
+      <span class="field-ico">👤</span>
+      <input id="identifier" name="identifier" type="text" placeholder="שם משתמש או אימייל" required autocomplete="username" dir="rtl">
+    </label>
+    <button class="primary-btn" type="submit" id="step1Btn">✉️ שלח קוד למייל</button>
+  </form>
+
+  <!-- ─────────────────────────────── -->
+  <!--  Step 2: verify code            -->
+  <!-- ─────────────────────────────── -->
+  <form data-step="2" id="step2">
+    <label class="field" for="code">
+      <span class="field-ico">🔢</span>
+      <input id="code" name="code" type="text" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" placeholder="000000" required autocomplete="one-time-code" class="code">
+    </label>
+    <button class="primary-btn" type="submit" id="step2Btn">✅ אמת קוד</button>
+    <button type="button" class="secondary-link" id="resendBtn">שליחת קוד מחדש</button>
+  </form>
+
+  <!-- ─────────────────────────────── -->
+  <!--  Step 3: new password           -->
+  <!-- ─────────────────────────────── -->
+  <form data-step="3" id="step3">
+    <label class="field" for="newPassword">
+      <span class="field-ico">🔒</span>
+      <input id="newPassword" name="newPassword" type="password" placeholder="סיסמה חדשה" required minlength="6" maxlength="256" autocomplete="new-password">
+    </label>
+    <label class="field" for="confirmPassword">
+      <span class="field-ico">✅</span>
+      <input id="confirmPassword" name="confirmPassword" type="password" placeholder="אימות סיסמה חדשה" required minlength="6" maxlength="256" autocomplete="new-password">
+    </label>
+    <div class="policy">לפחות <b>6 תווים</b>, מתוכם <b>אות אחת</b> ו<b>ספרה אחת</b>.</div>
+    <button class="primary-btn" type="submit" id="step3Btn">🔐 עדכן סיסמה</button>
+  </form>
+
+  <div class="alert-pill" id="alertPill" role="alert" aria-live="polite"></div>
+
+  <button type="button" id="backToLogin" class="secondary-link">חזרה למסך הכניסה</button>
+</div>
+
+<script src="/auth/js/api.js"></script>
+<script>
+(function(){
+  'use strict';
+
+  (function drawStars(){
+    var wrap = document.getElementById('stars');
+    for (var i=0;i<70;i++){
+      var s=document.createElement('div'); s.className='star';
+      var r=(0.35+Math.random()*1.15).toFixed(2);
+      s.style.cssText='left:'+(Math.random()*100).toFixed(1)+'%;top:'+(Math.random()*100).toFixed(1)+'%;width:'+(r*2)+'px;height:'+(r*2)+'px;--tmax:'+(0.45+Math.random()*0.55).toFixed(2)+';--td:'+(2+Math.random()*3).toFixed(1)+'s;--tdelay:-'+(Math.random()*4).toFixed(1)+'s';
+      wrap.appendChild(s);
+    }
+  }());
+
+  var step1 = document.getElementById('step1');
+  var step2 = document.getElementById('step2');
+  var step3 = document.getElementById('step3');
+  var subtitle = document.getElementById('subtitle');
+  var alertEl = document.getElementById('alertPill');
+  var dots = [
+    document.getElementById('dot-1'),
+    document.getElementById('dot-2'),
+    document.getElementById('dot-3'),
+  ];
+
+  var state = { identifier: '' };
+
+  function showStep(n, sub){
+    [step1,step2,step3].forEach(function(el){ el.classList.remove('active'); });
+    var target = n===1?step1:(n===2?step2:step3);
+    target.classList.add('active');
+    if (sub) subtitle.textContent = sub;
+    dots.forEach(function(d,i){
+      d.classList.remove('active','done');
+      if (i < n-1) d.classList.add('done');
+      else if (i === n-1) d.classList.add('active');
+    });
+    var first = target.querySelector('input');
+    if (first) setTimeout(function(){ first.focus(); }, 50);
+  }
+  function showAlert(kind, msg){
+    alertEl.classList.remove('error','info','success');
+    alertEl.classList.add(kind);
+    alertEl.textContent = msg;
+    alertEl.classList.add('show');
+  }
+  function clearAlert(){ alertEl.classList.remove('show'); alertEl.textContent=''; }
+
+  document.getElementById('backToLogin').addEventListener('click', function(){
+    window.location.href = '/auth/login.html';
+  });
+
+  // ── Step 1: identifier → forgot-password ──
+  step1.addEventListener('submit', async function(ev){
+    ev.preventDefault();
+    clearAlert();
+    var id = document.getElementById('identifier').value.trim();
+    if (!id) { showAlert('error','יש להזין שם משתמש או אימייל'); return; }
+    state.identifier = id;
+    var btn = document.getElementById('step1Btn');
+    btn.disabled = true;
+    btn.textContent = 'שולח...';
+    try {
+      await window.ChessApi.post('/auth/forgot-password', { identifier: id });
+      showAlert('info','אם החשבון קיים ומחובר לאימייל, נשלח אליו קוד בן 6 ספרות. בדקו את תיבת הדואר.');
+      showStep(2, 'הזינו את הקוד שנשלח לאימייל');
+    } catch (err) {
+      if (err && err.status === 429) showAlert('error','יותר מדי נסיונות. נסו שוב בעוד כמה דקות.');
+      else showAlert('error','אירעה שגיאה. נסו שוב.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '✉️ שלח קוד למייל';
+    }
+  });
+
+  document.getElementById('resendBtn').addEventListener('click', async function(){
+    clearAlert();
+    if (!state.identifier) { showStep(1,'נתחיל בלזהות אותך'); return; }
+    try {
+      await window.ChessApi.post('/auth/forgot-password', { identifier: state.identifier });
+      showAlert('info','נשלח קוד חדש אם החשבון קיים.');
+    } catch (_e) {
+      showAlert('error','אירעה שגיאה. נסו שוב.');
+    }
+  });
+
+  // ── Step 2: code → verify-reset-code ──
+  step2.addEventListener('submit', async function(ev){
+    ev.preventDefault();
+    clearAlert();
+    var code = (document.getElementById('code').value||'').trim();
+    if (!/^\d{6}$/.test(code)) { showAlert('error','הקוד הוא 6 ספרות'); return; }
+    var btn = document.getElementById('step2Btn');
+    btn.disabled = true; btn.textContent = 'בודק…';
+    try {
+      await window.ChessApi.post('/auth/verify-reset-code', { identifier: state.identifier, code: code });
+      showStep(3, 'בחרו סיסמה חדשה');
+    } catch (err) {
+      if (err && err.status === 429) showAlert('error','יותר מדי נסיונות. נסו שוב בעוד כמה דקות.');
+      else showAlert('error','קוד שגוי או פג תוקף.');
+    } finally {
+      btn.disabled = false; btn.textContent = '✅ אמת קוד';
+    }
+  });
+
+  // ── Step 3: new password → reset-password ──
+  step3.addEventListener('submit', async function(ev){
+    ev.preventDefault();
+    clearAlert();
+    var p1 = document.getElementById('newPassword').value||'';
+    var p2 = document.getElementById('confirmPassword').value||'';
+    if (p1.length < 6) { showAlert('error','הסיסמה צריכה להיות לפחות 6 תווים'); return; }
+    if (!/[A-Za-zא-ת]/.test(p1) || !/[0-9]/.test(p1)) { showAlert('error','הסיסמה צריכה להכיל לפחות אות אחת וספרה אחת'); return; }
+    if (p1 !== p2) { showAlert('error','שתי הסיסמאות אינן זהות'); return; }
+    var btn = document.getElementById('step3Btn');
+    btn.disabled = true; btn.textContent = 'שומר…';
+    try {
+      await window.ChessApi.post('/auth/reset-password', { newPassword: p1, confirmPassword: p2 });
+      showAlert('success','הסיסמה עודכנה בהצלחה! מעבירים אותך למסך הכניסה...');
+      setTimeout(function(){ window.location.href = '/auth/login.html'; }, 1100);
+    } catch (err) {
+      btn.disabled = false; btn.textContent = '🔐 עדכן סיסמה';
+      if (err && err.status === 401) {
+        showAlert('error','אישור פג תוקף. אנא בקשו קוד חדש.');
+        showStep(1,'נתחיל בלזהות אותך');
+      } else if (err && err.code === 'validation_failed') {
+        showAlert('error', err.message || 'הקלט אינו תקין');
+      } else {
+        showAlert('error','אירעה שגיאה. נסו שוב.');
+      }
+    }
+  });
+
+  showStep(1, 'נתחיל בלזהות אותך');
+}());
+</script>
+</body>
+</html>
