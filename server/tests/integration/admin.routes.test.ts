@@ -41,8 +41,8 @@ describe('admin routes', () => {
     const res = await request(stack.app).get('/api/v1/admin/users').set('Cookie', admin.cookies);
     expect(res.status).toBe(200);
     const usernames = (res.body.users as Array<{ username: string }>).map((u) => u.username).sort();
-    // env-admin is NOT a DB row — only tomer + baruch are seeded.
-    expect(usernames).toEqual(['baruch', 'tomer']);
+    // env-admin is NOT a DB row — only the seeded demo accounts are listed.
+    expect(usernames).toEqual(['baruch', 'baruch_admin', 'tomer']);
   });
 
   it('admin can create a student, response includes a one-time temp password', async () => {

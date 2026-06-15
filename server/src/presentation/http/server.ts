@@ -100,7 +100,7 @@ async function main(): Promise<void> {
     appPublicName: env.APP_PUBLIC_NAME,
   });
 
-  const seedService = new SeedService({ usersRepo, passwordService });
+  const seedService = new SeedService({ usersRepo, progressRepo, passwordService });
   const seedResult = await seedService.seed();
   log.info({ seedResult }, 'seed done');
 

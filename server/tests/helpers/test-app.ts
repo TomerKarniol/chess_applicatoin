@@ -120,7 +120,7 @@ export async function buildTestStack(opts: BuildTestStackOptions = {}): Promise<
   };
   const passwordResetService = new PasswordResetService(resetDeps);
 
-  const seedService = new SeedService({ usersRepo, passwordService });
+  const seedService = new SeedService({ usersRepo, progressRepo, passwordService });
 
   if (opts.seed !== false) {
     await seedService.seed();
