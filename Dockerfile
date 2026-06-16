@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1
-#
 # אני מפלצת שחמט! — single-image build.
 #
 # The Express server in server/ serves BOTH the JSON API and the static Hebrew
