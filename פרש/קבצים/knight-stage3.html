@@ -77,6 +77,7 @@ body{
 
 /* ── Board layout ── */
 .coord-wrap{display:flex;align-items:center;gap:8px;direction:ltr;}
+.board-group{display:flex;align-items:flex-start;gap:8px;direction:ltr;}
 .rank-labels{
   display:flex;flex-direction:column;align-items:center;justify-content:space-around;
   height:calc(var(--cell)*8);
@@ -352,13 +353,15 @@ body{
 
 <!-- Board + coords -->
 <div class="coord-wrap">
-  <div class="rank-labels" id="rank-labels"></div>
-  <div>
-    <div class="board-outer" id="board-outer">
-      <div class="board" id="board"></div>
-      <div id="floating-knight"></div>
+  <div class="board-group">
+    <div class="rank-labels" id="rank-labels"></div>
+    <div>
+      <div class="board-outer" id="board-outer">
+        <div class="board" id="board"></div>
+        <div id="floating-knight"></div>
+      </div>
+      <div class="file-labels" id="file-labels"></div>
     </div>
-    <div class="file-labels" id="file-labels"></div>
   </div>
   <!-- Level buttons -->
   <div class="level-panel">
@@ -722,8 +725,8 @@ function onAllCollected(){
   scenIllegals[scenIdx] = illegalMoves;   // דורס ערך קודם של אותו תרחיש — מונע ספירה כפולה ב-retry
   const totalIllegal = Object.values(scenIllegals).reduce((a,b)=>a+b,0);
   const isLast  = (scenIdx === SCENARIOS.length - 1);
-  const perfect = totalIllegal <= 2 && !helpUsed && !timedOutSkip;  // scope-פונקציה: נדרש גם בבלוק ה-isLast השני (subText)
   if(isLast){
+    const perfect = totalIllegal <= 2 && !helpUsed && !timedOutSkip;
     KnightState.save('stage3', perfect);
     const stEl = document.getElementById('scen-stars');
     if(stEl){stEl.textContent=perfect?'⭐⭐⭐':'⭐⭐';stEl.style.display='block';}

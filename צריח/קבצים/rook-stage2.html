@@ -282,6 +282,8 @@ let mistakes=0;
 let coins=[];
 
 function getCellPx(){
+  const c=document.querySelector(".cell");
+  if(c){ const cw=c.getBoundingClientRect().width; if(cw>0) return cw; }
   const w=window.innerWidth;
   if(w<=360)return 40; if(w<=390)return 44; if(w<=430)return 48; if(w<=480)return 53; return 58;
 }

@@ -107,6 +107,7 @@ body{
 
 /* Board layout */
 .coord-wrap{display:flex;align-items:center;gap:8px;direction:ltr;}
+.board-group{display:flex;align-items:flex-start;gap:8px;direction:ltr;}
 .rank-labels{
   display:flex;flex-direction:column;align-items:center;justify-content:space-around;
   height:calc(var(--cell)*8);
@@ -467,12 +468,14 @@ body{
 
 <!-- Board + coords + level buttons -->
 <div class="coord-wrap" id="coord-wrap">
-  <div class="rank-labels" id="rank-labels"></div>
-  <div>
-    <div class="board-outer" id="board-outer">
-      <div class="board" id="board"></div>
+  <div class="board-group">
+    <div class="rank-labels" id="rank-labels"></div>
+    <div>
+      <div class="board-outer" id="board-outer">
+        <div class="board" id="board"></div>
+      </div>
+      <div class="file-labels" id="file-labels"></div>
     </div>
-    <div class="file-labels" id="file-labels"></div>
   </div>
   <!-- Level buttons (hidden in scenario 3) -->
   <div class="level-panel" id="level-panel">
@@ -917,10 +920,6 @@ function reloadMinefield(){
     const mines=cell.querySelectorAll('.board-mine');
     if(mines.length>0 && !mineSet.has(key)) mines.forEach(m=>m.remove());
   }
-  // שחזר את נראות המלכה — נסתרה (opacity:0) כשנתפסה בוריאנט הקודם
-  const queenEl = document.querySelector('.board-queen');
-  if(queenEl) queenEl.style.opacity = '';
-
   positionKnight(knightRow,knightCol,true);
 
   // הצג הודעת וריאנט

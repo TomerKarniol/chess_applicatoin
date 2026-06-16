@@ -160,9 +160,14 @@ body{
   40%{transform:scale(1.8) rotate(15deg);opacity:.9;}
   100%{transform:scale(0) rotate(45deg);opacity:0;}
 }
-/* TARGET STAR — סיבוב עדין, ללא זוהר אדום (קנוני, תואם שלב 5) */
-.target-star{ animation:starSpin 3s linear infinite; }
-@keyframes starSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+/* TARGET X */
+.target-icon{
+  animation:targetPulse 1.5s ease-in-out infinite;
+}
+@keyframes targetPulse{
+  0%,100%{transform:scale(1);filter:drop-shadow(0 0 5px rgba(231,76,60,.7));}
+  50%{transform:scale(1.15);filter:drop-shadow(0 0 14px rgba(231,76,60,1));}
+}
 
 /* BISHOP */
 .bishop-piece{
@@ -330,7 +335,7 @@ body{
 <div class="phase-bar">
   <div class="phase-pill ph1 active" id="pill1">שלב א׳ 🗝️</div>
   <div class="phase-arrow">→</div>
-  <div class="phase-pill ph2" id="pill2">שלב ב׳ ⭐</div>
+  <div class="phase-pill ph2" id="pill2">שלב ב׳ ❌</div>
 </div>
 
 <!-- BOARD -->
@@ -560,7 +565,7 @@ function showExplosion(row,col){
 }
 
 /* ══ UTILS ══ */
-function getCellPx(){const w=window.innerWidth;if(w<=360)return 40;if(w<=390)return 44;if(w<=430)return 48;if(w<=480)return 53;return 58;}
+function getCellPx(){const c=document.querySelector('.cell');if(c){const cw=c.getBoundingClientRect().width;if(cw>0)return cw;}const w=window.innerWidth;if(w<=360)return 40;if(w<=390)return 44;if(w<=430)return 48;if(w<=480)return 53;return 58;}
 document.documentElement.style.setProperty('--cell',getCellPx()+'px');
 window.addEventListener('resize',()=>{
   document.documentElement.style.setProperty('--cell',getCellPx()+'px');
@@ -623,19 +628,19 @@ function renderIcons(){
     cell.appendChild(wrap);
   });
 
+  // X target — מוצג תמיד (בשתי הפאזות)
+  const tCell=getCell(TARGET.row,TARGET.col);
+  if(tCell&&!tCell.querySelector('.cell-icon')){
+    const x=document.createElement('div');x.className='cell-icon target-icon';x.textContent='❌';
+    tCell.appendChild(x);
+  }
+
   if(phase===1){
-    // 🗝️ מפתח — המטרה היחידה בפאזה א׳ (הכוכב מוסתר כדי שלא יבלבל את הסדר)
+    // מפתח
     const keyCell=getCell(KEY_POS.row,KEY_POS.col);
     if(keyCell){
       const k=document.createElement('div');k.className='cell-icon key-icon';k.id='key-icon';k.textContent='🗝️';
       keyCell.appendChild(k);
-    }
-  } else {
-    // ⭐ יעד — המטרה היחידה בפאזה ב׳
-    const tCell=getCell(TARGET.row,TARGET.col);
-    if(tCell&&!tCell.querySelector('.cell-icon')){
-      const star=document.createElement('div');star.className='cell-icon target-star';star.textContent='⭐';
-      tCell.appendChild(star);
     }
   }
 }

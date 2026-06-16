@@ -87,7 +87,7 @@ header{position:relative;z-index:10;display:flex;justify-content:space-between;a
 #albumOv.open{display:flex}
 
 .album-card{
-  width:100vw;height:100vh;position:relative;z-index:1;
+  width:100vw;height:100vh;height:100dvh;position:relative;z-index:1;
   padding:clamp(10px,1.8vh,22px) clamp(14px,2.5vw,44px) clamp(8px,1.4vh,16px);
   display:flex;flex-direction:column;gap:clamp(6px,1vh,12px);overflow:hidden;
 }
@@ -101,14 +101,11 @@ header{position:relative;z-index:10;display:flex;justify-content:space-between;a
 .album-sub{font-size:clamp(.75rem,1.3vw,.95rem);color:#55718a;text-align:center;margin-top:-6px;flex-shrink:0}
 
 .album-grid{
-  display:grid;grid-template-columns:repeat(6,1fr);grid-template-rows:repeat(4,1fr);
+  display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(5,1fr);
   gap:clamp(8px,1.2vw,16px);flex:1;min-height:0;
 }
-/* each sticker spans 2 of the 6 columns -> 3 per row (rows 0,1,2) */
-.album-grid > .a-slot{grid-column:span 2}
-/* last two: both on row 3, centered between the columns */
-.album-grid > .a-slot:nth-child(10){grid-column:2/4}  /* middle of col 0 & 1 */
-.album-grid > .a-slot:nth-child(11){grid-column:4/6}  /* middle of col 1 & 2 */
+.album-grid > .a-slot:nth-child(10){grid-column:2}
+.album-grid > .a-slot:nth-child(11){grid-column:2}
 
 /* ── Card base ── */
 .a-slot{
@@ -203,7 +200,6 @@ header{position:relative;z-index:10;display:flex;justify-content:space-between;a
 /* Mobile: 2 columns */
 @media(max-width:500px){
   .album-grid{grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(6,1fr)}
-  .album-grid > .a-slot{grid-column:auto}
   .album-grid > .a-slot:nth-child(10){grid-column:auto}
   .album-grid > .a-slot:nth-child(11){grid-column:1/-1;justify-self:center}
 }
@@ -314,10 +310,6 @@ header{position:relative;z-index:10;display:flex;justify-content:space-between;a
 </style>
 <script>if(localStorage.getItem("chess_just_completed"))document.documentElement.classList.add("skip-splash");</script>
 <style>.skip-splash #splashOv{display:none!important}</style>
-<!-- ── Auth + per-user progress glue (added by the server backend integration) ── -->
-<script src="/auth/js/api.js"></script>
-<script src="/auth/js/bridge.js"></script>
-<script src="/auth/js/auth-guard.js"></script>
 </head>
 <body>
 
@@ -368,24 +360,24 @@ header{position:relative;z-index:10;display:flex;justify-content:space-between;a
 // ═══════════════════════════════════════════
 const MODULES = [
   {id:'rook',         name:'הצריח',         file:'../צריח/קבצים/rook-intro.html',                       x:10, y:84, color:'#7EC8E3', piece:'rook',         starThreshold:5},
-  {id:'bishop',       name:'הרץ',           file:'../רץ חדש/קבצים/bishop-intro.html',                  x:37, y:72, color:'#C39BD3', piece:'bishop',       starThreshold:6},
-  {id:'queen',        name:'המלכה',         file:'../מלכה/קבצים/queen-intro.html',                     x:65, y:83, color:'#F4D03F', piece:'queen',        starThreshold:4},
-  {id:'pawn',         name:'הרגלי',         file:'../רגלי/קבצים/pawn-intro.html',                      x:95, y:63, color:'#52B788', piece:'pawn',         starThreshold:3},
-  {id:'knight',       name:'הפרש',          file:'../פרש/קבצים/knight-intro.html',                     x:81, y:40, color:'#FF6B35', piece:'knight',       starThreshold:5},
-  {id:'king',         name:'המלך',          file:'../מלך/קבצים/king-intro.html',                       x:53, y:59, color:'#F4D03F', piece:'king',         starThreshold:4},
-  {id:'officers-game',name:'משחק הקצינים', file:'../משחק הקצינים/officers-intro.html',                x:10, y:45, color:'#9B59B6', piece:'officers-game',starThreshold:0},
-  {id:'check',        name:'שח!',           file:'../שח למלך/קבצים/check-intro.html',                  x:25, y:18, color:'#E74C3C', piece:'check',        starThreshold:4},
-  {id:'defense',      name:'הגנה על המלך', file:'../התגוננות משח/קבצים/check-defense-intro.html',     x:60, y:35, color:'#52B788', piece:'shield',       starThreshold:3},
-  {id:'checkmate',    name:'שחמט!',         file:'../מט/קבצים/checkmate-intro.html',                   x:90, y:17, color:'#F4D03F', piece:'trophy',       starThreshold:6},
-  {id:'tofeset',      name:'מאסטר מפלצת שחמט', file:'../משחקי שחמט/קבצים/tofeset-opening.html', x:50, y:10, color:'#F4D03F', piece:'certificate', starThreshold:0},
+  {id:'bishop',       name:'הרץ',           file:'../רץ חדש/קבצים/bishop-intro.html',                  x:33, y:72, color:'#C39BD3', piece:'bishop',       starThreshold:6},
+  {id:'queen',        name:'המלכה',         file:'../מלכה/קבצים/queen-intro.html',                     x:65, y:80, color:'#F4D03F', piece:'queen',        starThreshold:4},
+  {id:'pawn',         name:'הרגלי',         file:'../רגלי/קבצים/pawn-intro.html',                      x:90, y:63, color:'#52B788', piece:'pawn',         starThreshold:3},
+  {id:'knight',       name:'הפרש',          file:'../פרש/קבצים/knight-intro.html',                     x:75, y:40, color:'#FF6B35', piece:'knight',       starThreshold:5},
+  {id:'king',         name:'המלך',          file:'../מלך/קבצים/king-intro.html',                       x:45, y:52, color:'#F4D03F', piece:'king',         starThreshold:4},
+  {id:'officers-game',name:'משחק הקצינים', file:'../משחק הקצינים/officers-intro.html',                x:10, y:33, color:'#9B59B6', piece:'officers-game',starThreshold:0},
+  {id:'check',        name:'שח!',           file:'../שח למלך/קבצים/check-intro.html',                  x:33, y:12, color:'#E74C3C', piece:'check',        starThreshold:4},
+  {id:'defense',      name:'הגנה על המלך', file:'../התגוננות משח/קבצים/check-defense-intro.html',     x:57, y:22, color:'#52B788', piece:'shield',       starThreshold:3},
+  {id:'checkmate',    name:'שחמט!',         file:'../מט/קבצים/checkmate-intro.html',                   x:90, y:11, color:'#F4D03F', piece:'trophy',       starThreshold:6},
+  {id:'tofeset',      name:'מאסטר מפלצת שחמט', file:'../משחקי שחמט/קבצים/tofeset-opening.html', x:50, y:6, color:'#F4D03F', piece:'certificate', starThreshold:0},
 ];
 
 const STICKER = {
-  rook:'rook.png', bishop:'bishop.png', queen:'QUEEN.png', pawn:'pawn.png',
+  rook:'rook.png', bishop:'bishop.png', queen:'queen.png', pawn:'pawn.png',
   knight:'knight.png', king:'king.png', check:'check.png',
   defense:'defence.png', checkmate:'checkmate.png',
   'officers-game':'officer.png',
-  'tofeset': 'master.png'
+  'tofeset':'../משחקי שחמט/קבצים/master.png'
 };
 
 const FW_COLORS = ['#F4D03F','#E74C3C','#3498DB','#2ECC71','#9B59B6','#FF6B35','#1ABC9C'];

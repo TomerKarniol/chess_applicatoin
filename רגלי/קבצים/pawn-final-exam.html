@@ -537,7 +537,7 @@ function buildScenarioPieces() {
 // ════════════════════════════════════════
 //  GAME STATE
 // ════════════════════════════════════════
-const FILES = ['a','b','c','d','e','f','g','h'];
+const FILES = ['A','B','C','D','E','F','G','H'];
 const START_QUEEN = {row:0, col:3};
 const START_PAWNS   = [0,1,2,3,4,5,6,7].map(c => ({row:6, col:c}));
 const START_PAWNS_S2 = [0,1,2,3,5,6,7].map(c => ({row:6, col:c})); // scenario 2 קשה — 7 רגלים, E2 = סמיילי
@@ -550,7 +550,7 @@ let winsS1 = 0, winsS2 = 0, cardUnlocked = false;
 let introGlow = false; // pawns blink at game start only
 
 // Read actual cell size from CSS (responsive-safe)
-function getCellSz(){return parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell'))||68;}
+function getCellSz(){const pr=document.createElement('div');pr.style.cssText='position:absolute;visibility:hidden;width:var(--cell);height:0;';document.body.appendChild(pr);const w=pr.getBoundingClientRect().width;pr.remove();return w||68;}
 
 function vRow(r) { return scenario === 2 ? 7 - r : r; }
 function vCol(c) { return scenario === 2 ? 7 - c : c; }

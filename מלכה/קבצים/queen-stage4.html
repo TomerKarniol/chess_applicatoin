@@ -22,7 +22,7 @@ body{
   --gold:#F4D03F;--gold-dark:#C9A227;--gold-deep:#9A7B1A;
   --purple:#C39BD3;--blue:#7EC8E3;--green:#52B788;--red:#E74C3C;
   --bg1:#162D4A;--bg2:#0C1E30;--bg3:#060E1A;
-  --cell:54px;
+  --cell: clamp(38px, min(calc((100vw - 52px) / 8), calc((100vh - 210px) / 8)), 54px);
   --cell-light:#C9E4F5;--cell-dark:#4A7FA5;
   --module-accent:var(--purple);--module-accent-rgb:195,155,211;
 }
@@ -61,6 +61,7 @@ body{
 .file-labels{display:flex;justify-content:space-around;
   width:calc(var(--cell)*8);margin-top:4px;
   font-family:'Fredoka One',cursive;font-size:.72rem;color:var(--gold);opacity:.8;}
+@media (max-height: 700px) {:root { --cell: clamp(30px, min(calc((100vw - 52px) / 8), calc((100vh - 170px) / 8)), 46px); }}
 .board-outer{position:relative;border:3px solid var(--gold-dark);border-radius:6px;overflow:hidden;
   box-shadow:0 6px 28px rgba(0,0,0,.6),0 0 20px rgba(244,208,63,.12);}
 .board{
@@ -294,6 +295,7 @@ for(let i=0;i<55;i++){
 
 // ══ RESPONSIVE --cell ══
 function getCellPx(){
+  const c=document.querySelector('.cell'); if(c){const cw=c.getBoundingClientRect().width; if(cw>0) return cw;}
   const w=window.innerWidth,h=window.innerHeight;
   if(h<=600) return Math.max(36,Math.floor((w-40)/8));
   if(w<=360)  return 40;

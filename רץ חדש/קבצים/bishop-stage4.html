@@ -37,7 +37,7 @@ body{
 :root{ --board-size:calc(var(--cell)*8); }
 
 /* HEADER — board-aligned */
-.hdr{display:flex;align-items:center;justify-content:space-between;
+.hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;row-gap:6px;
   width:var(--board-size);margin-bottom:8px;z-index:1;}
 .stage-badge{font-family:'Fredoka One',cursive;font-size:.85rem;
   background:rgba(244,208,63,.12);border:1.5px solid rgba(244,208,63,.35);
@@ -410,7 +410,7 @@ function showExplosion(row,col){
 for(let i=0;i<55;i++){const s=document.createElement('div');s.className='star-dot';const sz=Math.random()*2.2+.7;s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}vw;top:${Math.random()*100}vh;animation-duration:${1.5+Math.random()*2.5}s;animation-delay:${Math.random()*3}s;`;document.body.appendChild(s);}
 
 // ══ UTILS ══
-function getCellPx(){const w=window.innerWidth,h=window.innerHeight;if(h<=600)return Math.min(36,Math.floor((w-24)/8));if(w<=360)return 40;if(w<=390)return 44;if(w<=430)return 48;if(w<=480)return 53;return 58;}
+function getCellPx(){const c=document.querySelector('.cell');if(c){const cw=c.getBoundingClientRect().width;if(cw>0)return cw;}const w=window.innerWidth,h=window.innerHeight;if(h<=600)return Math.min(36,Math.floor((w-24)/8));if(w<=360)return 40;if(w<=390)return 44;if(w<=430)return 48;if(w<=480)return 53;return 58;}
 document.documentElement.style.setProperty('--cell',getCellPx()+'px');
 window.addEventListener('resize',()=>{
   document.documentElement.style.setProperty('--cell',getCellPx()+'px');

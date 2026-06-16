@@ -63,6 +63,7 @@ body{
 
 /* Board area */
 .coord-wrap{display:flex;align-items:flex-start;gap:4px;direction:ltr;animation:fadeUp .4s .2s ease both;}
+.board-group{display:flex;align-items:flex-start;gap:4px;direction:ltr;}
 .rank-labels{display:flex;flex-direction:column;justify-content:space-around;
   height:calc(var(--cell)*8);padding:0 4px;
   font-family:'Fredoka One',cursive;font-size:.75rem;font-weight:900;color:#F4D03F;}
@@ -362,12 +363,14 @@ body{
 
 <!-- Board -->
 <div class="coord-wrap" id="coord-wrap">
-  <div class="rank-labels" id="rank-labels"></div>
-  <div>
-    <div class="board-outer" id="board-outer">
-      <div class="board" id="board"></div>
+  <div class="board-group">
+    <div class="rank-labels" id="rank-labels"></div>
+    <div>
+      <div class="board-outer" id="board-outer">
+        <div class="board" id="board"></div>
+      </div>
+      <div class="file-labels" id="file-labels"></div>
     </div>
-    <div class="file-labels" id="file-labels"></div>
   </div>
   <!-- Level buttons -->
   <div class="level-panel">

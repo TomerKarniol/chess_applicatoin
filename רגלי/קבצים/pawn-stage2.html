@@ -435,7 +435,7 @@ let selectedPawn = -1;  // for scenario 1
 let introGlow    = false; // pawns blink at game start (scenario 1 only)
 let _gameId      = 0;    // מזהה משחק — מבטל timeouts ישנים בעת מעבר בין משחקים
 // Cell size — responsive (syncs with CSS --cell breakpoints)
-function getSZ(){ return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--cell'))||68; }
+function getSZ(){ const cell=document.querySelector('.cell'); if(cell){const w=cell.getBoundingClientRect().width; if(w>0) return w;} const pr=document.createElement('div'); pr.style.cssText='position:absolute;visibility:hidden;width:var(--cell);height:0;'; document.body.appendChild(pr); const w=pr.getBoundingClientRect().width; pr.remove(); return w||68; }
 
 // Board orientation helpers
 function isFlipped(){ return scenario === 2; }

@@ -68,8 +68,7 @@ body{
 
 /* BOARD OUTER — border on board itself (bishop = gold tint) */
 .board-outer{
-  position:relative;
-  width:var(--board-size);height:var(--board-size);
+  position:relative;display:inline-block;direction:ltr;
   border:3px solid var(--gold-dark);
   border-radius:6px;overflow:hidden;
   box-shadow:0 0 40px rgba(244,208,63,.35),0 0 70px rgba(244,208,63,.12),0 8px 32px rgba(0,0,0,.7);
@@ -368,7 +367,7 @@ for(let i=0;i<55;i++){const s=document.createElement('div');s.className='star-do
 // ══════════════════════════════════════════
 const getCell=(r,c)=>document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
 function getCellPx(){
-  const w=window.innerWidth,h=window.innerHeight;
+  const c=document.querySelector('.cell');if(c){const cw=c.getBoundingClientRect().width;if(cw>0)return cw;}const w=window.innerWidth,h=window.innerHeight;
   if(h<=600)return Math.min(36,Math.floor((w-24)/8));
   if(w<=360)return 40; if(w<=390)return 44; if(w<=430)return 48; if(w<=480)return 53; return 58;
 }
