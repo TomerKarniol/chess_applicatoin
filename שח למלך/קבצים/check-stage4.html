@@ -30,8 +30,6 @@ body {
   animation:twinkle ease-in-out infinite alternate; pointer-events:none;
 }
 @keyframes twinkle { from{opacity:.1;transform:scale(.8)} to{opacity:.85;transform:scale(1.2)} }
-@keyframes sp-in { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
-@keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
 
 /* GAME WRAP */
 .game-wrap {
@@ -330,6 +328,12 @@ body {
   animation:burst-anim .6s ease-out forwards;
 }
 @keyframes burst-anim { 0%{transform:translate(0,0) scale(1);opacity:1;} 100%{transform:translate(var(--bx),var(--by)) scale(0);opacity:0;} }
+/* Short-viewport (e.g. tiny phones / landscape): trim nested vertical chrome so the
+   hint button below the board stays above the fold. Board already fits; only spacing shrinks. */
+@media (max-height: 660px){
+  body{ padding:6px 12px 10px; }
+  .game-wrap{ gap:5px; padding:6px 12px; }
+}
 </style>
 </head>
 <body>
@@ -560,6 +564,8 @@ function computeCell(){
   document.documentElement.style.setProperty('--cell', cell+'px');
 }
 computeCell();
+requestAnimationFrame(handleViewportChange);          // B11: full re-fit (cell+pieces) after viewport-meta applies
+window.addEventListener("load", handleViewportChange); // B11: backstop after full load
 
 // ── Reposition pieces on viewport change ──
 // Reads each piece's square straight from the DOM (top/left ÷ cell), so it re-places the

@@ -11,19 +11,18 @@
 * { box-sizing:border-box; margin:0; padding:0; }
 html { -webkit-text-size-adjust:100%; }
 :root {
-  --cell: max(
-    min(
-      calc((100vh - 200px) / 8),
-      calc((100vw - 40px) / 8)
-    ),
-    40px
-  );
+  --cell:58px;
   --board-size:calc(var(--cell)*8);
   --cell-light:#C9E4F5; --cell-dark:#4A7FA5;
   --gold:#F4D03F; --gold-dark:#C9A227;
   --red:#E74C3C; --green:#52B788; --blue:#7EC8E3;
   --purple:#C39BD3;
 }
+@media(max-width:480px){:root{--cell:53px;}}
+@media(max-width:430px){:root{--cell:48px;}}
+@media(max-width:390px){:root{--cell:44px;}}
+@media(max-width:360px){:root{--cell:40px;}}
+@media(max-height:600px){:root{--cell:36px;}}
 body {
   font-family:'Nunito',sans-serif;
   background:radial-gradient(ellipse at 50% 0%,#162D4A 0%,#0C1E30 55%,#060E1A 100%);
@@ -32,7 +31,8 @@ body {
   overflow:hidden; overflow-x:hidden; user-select:none;
   overscroll-behavior:none;
   -webkit-tap-highlight-color:transparent;
-  padding-bottom:env(safe-area-inset-bottom);
+  padding:16px 12px;
+  padding-bottom:max(16px,env(safe-area-inset-bottom));
 }
 .star-dot { position:fixed; border-radius:50%; background:white;
   animation:twinkle ease-in-out infinite alternate; pointer-events:none; }
@@ -40,7 +40,7 @@ body {
 
 .game-wrap {
   position:relative; z-index:1; display:flex; flex-direction:column;
-  align-items:center; gap:10px; padding:16px 12px;
+  align-items:center; gap:10px; width:100%;
   opacity:0; transition:opacity .5s ease;
 }
 .game-wrap.visible { opacity:1; }
@@ -85,7 +85,7 @@ body {
 .instruction.phase2 { color:#C39BD3; border-color:rgba(195,155,211,.3); background:rgba(195,155,211,.08); }
 
 /* BOARD */
-.coord-wrap { display:flex; align-items:center; gap:8px; direction:ltr; }
+.coord-wrap { display:flex; align-items:flex-start; gap:5px; direction:ltr; }
 .rank-labels {
   display:flex; flex-direction:column; height:var(--board-size);
   justify-content:space-around; font-family:'Fredoka One',cursive; font-size:.72rem;
@@ -297,9 +297,11 @@ for(let i=0;i<55;i++){
 }
 
 function getCell(){
-  const fromH = (window.innerHeight - 200) / 8;
-  const fromW = (window.innerWidth - 40) / 8;
-  return Math.max(Math.min(fromH, fromW), 40);
+  const w = window.innerWidth;
+  const px = w<=360?40 : w<=390?44 : w<=430?48 : w<=480?53 : 58;
+  document.documentElement.style.setProperty('--cell', px+'px');
+  document.documentElement.style.setProperty('--board-size', (px*8)+'px');
+  return px;
 }
 let CELL = 64;
 const FILES_ARR = ['A','B','C','D','E','F','G','H'];
@@ -793,12 +795,18 @@ buildBoard();
 loadScenario(0);
 setTimeout(()=>document.getElementById('game-wrap').classList.add('visible'),100);
 
+let _rzT, _rzCell = CELL;
 window.addEventListener('resize', ()=>{
-  CELL = getCell();
-  const bs = CELL*8;
-  document.getElementById('laser-svg').setAttribute('viewBox',`0 0 ${bs} ${bs}`);
-  buildBoard();
-  loadScenario(scenIdx);
+  clearTimeout(_rzT);
+  _rzT = setTimeout(()=>{
+    const nc = getCell();              // מסנכרן --cell/--board-size תמיד
+    if(nc === _rzCell) return;         // לא נחצה breakpoint → שמור את כל מצב התרחיש
+    _rzCell = nc; CELL = nc;
+    const bs = CELL*8;
+    document.getElementById('laser-svg').setAttribute('viewBox',`0 0 ${bs} ${bs}`);
+    buildBoard();
+    loadScenario(scenIdx);
+  }, 150);
 });
 </script>
 </body>

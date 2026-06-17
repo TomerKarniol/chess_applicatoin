@@ -1321,7 +1321,7 @@ function syncCellSize(){
   // מיקום מחדש של הפרש הצף — הוא ממוקם ב-px לפי גודל התא
   positionKnight(knightRow, knightCol, false);
 }
-syncCellSize();
+/* B11 fix (rook pattern): no parse-time --cell clobber; CSS media-query holds at first paint; buildBoard places knight via measure-first getCellSize; syncs on resize */
 window.addEventListener('resize', syncCellSize);
 // iOS: נעילת אודיו על המחווה הראשונה
 document.addEventListener('click', ()=>{ try{ getCtx(); }catch(e){} }, {once:true});

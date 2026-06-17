@@ -457,7 +457,7 @@ function showExplosion(row,col){
 // ══════════════════════════════════════════
 const getCell=(r,c)=>document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
 function getCellPx(){const c=document.querySelector('.cell');if(c){const cw=c.getBoundingClientRect().width;if(cw>0)return cw;}const w=window.innerWidth,h=window.innerHeight;if(h<=600)return Math.min(36,Math.floor((w-24)/8));if(w<=360)return 40;if(w<=390)return 44;if(w<=430)return 48;if(w<=480)return 53;return 58;}
-document.documentElement.style.setProperty('--cell',getCellPx()+'px');
+/* B11 fix (rook pattern): CSS media-query holds at first paint; JS syncs only on resize */
 window.addEventListener('resize',()=>{
   document.documentElement.style.setProperty('--cell',getCellPx()+'px');
   if(bPos.row!=null)placeBishop(bPos.row,bPos.col,false);

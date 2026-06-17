@@ -243,8 +243,12 @@ var WK='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g style="fi
    INITIAL STATE
 ═══════════════════════════════════ */
 /* SZ נגזר מ-CSS --cell כדי שלא יהיו שתי הגדרות נפרדות */
-var SZ=parseInt(getComputedStyle(document.documentElement)
-      .getPropertyValue('--cell'),10)||54;
+function getSZ(){
+  var cell=document.querySelector('#board .sq');
+  if(cell){var w=cell.getBoundingClientRect().width;if(w>0)return w;}
+  return parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell'),10)||54;
+}
+var SZ=getSZ();
 var TOTAL=10;
 var INIT=[
   {id:'kA8',sym:'♞',type:'knight',row:0,col:0},
@@ -451,6 +455,7 @@ function buildBoard(){
     }
   }
   // laser svg size
+  SZ=getSZ();
   var px=SZ*8+6;
   var lsvg=document.getElementById('laser-svg');
   lsvg.setAttribute('viewBox','0 0 '+px+' '+px);
@@ -462,7 +467,12 @@ function buildBoard(){
 /* ═══════════════════════════════════
    LASER + X
 ═══════════════════════════════════ */
-function sqCtr(r,c){return{x:c*SZ+SZ/2+3,y:r*SZ+SZ/2+3};}
+function sqCtr(r,c){
+  var sq=document.getElementById('sq-'+r+'-'+c),outer=document.getElementById('board-outer');
+  if(sq&&outer){var sr=sq.getBoundingClientRect(),or=outer.getBoundingClientRect();
+    return{x:sr.left-or.left+sr.width/2,y:sr.top-or.top+sr.height/2};}
+  SZ=getSZ();return{x:c*SZ+SZ/2+3,y:r*SZ+SZ/2+3};
+}
 
 function showLasers(threats,tr,tc){
   var svg=document.getElementById('laser-svg');
@@ -714,8 +724,9 @@ function playWin(){
 ═══════════════════════════════════ */
 function showExplosion(row,col){
   var boardOuter=document.querySelector('.board-outer');
+  SZ=getSZ();
   var W=SZ*8,H=SZ*8;
-  var cx=col*SZ+SZ/2+3,cy=row*SZ+SZ/2+3;
+  var ctr=sqCtr(row,col),cx=ctr.x,cy=ctr.y;
   var canvas=document.createElement('canvas');
   canvas.width=W;canvas.height=H;
   canvas.style.cssText='position:absolute;left:0;top:0;width:'+W+'px;height:'+H+'px;z-index:30;pointer-events:none;';

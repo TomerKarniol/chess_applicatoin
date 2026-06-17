@@ -372,7 +372,7 @@ function getCellPx(){
   if(w<=360)return 40; if(w<=390)return 44; if(w<=430)return 48; if(w<=480)return 53; return 58;
 }
 // Sync CSS variable with JS-computed value
-document.documentElement.style.setProperty('--cell',getCellPx()+'px');
+/* B11 fix (rook pattern): no parse-time --cell clobber — CSS media-query holds at first paint; JS syncs only on resize */
 window.addEventListener('resize',()=>{
   document.documentElement.style.setProperty('--cell',getCellPx()+'px');
   if(bPos.row!=null)placeBishop(bPos.row,bPos.col,false);

@@ -450,7 +450,7 @@ body {
 // ════════════════════════════════════════════
 let C = 64;
 function computeCell() {
-  const newC = Math.max(Math.min(Math.floor((window.innerWidth - 40) / 8), 64), 44);
+  const newC = Math.max(Math.min(Math.floor((window.innerWidth - 56) / 8), 64), 40);
   if (newC !== C) { C = newC; document.documentElement.style.setProperty('--cell', C + 'px'); }
 }
 
@@ -1229,7 +1229,7 @@ buildGrid();
 shuffleScenarios();
 loadScenario(0);
 document.addEventListener('pointerdown', () => getCtx(), {once:true});
-window.addEventListener('resize', ()=>{ computeCell(); buildGrid(); loadScenario(scenIdx); });
+let _rzTimer=null; window.addEventListener('resize', ()=>{ clearTimeout(_rzTimer); _rzTimer=setTimeout(()=>{ const _prevC=C; computeCell(); if (C!==_prevC) { buildGrid(); loadScenario(scenIdx); } }, 150); });
 </script>
 </body>
 </html>

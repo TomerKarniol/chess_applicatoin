@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="he" dir="rtl" style="-webkit-text-size-adjust:100%;">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -81,7 +81,7 @@ body {
   color:#F4D03F; font-weight:bold;
 }
 .board-outer {
-  position:relative; width:var(--board-size); height:var(--board-size);
+  position:relative; box-sizing:content-box; width:var(--board-size); height:var(--board-size);
   border:4px solid transparent;
   border-radius:8px; overflow:hidden;
   background:linear-gradient(#162D4A,#162D4A) padding-box,
@@ -565,6 +565,8 @@ function computeCell(){
   document.documentElement.style.setProperty('--cell', cell+'px');
 }
 computeCell();
+requestAnimationFrame(handleViewportChange);          // B11: full re-fit (cell+pieces) after viewport-meta applies
+window.addEventListener("load", handleViewportChange); // B11: backstop after full load
 
 // ════════════════════════════════════════
 // PIECE ATTACK CALCULATIONS

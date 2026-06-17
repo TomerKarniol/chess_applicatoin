@@ -293,6 +293,8 @@ function computeCell(){
   return cell;
 }
 computeCell();
+requestAnimationFrame(computeCell);            // catch corrected innerWidth after viewport-meta applies
+window.addEventListener("load", computeCell);   // backstop after full load (mobile first-paint fix)
 // Arrows/pieces live inside an SVG with a FIXED logical viewBox that CSS stretches to the real
 // board size (width/height:100%). So arrow math uses fixed logical units (C) and stays aligned
 // at every screen size — no per-resize arrow recompute needed.

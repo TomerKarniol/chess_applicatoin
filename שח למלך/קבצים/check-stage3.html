@@ -730,6 +730,8 @@ function computeCell(){
   document.documentElement.style.setProperty('--cell', cell+'px');
 }
 computeCell();
+requestAnimationFrame(handleViewportChange);          // B11: full re-fit (cell+pieces) after viewport-meta applies
+window.addEventListener("load", handleViewportChange); // B11: backstop after full load
 
 // ── Reposition pieces on viewport change ──
 // Reads each piece's square straight from the DOM (top/left ÷ cell), so it correctly
