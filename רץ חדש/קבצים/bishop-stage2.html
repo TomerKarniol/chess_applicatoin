@@ -390,7 +390,11 @@ function placeCoin(){
 // ══════ DRAW PATH LINES ══════
 // Draws animated lines: startPos → midPos → endPos in given color,
 // then fades them out after ~1.3 seconds total.
-function drawFoundPath(from,mid,to,color){
+// השובל נשאר על הלוח: נתיב 1 דוהה ל"רפאים" (עוגן זיכרון לחיפוש נתיב 2);
+// כשנמצא הנתיב המשלים — שני השובלים נדלקים בעוצמה מלאה לרגע החגיגה.
+// loadScenario() מנקה את path-svg בכל תרחיש חדש, כך שאין הצטברות.
+const GHOST_OP=0.4;
+function drawFoundPath(from,mid,to,color,pathNum,isFinal){
   const svg=document.getElementById('path-svg');
   const px=getCellPx();
   const cx=pos=>pos.col*px+px/2, cy=pos=>pos.row*px+px/2;
@@ -403,17 +407,29 @@ function drawFoundPath(from,mid,to,color){
     line.setAttribute('stroke',color);
     line.setAttribute('stroke-width','5');
     line.setAttribute('stroke-linecap','round');
+    line.classList.add('trail');
+    line.dataset.path=pathNum;
     line.style.cssText=`stroke-dasharray:${len};stroke-dashoffset:${len};opacity:1;filter:drop-shadow(0 0 7px ${color});`;
     svg.appendChild(line);
     setTimeout(()=>{
       line.style.transition=`stroke-dashoffset ${dur}ms ease-in-out`;
       line.style.strokeDashoffset='0';
     },delay+30);
-    // Fade after fully drawn
+    // אחרי שהקו צויר במלואו:
     setTimeout(()=>{
-      line.style.transition='opacity 500ms ease-out';
-      line.style.opacity='0';
-      setTimeout(()=>line.remove(),550);
+      if(isFinal){
+        // הנתיב המשלים — מאירים את שני השובלים בעוצמה מלאה (ניגוד דו-צבעי)
+        svg.querySelectorAll('.trail').forEach(l=>{
+          l.style.transition='opacity 400ms ease-out, filter 400ms ease-out';
+          l.style.opacity='1';
+          l.style.filter=`drop-shadow(0 0 9px ${l.getAttribute('stroke')})`;
+        });
+      }else{
+        // נתיב 1 — דוהה לעוגן-רפאים ונשאר על הלוח
+        line.style.transition='opacity 450ms ease-out, filter 450ms ease-out';
+        line.style.opacity=GHOST_OP;
+        line.style.filter=`drop-shadow(0 0 4px ${color})`;
+      }
     },delay+dur+350);
     return line;
   }
@@ -585,7 +601,7 @@ function registerFoundPath(){
 
     // Draw trail (different colour per path)
     const trailColor=pathNum===1?'#F4D03F':'#7EC8E3';
-    drawFoundPath(startPos,intermedPos,coinPos,trailColor);
+    drawFoundPath(startPos,intermedPos,coinPos,trailColor,pathNum,foundPaths.length>=2);
 
     spawnParticles(coinPos.row,coinPos.col);
     sndPath();
