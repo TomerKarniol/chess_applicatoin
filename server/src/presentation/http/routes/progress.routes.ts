@@ -1,6 +1,7 @@
 import { Router, type RequestHandler } from 'express';
 import type { ProgressService } from '../../../application/services/progress.service.js';
 import { progressBodySchema } from '../validators/progress.schema.js';
+import { shouldUnlockAllModules } from '../../../domain/progress.js';
 import { UnauthenticatedError } from '../../../shared/errors.js';
 
 export interface ProgressRouterDeps {
@@ -19,7 +20,10 @@ export function buildProgressRouter(deps: ProgressRouterDeps): Router {
   router.get('/progress', (req, res, next) => {
     try {
       if (!req.auth) throw new UnauthenticatedError();
-      const snapshot = deps.progressService.getForUser(req.auth.user.id);
+      const snapshot = deps.progressService.getForUser(
+        req.auth.user.id,
+        shouldUnlockAllModules(req.auth.user),
+      );
       res.status(200).json(snapshot);
     } catch (err) {
       next(err);

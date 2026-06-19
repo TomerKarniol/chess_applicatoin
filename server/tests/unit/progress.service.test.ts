@@ -4,7 +4,11 @@ import { runMigrations } from '../../src/infrastructure/db/migrator.js';
 import { UsersRepository } from '../../src/infrastructure/repositories/users.repository.js';
 import { ProgressRepository } from '../../src/infrastructure/repositories/progress.repository.js';
 import { ProgressService } from '../../src/application/services/progress.service.js';
-import type { ProgressSnapshot } from '../../src/domain/progress.js';
+import {
+  ALL_MODULE_IDS,
+  shouldUnlockAllModules,
+  type ProgressSnapshot,
+} from '../../src/domain/progress.js';
 
 describe('ProgressService', () => {
   let db: ReturnType<typeof openDb>;
@@ -68,6 +72,18 @@ describe('ProgressService', () => {
     expect(svc.getForUser(baruch.id).completed).toEqual(['queen']);
   });
 
+  it('returns a fully-completed snapshot when unlockAll is set, regardless of stored state', () => {
+    const u = users.create({ username: 'baruch_admin', passwordHash: 'h' });
+    // Even with a partial (or empty) stored snapshot, an unlock-all account
+    // sees every module — this is what makes the account device-independent.
+    svc.saveForUser(u.id, snap({ completed: ['rook'] }));
+
+    const view = svc.getForUser(u.id, true);
+    expect(view.completed).toEqual([...ALL_MODULE_IDS]);
+    // The stored row is untouched — the unlock is computed at read time only.
+    expect(svc.getForUser(u.id).completed).toEqual(['rook']);
+  });
+
   it('drops unknown fields when persisting (normalization)', () => {
     const u = users.create({ username: 'a', passwordHash: 'h' });
     svc.saveForUser(u.id, {
@@ -80,5 +96,19 @@ describe('ProgressService', () => {
     });
     const back = svc.getForUser(u.id);
     expect(Object.keys(back).sort()).toEqual(['cards', 'completed', 'currentModule', 'modules']);
+  });
+});
+
+describe('shouldUnlockAllModules', () => {
+  it('unlocks the seeded showcase account by username', () => {
+    expect(shouldUnlockAllModules({ username: 'baruch_admin', isAdmin: false })).toBe(true);
+  });
+
+  it('unlocks any admin account', () => {
+    expect(shouldUnlockAllModules({ username: 'someone', isAdmin: true })).toBe(true);
+  });
+
+  it('does not unlock ordinary players', () => {
+    expect(shouldUnlockAllModules({ username: 'tomer', isAdmin: false })).toBe(false);
   });
 });

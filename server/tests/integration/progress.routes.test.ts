@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import request from 'supertest';
 import { buildTestStack, type TestStack } from '../helpers/test-app.js';
 import { primeCsrf } from '../helpers/csrf.js';
+import { ALL_MODULE_IDS } from '../../src/domain/progress.js';
 
 /**
  * Helper: login a seeded user and return cookies + csrf token tied to the
@@ -129,6 +130,23 @@ describe('progress routes', () => {
       .get('/api/v1/progress')
       .set('Cookie', baruch2.cookies);
     expect(baruchNow.body.completed).toEqual(['queen']);
+  });
+
+  it('baruch_admin always sees every module unlocked, even after an empty snapshot is uploaded', async () => {
+    // Simulate a device with stale/empty localStorage clobbering the stored row,
+    // which is what made the account appear "locked" on other devices.
+    const admin = await loginAs(stack, 'baruch_admin', 'baruch_admin');
+    await request(stack.app)
+      .put('/api/v1/progress')
+      .set('Cookie', admin.cookies)
+      .set('X-CSRF-Token', admin.csrfToken)
+      .send({ completed: [], cards: [], modules: {}, currentModule: null });
+
+    // A fresh login (any device) still gets the full set of completed modules.
+    const fresh = await loginAs(stack, 'baruch_admin', 'baruch_admin');
+    const res = await request(stack.app).get('/api/v1/progress').set('Cookie', fresh.cookies);
+    expect(res.status).toBe(200);
+    expect(res.body.completed).toEqual([...ALL_MODULE_IDS]);
   });
 
   it('PUT /progress validates the body', async () => {
