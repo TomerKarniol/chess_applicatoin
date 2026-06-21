@@ -199,6 +199,19 @@ export function createApp(deps: AppDeps): Express {
         etag: true,
         lastModified: true,
         maxAge: isProd ? '1h' : 0,
+        setHeaders: (res, filePath) => {
+          // HTML documents must always be revalidated. The frontend has no
+          // cache-busting (no hashed filenames), so a cached page would keep
+          // serving stale markup for up to `maxAge` — which is exactly how a
+          // device ended up running an old roadmap without the per-user
+          // progress sync scripts, falling back to its own localStorage and
+          // showing modules locked/unlocked inconsistently across devices.
+          // `no-cache` still allows cheap 304s via ETag/Last-Modified; it only
+          // forces the browser to check freshness before reusing the document.
+          if (filePath.endsWith('.html')) {
+            res.setHeader('Cache-Control', 'no-cache');
+          }
+        },
       }),
     ),
   );
