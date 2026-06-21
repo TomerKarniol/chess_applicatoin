@@ -1,0 +1,61 @@
+# fly.toml — אני מפלצת שחמט! on Fly.io
+#
+# Single-image deploy (frontend lessons + API) using the repo-root Dockerfile.
+# Persistence: the SQLite DB lives at DB_PATH=/data/chess.db, backed by the Fly
+# VOLUME mounted at /data below — so users + progress survive deploys/restarts.
+#
+# IMPORTANT (SQLite): keep this to ONE machine. SQLite is single-writer, so never
+# scale this app horizontally (no `fly scale count 2`). One machine + one volume.
+#
+# First-time setup (run once, from the repo root):
+#   fly launch --no-deploy --copy-config --name <your-unique-app-name>
+#       # ^ or: edit `app` below, then `fly apps create <name>`
+#   fly volumes create chess_data --region fra --size 1      # 1 GB ≈ $0.15/mo
+#   fly secrets set COOKIE_SECRET="$(openssl rand -hex 24)"  # REQUIRED (>=16 chars)
+#   fly secrets set ADMIN_PASSWORD="choose-a-strong-password"
+#   # Optional email (password-reset). Leave unset to use the dev console transport:
+#   fly secrets set SMTP_HOST="smtp.gmail.com" SMTP_USER="you@gmail.com" \
+#                   SMTP_PASS="app-password" SMTP_FROM="you@gmail.com"
+#   fly deploy
+#
+# Redeploy later:  fly deploy
+# Logs:            fly logs
+# Open:            fly open
+
+app = "chess-monster"          # ← must be globally unique; change if taken
+primary_region = "fra"         # Frankfurt — closest Fly region to Israel
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "3000"
+  STATIC_ROOT = ".."           # server runs from /app/server; ".." = repo root (lessons)
+  DB_PATH = "/data/chess.db"   # on the persistent volume below
+
+# Persistent storage for the SQLite database.
+[mounts]
+  source = "chess_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  # Cost-saver: the single machine sleeps when idle and wakes on the next request
+  # (~1s cold start). For zero cold starts (~$2/mo always-on) set
+  # min_machines_running = 1.
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "10s"
+    method = "GET"
+    path = "/healthz"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"             # bump to "512mb" only if it OOMs on boot

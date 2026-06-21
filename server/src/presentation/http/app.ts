@@ -22,6 +22,7 @@ import {
 import { requireAuthMiddleware } from './middleware/require-auth.js';
 import { requireCompletedSetupMiddleware } from './middleware/require-completed-setup.js';
 import { requireAdminMiddleware } from './middleware/require-admin.js';
+import { roadmapSyncInjectionMiddleware } from './middleware/roadmap-sync-injection.js';
 import { errorHandler, notFoundHandler } from './middleware/error-handler.js';
 import { buildHealthRouter } from './routes/health.routes.js';
 import { buildCsrfRouter } from './routes/csrf.routes.js';
@@ -190,6 +191,10 @@ export function createApp(deps: AppDeps): Express {
       next(err);
     }
   });
+
+  // Serve the roadmap with the per-user progress sync scripts injected, so the
+  // sync runs on every device regardless of the static HTML's current content.
+  app.use(roadmapSyncInjectionMiddleware(staticRoot));
 
   app.use(
     asHandler(
