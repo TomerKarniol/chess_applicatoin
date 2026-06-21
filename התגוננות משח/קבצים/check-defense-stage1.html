@@ -253,10 +253,7 @@ body {
 <div class="game-wrap" id="game-wrap">
   <div class="hdr">
     <div class="stage-badge" id="stage-badge">תרחיש 1/3</div>
-    <div class="game-title" style="display:flex;align-items:center;justify-content:center;gap:8px;">
-      שלב 1 - בריחה
-      <img id="title-king-icon" style="width:1.8rem;height:1.8rem;object-fit:contain;"/>
-    </div>
+    <div class="game-title">שלב 1 - בריחה</div>
     <button class="btn-mute" id="muteBtn" onclick="toggleMute()">🔊</button>
   </div>
 
@@ -393,7 +390,8 @@ let busy    = false;
 
 // ── Audio ──
 let audioCtx = null;
-let isMuted = localStorage.getItem('chess_muted') === 'true';
+let isMuted = ['true','1'].includes(localStorage.getItem('chess_muted'));
+{ const _mb = document.getElementById('muteBtn'); if(_mb) _mb.textContent = isMuted ? '🔇' : '🔊'; }
 
 function getAudio(){
   if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
@@ -473,8 +471,6 @@ function makePieceSVG(sym, isWhite) {
 }
 
 // ── Board helpers ──
-document.getElementById('title-king-icon').src =
-  'data:image/svg+xml,' + encodeURIComponent(WHITE_SVG['♔']);
 function rowCol(file,rank){ return { r:8-parseInt(rank), c:FILES_ARR.indexOf(file) }; }
 function cellId(file,rank){ const {r,c}=rowCol(file,rank); return `cell_${r}_${c}`; }
 function cellCenter(file,rank){ const {r,c}=rowCol(file,rank); return {x:c*CELL+CELL/2, y:r*CELL+CELL/2}; }

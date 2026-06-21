@@ -244,13 +244,7 @@ body {
 <div class="game-wrap" id="game-wrap">
   <div class="hdr">
     <div class="stage-badge" id="stage-badge">תרחיש 1/3</div>
-    <div class="game-title" style="display:flex;align-items:center;justify-content:center;gap:8px;">
-      אכילה
-      <svg width="28" height="28" viewBox="0 0 28 28" style="flex-shrink:0;filter:drop-shadow(0 0 6px rgba(244,208,63,.8));">
-        <path d="M14,14 L26,7 A13,13 0 1,0 26,21 Z" fill="#F4D03F"/>
-        <circle cx="14" cy="6" r="2" fill="#1a1a1a"/>
-      </svg>
-    </div>
+    <div class="game-title">שלב 3 - אכילה</div>
     <button class="btn-mute" id="muteBtn" onclick="toggleMute()">🔊</button>
   </div>
   <div class="progress-row" id="progress-row"></div>
@@ -391,7 +385,8 @@ let busy    = false;
 
 // ── Audio ──
 let audioCtx = null;
-let isMuted = localStorage.getItem('chess_muted') === 'true';
+let isMuted = ['true','1'].includes(localStorage.getItem('chess_muted'));
+{ const _mb = document.getElementById('muteBtn'); if(_mb) _mb.textContent = isMuted ? '🔇' : '🔊'; }
 function toggleMute(){
   isMuted = !isMuted;
   localStorage.setItem('chess_muted', isMuted);

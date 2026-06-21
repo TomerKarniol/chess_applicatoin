@@ -478,7 +478,7 @@ function playSound(type){
   }catch(e){}
 }
 
-// ══ HINT SMILEY — מופיע אחרי 5 / 10 שגיאות ════════════════════════
+// ══ HINT SMILEY — מופיע אחרי 3 / 6 / 9 שגיאות ════════════════════════
 function showHintSmiley(){
   // מצא פתרון שלא נמצא עדיין ואין עליו סמיילי
   const unfound=ALL_SOLUTIONS[scenIdx].filter(s=>{
@@ -563,9 +563,11 @@ function onCellClick(r,c){
     const cell=document.getElementById(`cell_${r}_${c}`);
     if(cell){cell.classList.remove('wflash');void cell.offsetWidth;cell.classList.add('wflash');}
     playSound('bad');
-    // רמז פדגוגי — 😊 על תא הפתרון אחרי 5 ו-10 שגיאות (ללא עונש מספרי)
-    if(scenErrors===5)  showHintSmiley();
-    if(scenErrors===10) showHintSmiley();
+    // רמז פדגוגי — 😊 על תא פתרון שטרם נמצא, אחרי 3/6/9 שגיאות (ללא עונש מספרי)
+    // כל הפעלה חושפת פתרון נוסף שטרם נמצא (מסנן unfound ב-showHintSmiley)
+    if(scenErrors===3) showHintSmiley();
+    if(scenErrors===6) showHintSmiley();
+    if(scenErrors===9) showHintSmiley();
   }
 }
 

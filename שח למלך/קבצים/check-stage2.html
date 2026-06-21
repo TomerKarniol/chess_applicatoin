@@ -82,11 +82,11 @@ body {
 }
 
 /* BOARD */
-.coord-wrap { display:flex; align-items:center; gap:12px; direction:ltr; max-width:100%; }
+.coord-wrap { display:flex; align-items:center; gap:6px; direction:ltr; max-width:100%; padding-right:18px; }
 .rank-labels {
   display:flex; flex-direction:column; height:var(--board-size);
   justify-content:space-around; font-family:'Fredoka One',cursive; font-size:.8rem;
-  color:#F4D03F; font-weight:bold; width:15px; text-align:center;
+  color:#F4D03F; font-weight:bold; width:12px; text-align:center;
 }
 .file-labels {
   display:flex; justify-content:space-around; width:var(--board-size);
@@ -216,7 +216,7 @@ body {
 #win-overlay {
   position:fixed; inset:0; z-index:450;
   display:flex; align-items:center; justify-content:center;
-  background:rgba(6,14,26,.9); opacity:0; pointer-events:none; transition:opacity .4s;
+  background:rgba(6,14,26,.97); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); opacity:0; pointer-events:none; transition:opacity .4s;
 }
 #win-overlay.show { opacity:1; pointer-events:all; }
 .win-card {
@@ -554,7 +554,7 @@ const updateScore = ()=>{}; // v2: no-op — מוחלף במערכת כוכבי�
 function computeCell(){
   // Derive the cell from the REAL viewport so the rank column + board always fit with no
   // horizontal clipping on mobile. Row needs 8*cell + 6(frame) + 15(ranks) + 12(gap) + 24(body pad).
-  const CHROME = 6 + 15 + 12 + 24 + 4;
+  const CHROME = 6 + 12 + 6 + 18 + 24 + 4;
   const avail  = Math.min(window.innerWidth, 720) - CHROME;
   const ideal  = window.innerWidth <= 600 ? 60 : 68;
   const cell   = Math.max(32, Math.min(ideal, Math.floor(avail / 8)));
@@ -568,7 +568,7 @@ window.addEventListener("load", handleViewportChange); // B11: backstop after fu
 // Cells/labels resize via CSS (var(--cell)); pieces use px top/left so must be re-placed
 // from the live model (pieces[] hold current positions, incl. ones that already checked).
 function repositionPieces(){
-  const px=getCellPx(); const BD=3;
+  const px=getCellPx(); const BD=0;
   const place=(el,row,col)=>{ if(el){ el.style.top=(row*px+BD)+'px'; el.style.left=(col*px+BD)+'px'; } };
   place(document.getElementById('king-piece'), KING.row, KING.col);
   pieces.forEach(p=>place(document.getElementById(p.id), p.row, p.col));
@@ -672,7 +672,7 @@ function placePieces(){
     const el=document.createElement('div');
     el.className='piece'; if(id) el.id=id;
     if(extraData) Object.assign(el.dataset, extraData);
-    const BD=3;
+    const BD=0;
     el.style.top=(row*px+BD)+'px'; el.style.left=(col*px+BD)+'px';
     el.style.display='flex'; el.style.alignItems='center'; el.style.justifyContent='center';
     const img=makePieceSVG(sym, isWhite);

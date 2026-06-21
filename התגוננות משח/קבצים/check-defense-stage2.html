@@ -75,7 +75,7 @@ body {
   font-family:'Fredoka One',cursive; font-size:1.26rem; color:#B0D8F0;
   background:rgba(126,200,227,.1); border:1.5px solid rgba(126,200,227,.2);
   border-radius:50px; padding:7px 22px; text-align:center;
-  min-height:40px; display:flex; align-items:center; justify-content:center;
+  min-height:66px; display:flex; align-items:center; justify-content:center;
   width:var(--board-size);
   direction:rtl; unicode-bidi:bidi-override;
   animation:instr-pulse 2.4s ease-in-out infinite;
@@ -465,7 +465,8 @@ let busy    = false;
 
 // ── Audio ──
 let audioCtx = null;
-let isMuted = localStorage.getItem('chess_muted') === 'true';
+let isMuted = ['true','1'].includes(localStorage.getItem('chess_muted'));
+{ const _mb = document.getElementById('muteBtn'); if(_mb) _mb.textContent = isMuted ? '🔇' : '🔊'; }
 function getAudio(){
   if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
   if(audioCtx.state==='suspended') audioCtx.resume();
