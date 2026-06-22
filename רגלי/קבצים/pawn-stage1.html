@@ -180,7 +180,8 @@ body{
 .score-count.w{color:var(--blue);}
 .score-count.b{color:#FF8888;}
 .turn-badge{
-  font-family:'Fredoka One',cursive;font-size:.95rem;padding:4px 13px;border-radius:20px;transition:all .3s;
+  font-family:'Fredoka One',cursive;font-size:.95rem;padding:0 13px;border-radius:20px;transition:background .3s,border-color .3s,color .3s;
+  white-space:nowrap;height:30px;display:inline-flex;align-items:center;justify-content:center;line-height:1;flex:0 0 auto;
 }
 .turn-badge.your-turn{background:rgba(82,183,136,.18);border:1.5px solid var(--green);color:var(--green);}
 .turn-badge.ai-turn{background:rgba(231,76,60,.15);border:1.5px solid var(--red);color:#FF8888;}
@@ -205,6 +206,12 @@ body{
 @media(max-width:479px){
   .coord-wrap{gap:3px;}
   .rank-labels{width:12px;font-size:.60rem;}
+}
+/* מסך צר מאוד (≤360px): צמצום שורת הניקוד כך שמחרוזת התור הארוכה לא תגלוש */
+@media(max-width:360px){
+  .turn-badge{font-size:.82rem;padding:0 10px;}
+  .score-side{font-size:.78rem;gap:4px;}
+  .score-mini{width:22px;height:25px;}
 }
 .board-outer{border:3px solid var(--gold-dark);border-radius:3px;position:relative;}
 .board-inner{overflow:hidden;position:relative;}
@@ -946,7 +953,7 @@ const AI_CONFIG = {
   thinkDelay: 700   // תמיד 700ms — לא פחות, לא יותר (chess-ai-difficulty-skill)
 };
 
-function showAIThinking(){ const el=document.getElementById('turn-badge');if(el){el.className='turn-badge ai-turn';el.textContent='השחור חושב... 🤔';} }
+function showAIThinking(){ const el=document.getElementById('turn-badge');if(el){el.className='turn-badge ai-turn';el.textContent='חושב... 🤔';} }
 function hideAIThinking(){ setTurnBadge('black'); }
 
 /* ═══════════════════════════════════════════════════════

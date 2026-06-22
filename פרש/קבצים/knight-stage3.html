@@ -725,8 +725,9 @@ function onAllCollected(){
   scenIllegals[scenIdx] = illegalMoves;   // דורס ערך קודם של אותו תרחיש — מונע ספירה כפולה ב-retry
   const totalIllegal = Object.values(scenIllegals).reduce((a,b)=>a+b,0);
   const isLast  = (scenIdx === SCENARIOS.length - 1);
+  // perfect מוצהר בתחום הפונקציה — נדרש גם בבלוק ה-subText למטה (היה block-scoped וגרם ל-ReferenceError בתרחיש האחרון → מסך קפוא)
+  const perfect = totalIllegal <= 2 && !helpUsed && !timedOutSkip;
   if(isLast){
-    const perfect = totalIllegal <= 2 && !helpUsed && !timedOutSkip;
     KnightState.save('stage3', perfect);
     const stEl = document.getElementById('scen-stars');
     if(stEl){stEl.textContent=perfect?'⭐⭐⭐':'⭐⭐';stEl.style.display='block';}

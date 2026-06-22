@@ -331,6 +331,18 @@
   </div>
 </div>
 
+<!-- DRAW OVERLAY -->
+<div id="draw-overlay" class="overlay">
+  <div class="ov-card" style="border-color:var(--blue);box-shadow:0 0 40px rgba(126,200,227,.3),0 10px 40px rgba(0,0,0,.6);">
+    <div class="ov-icon">🤝</div>
+    <div class="ov-title" style="color:var(--blue);">תיקו!</div>
+    <div class="ov-sub" id="draw-sub"></div>
+    <button class="btn-main" onclick="closeOverlays();resetGame()">🔄 נסו שוב</button>
+    <button class="btn-alt" id="draw-other-btn" onclick="loseOtherScenario()">נסו את התרחיש השני</button>
+    <button class="btn-alt" onclick="goBack()">בחרו תרחיש</button>
+  </div>
+</div>
+
 <!-- STAGE COMPLETE OVERLAY (beat both scenarios) -->
 <div id="stage-complete" class="overlay">
   <div class="ov-card" style="border-color:var(--gold);box-shadow:0 0 50px rgba(244,208,63,.35);">
@@ -1111,7 +1123,7 @@ function doS1RookAI(){
 
 function s1BackToPlayer(){
   if(G.over)return;
-  if(!hasAnyPawnMove()){handleLose('כל הרגלים חסומים! הצריח ניצח ♜');return;}
+  if(!hasAnyPawnMove()){handleDraw('הרגלי האחרון חסום — אין מהלך אפשרי! 🤝');return;}
   G.turn='pawns';
   renderBoard();
   setStatus('תורכם! בחרו רגלי להזיז ♙');
@@ -1162,7 +1174,11 @@ function startS2PawnAI(){
 function doS2PawnAI(){
   if(G.over)return;
   const mv=pawnAIMove();
-  if(!mv){s2BackToPlayer();return;}
+  if(!mv){
+    if(G.pawns.some(p=>p.alive)){handleDraw('הרגלים חסומים — אין מהלך אפשרי! 🤝');}
+    else s2BackToPlayer();
+    return;
+  }
   const pawn=G.pawns[mv.idx];
   const fromR=pawn.row,fromC=pawn.col;
 
@@ -1324,6 +1340,37 @@ function showWinOverlay(reason){
     :'';
   document.getElementById('win-overlay').classList.add('show');
   spawnParticles(); soundApplause();
+}
+
+function handleDraw(reason){
+  G.over=true;
+  selectedPawn=-1;
+  // אם השלב כבר הושלם (ניצחון ת"2) ושחקן חוזר לשפר — חזרה ל-stage-complete (כמו בהפסד)
+  if(scenario===2 && stageWon){
+    showStageComplete();
+    return;
+  }
+  document.getElementById('draw-sub').textContent=reason;
+  const other=scenario===1?2:1;
+  const otherBtn=document.getElementById('draw-other-btn');
+  otherBtn.textContent=`נסו תרחיש ${other}`;
+  otherBtn.style.display=(scenario===1&&!s2Unlocked)?'none':'block';
+  document.getElementById('draw-overlay').classList.add('show');
+  soundDraw();
+}
+
+// תיקו — מנגינה נייטרלית-עגולה (דפוס stage1)
+function soundDraw(){
+  if(isMuted) return;
+  try{
+    const ctx=getAudioCtx();const now=ctx.currentTime;
+    [[440,0],[392,.15],[440,.3]].forEach(([freq,delay])=>{
+      const o=ctx.createOscillator();const g=ctx.createGain();
+      o.type='triangle';o.frequency.value=freq;
+      g.gain.setValueAtTime(.18,now+delay);g.gain.exponentialRampToValueAtTime(.001,now+delay+.2);
+      o.connect(g);g.connect(ctx.destination);o.start(now+delay);o.stop(now+delay+.22);
+    });
+  }catch(e){}
 }
 
 function handleLose(reason){
@@ -1542,7 +1589,7 @@ function setStatus(msg,cls=''){
 }
 
 function closeOverlays(){
-  ['win-overlay','lose-overlay','stage-complete'].forEach(id=>{
+  ['win-overlay','lose-overlay','draw-overlay','stage-complete'].forEach(id=>{
     const el=document.getElementById(id);
     if(el)el.classList.remove('show');
   });

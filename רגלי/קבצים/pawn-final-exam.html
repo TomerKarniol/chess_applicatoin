@@ -142,12 +142,12 @@
 
     /* BOARD */
     .coord-wrap{display:flex;align-items:flex-start;gap:6px;direction:ltr;}
-    .rank-labels{display:flex;flex-direction:column;justify-content:space-around;height:calc(var(--cell)*8);padding:0 5px;}
-    .rank-labels span{font-size:.7rem;color:rgba(255,255,255,.5);font-weight:700;height:var(--cell);display:flex;align-items:center;justify-content:center;}
+    .rank-labels{display:flex;flex-direction:column;justify-content:space-around;height:calc(var(--cell)*8);padding:0 5px;color:var(--gold);}
+    .rank-labels span{font-size:.7rem;font-weight:700;height:var(--cell);display:flex;align-items:center;justify-content:center;}
     .board-outer{position:relative;border:3px solid var(--gold-dark);border-radius:6px;overflow:hidden;box-shadow:0 6px 28px rgba(0,0,0,.6),0 0 20px rgba(244,208,63,.12);}
     .board{display:grid;grid-template-columns:repeat(8,var(--cell));grid-template-rows:repeat(8,var(--cell));}
-    .file-labels{display:flex;width:calc(var(--cell)*8);padding:4px 0;}
-    .file-labels span{font-size:.7rem;color:rgba(255,255,255,.5);font-weight:700;width:var(--cell);text-align:center;}
+    .file-labels{display:flex;width:calc(var(--cell)*8);padding:4px 0;color:var(--gold);}
+    .file-labels span{font-size:.7rem;font-weight:700;width:var(--cell);text-align:center;}
     .sq{width:var(--cell);height:var(--cell);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:background .1s;touch-action:manipulation;}
     .sq.light{background:var(--cell-light);}
     .sq.dark{background:var(--cell-dark);}
@@ -384,7 +384,18 @@
     <div class="ov-title" id="il-title" style="color:var(--red);">משחק טוב, נסו שוב</div>
     <div class="ov-sub" id="il-sub"></div>
     <button class="btn-main" id="il-btn-retry">🔄 נסו שוב</button>
-    <button class="btn-alt" id="il-btn-cont" style="display:none;">המשיכו →</button>
+    <button class="btn-alt" id="il-btn-cont" style="display:none;">המשיכו ←</button>
+  </div>
+</div>
+
+<!-- DRAW OVERLAY -->
+<div id="draw-overlay" class="overlay">
+  <div class="ov-card" style="border-color:var(--blue);box-shadow:0 0 40px rgba(126,200,227,.3),0 10px 40px rgba(0,0,0,.6);">
+    <div class="ov-icon">🤝</div>
+    <div class="ov-title" style="color:var(--blue);">תיקו!</div>
+    <div class="ov-sub" id="draw-sub"></div>
+    <button class="btn-main" id="draw-retry-btn">🔄 נסו שוב</button>
+    <button class="btn-alt" onclick="goBack()">← בחרו תרחיש</button>
   </div>
 </div>
 
@@ -1144,7 +1155,11 @@ function doPlayerQueen(mv){
 // ── AI TURNS ──
 function startPAI(){if(G.over)return;G.turn='pawns';setStatus('הרגלים חושבים... ♙','var(--green)');setTimeout(doPAI,diff==='hard'?950:700);}
 function doPAI(){
-  if(G.over)return;const mv=pawnAIMove();if(!mv){startQTurn();return;}
+  if(G.over)return;const mv=pawnAIMove();if(!mv){
+    if(G.pawns.some(p=>p.alive)){rungDraw('הרגלים חסומים — אין מהלך אפשרי! 🤝');}
+    else startQTurn();
+    return;
+  }
   const p=G.pawns[mv.idx],fr=p.row,fc=p.col;
   if(mv.type==='captureQueen'){glide(false,fr,fc,mv.row,mv.col,()=>{playSound('capture');showExplosion(mv.row,mv.col);p.row=mv.row;p.col=mv.col;G.queen={row:-1,col:-1};setTimeout(()=>{renderBoard();G.over=true;setTimeout(()=>rungLose('😤','הרגלים אכלו את המלכה! 💥'),1500);},80);});}
   else if(mv.row===0){glide(false,fr,fc,mv.row,mv.col,()=>{p.row=mv.row;p.col=mv.col;renderBoard();playSound('promote');const sq=document.getElementById(`sq-0-${mv.col}`);if(sq){sq.innerHTML='';const img=mkImg('♕',true);if(img){img.classList.add('queen-pop');sq.appendChild(img);}}setTimeout(()=>{rungLose('👑','רגלי הפך למלכה! 👑');},1400);});}
@@ -1156,7 +1171,9 @@ function startQTurn(){
   setStatus('תורכם! זזו עם המלכה 👑','var(--gold)');
   renderBoard();
 }
-function startPTurn(){if(G.over)return;const alive=G.pawns.filter(p=>p.alive);if(!alive.length)return;G.turn='pawns';setStatus('תורכם! בחרו רגלי ♙','var(--green)');renderBoard();}
+function startPTurn(){if(G.over)return;const alive=G.pawns.filter(p=>p.alive);if(!alive.length)return;
+  if(getAllPawnMoves().length===0){rungDraw('הרגלי האחרון חסום — אין מהלך אפשרי! 🤝');return;}
+  G.turn='pawns';setStatus('תורכם! בחרו רגלי ♙','var(--green)');renderBoard();}
 
 function startQAI(){if(G.over)return;G.turn='queen';setStatus('המלכה חושבת... 👑','#c58be8');setTimeout(doQAI,diff==='hard'?900:650);}
 function doQAI(){
@@ -1349,8 +1366,32 @@ function completeLadder(){
   const bothHard=(s1WinLevel===2&&s2WinLevel===2);
   PawnState.save('stage3', bothHard);
   if(!cardUnlocked){ cardUnlocked=true; ChessState.addCompleted(MODULE_ID); ChessState.addCard(MODULE_ID); }
-  showFinalScore();soundApplause();
-  playVS(()=>document.getElementById('win-screen1').classList.add('show'));
+  showFinalScore();
+  document.getElementById('win-screen1').classList.add('show'); // הצג מיד — מכסה את הלוח ומונע הבזק
+  soundApplause();playVS();
+}
+
+function rungDraw(title){
+  G.over=true;
+  document.getElementById('draw-sub').textContent=title||'הרגלי תקוע — אין מהלך אפשרי! 🤝';
+  const retry=document.getElementById('draw-retry-btn');
+  retry.onclick=()=>{document.getElementById('draw-overlay').classList.remove('show');resetGame();};
+  soundDraw();
+  document.getElementById('draw-overlay').classList.add('show');
+}
+
+// תיקו — מנגינה נייטרלית-עגולה (דפוס stage1/stage2)
+function soundDraw(){
+  if(isMuted) return;
+  try{
+    const ctx=getAudioCtx();const now=ctx.currentTime;
+    [[440,0],[392,.15],[440,.3]].forEach(([freq,delay])=>{
+      const o=ctx.createOscillator();const g=ctx.createGain();
+      o.type='triangle';o.frequency.value=freq;
+      g.gain.setValueAtTime(.18,now+delay);g.gain.exponentialRampToValueAtTime(.001,now+delay+.2);
+      o.connect(g);g.connect(ctx.destination);o.start(now+delay);o.stop(now+delay+.22);
+    });
+  }catch(e){}
 }
 
 function rungLose(icon,title){
@@ -1405,7 +1446,7 @@ function startGame(sc,d){
 }
 
 function closeWinScreens(){
-  ['win-screen1','win-screen2','inter-win-screen','inter-lose-screen'].forEach(id=>{
+  ['win-screen1','win-screen2','inter-win-screen','inter-lose-screen','draw-overlay'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.classList.remove('show');
   });
 }
