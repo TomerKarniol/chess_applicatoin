@@ -33,6 +33,8 @@ body {
   padding:16px 12px;
   padding-bottom:max(16px,env(safe-area-inset-bottom));
 }
+/* רשת ביטחון: מסך נמוך -> גלילה + יישור לראש כדי ששום אלמנט (כולל תוויות A-H) לא ייחתך */
+@media(max-height:700px){ body{ overflow-y:auto; justify-content:flex-start; } }
 .star-dot { position:fixed; border-radius:50%; background:white;
   animation:twinkle ease-in-out infinite alternate; pointer-events:none; }
 @keyframes twinkle { from{opacity:.1;transform:scale(.8)} to{opacity:.85;transform:scale(1.2)} }
@@ -253,7 +255,10 @@ body {
 <div class="game-wrap" id="game-wrap">
   <div class="hdr">
     <div class="stage-badge" id="stage-badge">תרחיש 1/3</div>
-    <div class="game-title">שלב 1 - בריחה</div>
+    <div class="game-title" style="display:flex;align-items:center;justify-content:center;gap:8px;">
+      שלב 1 - בריחה
+      <img id="title-king-icon" style="width:1.8rem;height:1.8rem;object-fit:contain;"/>
+    </div>
     <button class="btn-mute" id="muteBtn" onclick="toggleMute()">🔊</button>
   </div>
 
@@ -305,7 +310,10 @@ for(let i=0;i<55;i++){
 
 function getCell(){
   const w = window.innerWidth;
-  const px = w<=360?40 : w<=390?44 : w<=430?48 : w<=480?53 : 58;
+  const wPx = w<=360?40 : w<=390?44 : w<=430?48 : w<=480?53 : 58;
+  // גם לפי גובה: header+סטטוס+רמז+תוויות+ריווחים ≈ 195px — כך תוויות A-H לא נחתכות במסך כיתה נמוך
+  const hPx = Math.floor((window.innerHeight - 195) / 8);
+  const px = Math.max(36, Math.min(wPx, hPx));
   document.documentElement.style.setProperty('--cell', px+'px');
   document.documentElement.style.setProperty('--board-size', (px*8)+'px');
   return px;
@@ -390,8 +398,7 @@ let busy    = false;
 
 // ── Audio ──
 let audioCtx = null;
-let isMuted = ['true','1'].includes(localStorage.getItem('chess_muted'));
-{ const _mb = document.getElementById('muteBtn'); if(_mb) _mb.textContent = isMuted ? '🔇' : '🔊'; }
+let isMuted = localStorage.getItem('chess_muted') === 'true';
 
 function getAudio(){
   if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
@@ -471,6 +478,8 @@ function makePieceSVG(sym, isWhite) {
 }
 
 // ── Board helpers ──
+document.getElementById('title-king-icon').src =
+  'data:image/svg+xml,' + encodeURIComponent(WHITE_SVG['♔']);
 function rowCol(file,rank){ return { r:8-parseInt(rank), c:FILES_ARR.indexOf(file) }; }
 function cellId(file,rank){ const {r,c}=rowCol(file,rank); return `cell_${r}_${c}`; }
 function cellCenter(file,rank){ const {r,c}=rowCol(file,rank); return {x:c*CELL+CELL/2, y:r*CELL+CELL/2}; }

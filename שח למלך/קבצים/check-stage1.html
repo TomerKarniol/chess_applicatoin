@@ -24,6 +24,8 @@ body {
   overscroll-behavior:none;
   padding-bottom:max(0px, env(safe-area-inset-bottom));
 }
+/* רשת ביטחון: מסך נמוך -> גלילה + יישור לראש כדי שכפתור הרמז לעולם לא ייחתך */
+@media(max-height:700px){ body{ overflow-y:auto; justify-content:flex-start; } }
 .star-dot { position:fixed; border-radius:50%; background:white;
   animation:twinkle ease-in-out infinite alternate; pointer-events:none; }
 @keyframes twinkle { from{opacity:.1;transform:scale(.8)} to{opacity:.85;transform:scale(1.2)} }
@@ -83,11 +85,11 @@ body {
 }
 
 /* BOARD */
-.coord-wrap { display:flex; align-items:center; gap:6px; direction:ltr; max-width:100%; padding-right:18px; }
+.coord-wrap { display:flex; align-items:center; gap:12px; direction:ltr; max-width:100%; }
 .rank-labels {
   display:flex; flex-direction:column; height:var(--board-size);
   justify-content:space-around; font-family:'Fredoka One',cursive; font-size:.8rem;
-  color:#F4D03F; font-weight:bold; width:12px; text-align:center;
+  color:#F4D03F; font-weight:bold; width:15px; text-align:center;
 }
 .file-labels {
   display:flex; justify-content:space-around; width:var(--board-size);
@@ -217,7 +219,7 @@ body {
 #win-overlay {
   position:fixed; inset:0; z-index:450;
   display:flex; align-items:center; justify-content:center;
-  background:rgba(6,14,26,.97); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); opacity:0; pointer-events:none; transition:opacity .4s;
+  background:rgba(6,14,26,.9); opacity:0; pointer-events:none; transition:opacity .4s;
 }
 #win-overlay.show { opacity:1; pointer-events:all; }
 .win-card {
@@ -290,7 +292,7 @@ body {
 #transition-overlay {
   position:fixed; inset:0; z-index:400;
   display:flex; align-items:center; justify-content:center;
-  background:rgba(6,14,26,.97); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); opacity:0; pointer-events:none;
+  background:rgba(6,14,26,.85); opacity:0; pointer-events:none;
   transition:opacity .3s;
 }
 #transition-overlay.show { opacity:1; pointer-events:all; }
@@ -601,12 +603,14 @@ const updateScore = ()=>{}; // v2: no-op — ניקוד מספרי הוסר, מ�
 // We deliberately do NOT add CSS @media that sets --cell — it would conflict with the
 // inline style set here. Breakpoints below are this file's proven working values.
 function computeCell(){
-  // Derive the cell from the REAL viewport so the rank column + board always fit with no
-  // horizontal clipping on mobile. Row needs 8*cell + 6(frame) + 15(ranks) + 12(gap) + 24(body pad).
-  const CHROME = 6 + 12 + 6 + 18 + 24 + 4;
-  const avail  = Math.min(window.innerWidth, 720) - CHROME;
-  const ideal  = window.innerWidth <= 600 ? 60 : 68;
-  const cell   = Math.max(32, Math.min(ideal, Math.floor(avail / 8)));
+  // Derive the cell from BOTH width and height so board + header + hint-row always fit.
+  // הכפתור 💡 רמז חייב להיות גלוי גם במסך כיתה נמוך (1366x768 -> ~657px גובה שמיש).
+  const CHROME  = 6 + 15 + 12 + 24 + 4;   // horizontal: frame+ranks+gap+body-pad
+  const VCHROME = 240;                     // vertical: header + hint-row + gaps + paddings (measured, w/ margin)
+  const wAvail  = Math.min(window.innerWidth, 720) - CHROME;
+  const hAvail  = window.innerHeight - VCHROME;
+  const ideal   = window.innerWidth <= 600 ? 60 : 68;
+  const cell    = Math.max(32, Math.min(ideal, Math.floor(wAvail / 8), Math.floor(hAvail / 8)));
   document.documentElement.style.setProperty('--cell', cell+'px');
 }
 computeCell();

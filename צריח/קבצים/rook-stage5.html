@@ -259,12 +259,12 @@ body {
 <script>
 // ═══ SCENARIOS ═══
 const S5_SCENARIOS = [
-  // תרחיש 1 — מפוזר | batSpeed 0.9 (היה 1.0, -10%) — (1,0) הוחלף ב-(1,2) למניעת לכידה ישירה מ-A1
-  { iceCream:[{row:0,col:4},{row:1,col:2},{row:1,col:7},{row:2,col:3},{row:5,col:1},{row:5,col:5},{row:6,col:2},{row:6,col:7}], batSpeed:0.9, bats:2 },
-  // תרחיש 2 — גל 🌊 | batSpeed 0.99 (היה 1.1, -10%) — (7,3) הוחלף ב-(4,3) למניעת לכידה ישירה מ-A1
-  { iceCream:[{row:0,col:1},{row:1,col:6},{row:2,col:2},{row:3,col:4},{row:4,col:3},{row:4,col:6},{row:5,col:2},{row:6,col:5}], batSpeed:0.99, bats:2 },
-  // תרחיש 3 — פינות + שוליים 🔲 | batSpeed 1.08 (היה 1.2, -10%) — (6,0)→(6,3), (7,5)→(5,6) תוקנו
-  { iceCream:[{row:0,col:2},{row:1,col:6},{row:2,col:7},{row:3,col:1},{row:4,col:3},{row:5,col:5},{row:5,col:6},{row:6,col:3}], batSpeed:1.08, bats:2 },
+  // תרחיש 1 — מפוזר | batSpeed 0.8 (בסיס 1.0, -20%) — (1,0) הוחלף ב-(1,2) למניעת לכידה ישירה מ-A1
+  { iceCream:[{row:0,col:4},{row:1,col:2},{row:1,col:7},{row:2,col:3},{row:5,col:1},{row:5,col:5},{row:6,col:2},{row:6,col:7}], batSpeed:0.8, bats:2 },
+  // תרחיש 2 — גל 🌊 | batSpeed 0.88 (בסיס 1.1, -20%) — (7,3) הוחלף ב-(4,3) למניעת לכידה ישירה מ-A1
+  { iceCream:[{row:0,col:1},{row:1,col:6},{row:2,col:2},{row:3,col:4},{row:4,col:3},{row:4,col:6},{row:5,col:2},{row:6,col:5}], batSpeed:0.88, bats:2 },
+  // תרחיש 3 — פינות + שוליים 🔲 | batSpeed 0.96 (בסיס 1.2, -20%) — (6,0)→(6,3), (7,5)→(5,6) תוקנו
+  { iceCream:[{row:0,col:2},{row:1,col:6},{row:2,col:7},{row:3,col:1},{row:4,col:3},{row:5,col:5},{row:5,col:6},{row:6,col:3}], batSpeed:0.96, bats:2 },
 ];
 const ORIGINAL_S5_SCENARIOS = JSON.parse(JSON.stringify(S5_SCENARIOS));
 let s5ScIdx=0;

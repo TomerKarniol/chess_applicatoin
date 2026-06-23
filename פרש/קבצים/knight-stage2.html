@@ -192,8 +192,23 @@ body{
 .board-coin{
   position:absolute;top:50%;left:50%;
   transform:translate(-50%,-50%);
-  font-size:1.6rem;z-index:5;pointer-events:none;
+  width:62%;height:62%;border-radius:50%;
+  background:
+    radial-gradient(circle at 32% 26%, rgba(255,255,220,.9) 0%, transparent 48%),
+    radial-gradient(circle at 68% 74%, rgba(0,0,0,.28) 0%, transparent 52%),
+    linear-gradient(135deg,#FFF8C0 0%,#F4D03F 28%,#C9A227 60%,#9A7B1A 100%);
+  box-shadow:0 0 14px rgba(244,208,63,.9),0 0 28px rgba(244,208,63,.35),0 3px 7px rgba(0,0,0,.5),inset 0 2px 5px rgba(255,255,200,.6),inset 0 -2px 5px rgba(0,0,0,.3);
+  z-index:5;pointer-events:none;
   animation:coinBob 1.2s ease-in-out infinite alternate;
+}
+.coin-inline{
+  display:inline-block;width:1.05em;height:1.05em;border-radius:50%;
+  vertical-align:-0.16em;margin-inline-end:.18em;
+  background:
+    radial-gradient(circle at 32% 26%, rgba(255,255,220,.9) 0%, transparent 48%),
+    radial-gradient(circle at 68% 74%, rgba(0,0,0,.28) 0%, transparent 52%),
+    linear-gradient(135deg,#FFF8C0 0%,#F4D03F 28%,#C9A227 60%,#9A7B1A 100%);
+  box-shadow:0 0 8px rgba(244,208,63,.7),inset 0 1px 3px rgba(255,255,200,.6),inset 0 -1px 3px rgba(0,0,0,.3);
 }
 @keyframes coinBob{from{transform:translate(-50%,-50%) scale(.88)}to{transform:translate(-50%,-50%) scale(1.12)}}
 .board-coin.dimmed{filter:grayscale(1) brightness(0.4);animation:none;transform:translate(-50%,-50%) scale(0.85);}
@@ -456,7 +471,7 @@ body{
 <div class="prog-row" id="prog-row"></div>
 
 <!-- Scenario title (dynamic per scenario type) -->
-<div class="scenario-title" id="scenario-title">🪙 אוספים מטבעות</div>
+<div class="scenario-title" id="scenario-title"><span class="coin-inline"></span>אוספים מטבעות</div>
 
 <!-- Explosion counter (only visible in minefield) -->
 <div class="explosion-dots" id="explosion-dots">
@@ -744,15 +759,15 @@ function jumpKnightTo(tr,tc,callback){
 }
 
 // ── BUILD BOARD ────────────────────────────────
-function buildBoard(keepVariant=false){
+function buildBoard(){
   const sc=SCENARIOS[scenIdx];
   knightRow=sc.knight.row; knightCol=sc.knight.col;
   busy=false; soloErrors=0; moveCount=0; explosions=0; mistakesMade=0;
 
   // ברירת מחדל solo בתרחישי מטבעות (מאפשר 3⭐); help הוא opt-in. במינפילד — מוסתר
   const isMinefield=(sc.type==='minefield');
-  // איפוס מונה וריאנטים רק כשנכנסים לתרחיש 3 מחדש (keepVariant=true שומר על הוריאנט הפעיל)
-  if(isMinefield && !keepVariant){ sc3TotalHits=0; sc3VariantIdx=0; sc3HintUsed=false; }
+  // איפוס מונה וריאנטים רק כשנכנסים לתרחיש 3 מחדש
+  if(isMinefield){ sc3TotalHits=0; sc3VariantIdx=0; sc3HintUsed=false; }
 
   document.getElementById('level-panel').style.display=isMinefield?'none':'flex';
   document.getElementById('move-counter').classList.toggle('visible', isMinefield);
@@ -776,8 +791,8 @@ function buildBoard(keepVariant=false){
 
   // Update dynamic scenario title
   const titleEl = document.getElementById('scenario-title');
-  if(titleEl) titleEl.textContent = sc.type==='coins'
-    ? '🪙 אוספים מטבעות'
+  if(titleEl) titleEl.innerHTML = sc.type==='coins'
+    ? '<span class="coin-inline"></span>אוספים מטבעות'
     : '🐴 הגיעו למלכה בלי לדרוך על מוקש! יש לכם 6 מהלכים';
 
   document.getElementById('stage-badge').textContent=`שלב 2 · תרחיש ${scenIdx+1}/${SCENARIOS.length}`;
@@ -813,7 +828,7 @@ function buildBoard(keepVariant=false){
         const idx=coinMap[key];
         const coinEl=document.createElement('div');
         coinEl.className='board-coin';
-        coinEl.id=`board-coin-${idx}`; coinEl.textContent='🪙';
+        coinEl.id=`board-coin-${idx}`;
         cell.appendChild(coinEl);
         const num=document.createElement('div');
         num.className='coin-num'+(idx===0?' active':'');
@@ -892,12 +907,35 @@ function flashReachable(){
 
 // טעינה מחדש של מינפילד עם הוריאנט הנוכחי (ללא איפוס sc3VariantIdx)
 function reloadMinefield(){
-  // בנייה מלאה מחדש מהוריאנט הפעיל — מקור-אמת יחיד.
-  // keepVariant=true שומר על sc3VariantIdx (אחרת buildBoard מאפס ל-0).
-  // buildBoard כבר מאפס busy/moveCount/explosions/mistakesMade, מרענן מוקשים,
-  // בונה מחדש את המלכה (נראית) ואת הפרש הצף — אין צורך ברענון ידני.
-  sc3HintUsed=false;
-  buildBoard(true);
+  const sc=SCENARIOS[scenIdx];
+  busy=false; moveCount=0; explosions=0; mistakesMade=0; sc3HintUsed=false;
+  knightRow=sc.knight.row; knightCol=sc.knight.col;
+  resetExplosionDots();
+  updateMoveCounter();
+  document.getElementById('hint-reveal').classList.remove('show');
+
+  const variant=SC3_VARIANTS[sc3VariantIdx];
+  const mineSet=new Set(variant.mines.map(m=>m.row+','+m.col));
+
+  // רענן רק את המוקשים על הלוח הקיים
+  document.querySelectorAll('.board-mine').forEach(el=>el.remove());
+  variant.mines.forEach(m=>{
+    const cell=document.getElementById(`cell_${m.row}_${m.col}`);
+    if(cell){
+      const mine=document.createElement('div');
+      mine.className='board-mine'; mine.textContent='💣';
+      cell.appendChild(mine);
+    }
+  });
+  // הסר מוקשים ישנים שלא שייכים לוריאנט הנוכחי
+  for(let r=0;r<8;r++) for(let c=0;c<8;c++){
+    const key=r+','+c;
+    const cell=document.getElementById(`cell_${r}_${c}`);
+    if(!cell) continue;
+    const mines=cell.querySelectorAll('.board-mine');
+    if(mines.length>0 && !mineSet.has(key)) mines.forEach(m=>m.remove());
+  }
+  positionKnight(knightRow,knightCol,true);
 
   // הצג הודעת וריאנט
   const varLabels=['א','ב','ג'];
@@ -1094,14 +1132,12 @@ function onCellClick(r,c,cell){
 
       // Reached queen!
       if(isQueen){
-        // הפרש נחת על המלכה → הפיצוץ והסאונד נורים מיד (≈20ms אחרי הנחיתה)
+        // פיצוץ + סאונד מהסקיל — מופעלים ברגע הנחיתה על המלכה
         showExplosion(r, c);
         playBoom();
-        // המלכה נעלמת ~90ms לתוך הפיצוץ — בדיוק בשיא הבזק הלבן (Phase 1),
-        // כך היא "נבלעת" באש ולא נעלמת רגע לפניה. כוונן 60–130ms לפי הטעם.
-        // הלוח נבנה מחדש בכל reload/retry, לכן אין צורך לשחזר אותה (מונע באג "מלכה בלתי-נראית").
+        // הסר את אייקון המלכה מהלוח
         const queenEl = document.querySelector('.board-queen');
-        setTimeout(()=>{ if(queenEl) queenEl.remove(); }, 90);
+        if(queenEl) queenEl.style.opacity = '0';
 
         spawnConfetti();
         awardScore();

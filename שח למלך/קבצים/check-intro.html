@@ -145,13 +145,13 @@ body {
 /* .sq.danger removed — king glow handles check state */
 .sq.highlight { background:#F4D03F !important; }
 
-/* King in check — red glow contained within the square */
+/* King in check — solid red square fill behind the king (matches check / check-defense stages) */
 .sq.in-check {
   animation: sqInCheck 1.2s ease-in-out infinite;
 }
 @keyframes sqInCheck {
-  0%,100% { background: radial-gradient(circle, rgba(231,76,60,.55) 0%, rgba(180,40,30,.35) 60%, rgba(120,20,10,.15) 100%) !important; }
-  50%     { background: radial-gradient(circle, rgba(231,76,60,.95) 0%, rgba(200,50,35,.7)  60%, rgba(150,30,15,.3)  100%) !important; }
+  0%,100% { background: rgba(230,48,34,.6) !important; }
+  50%     { background: rgba(230,48,34,1)  !important; }
 }
 .pc.in-check {
   animation: kingInCheck 1.2s ease-in-out infinite;

@@ -10,7 +10,7 @@
 <style>
 * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
 :root {
-  --board-size: min(92vw, 80vh, 680px);
+  --board-size: min(92vw, calc(100vh - 225px), 680px); /* B14: גובה פחות chrome — לוח+תוויות נכנסים במסך כיתה נמוך */
   --cell: calc(var(--board-size) / 8);
   --bezel-pad:14px; --gold-pad:6px; --board-border:2px;
   --frame-total: calc(var(--bezel-pad) + var(--gold-pad) + var(--board-border));
@@ -22,6 +22,8 @@ body { overscroll-behavior:none; font-family:'Nunito',sans-serif;
   background:radial-gradient(ellipse at 50% 0%,#162D4A 0%,#0C1E30 55%,#060E1A 100%);
   min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
   overflow:hidden; user-select:none; }
+/* B14 רשת ביטחון: מסך נמוך -> גלילה + יישור לראש כדי ששום אלמנט לא ייחתך */
+@media(max-height:700px){ body{ overflow-y:auto; justify-content:flex-start; } }
 .star-dot { position:fixed; border-radius:50%; background:white; animation:twinkle ease-in-out infinite alternate; pointer-events:none; }
 @keyframes twinkle { from{opacity:.1;transform:scale(.8)} to{opacity:.85;transform:scale(1.2)} }
 .game-wrap { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:7px; padding:8px 12px calc(14px + env(safe-area-inset-bottom)); }
