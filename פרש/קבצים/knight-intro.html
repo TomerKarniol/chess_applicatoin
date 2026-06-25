@@ -129,8 +129,20 @@ body {
 
 /* Coin on board */
 .sq-coin {
-  font-size:1.2rem; z-index:3;
+  width:62%; height:62%; border-radius:50%;
+  box-shadow:0 0 12px rgba(244,208,63,.85),0 0 22px rgba(244,208,63,.3),0 2px 6px rgba(0,0,0,.5);
+  z-index:3;
   animation:coinBob 1.5s ease-in-out infinite alternate;
+}
+.sq-coin svg{ width:100%; height:100%; display:block; }
+.coin-inline {
+  display:inline-block; width:1.05em; height:1.05em; border-radius:50%;
+  vertical-align:-0.16em; margin-inline-start:.18em;
+  background:
+    radial-gradient(circle at 32% 26%, rgba(255,255,220,.9) 0%, transparent 48%),
+    radial-gradient(circle at 68% 74%, rgba(0,0,0,.28) 0%, transparent 52%),
+    linear-gradient(135deg,#FFF8C0 0%,#F4D03F 28%,#C9A227 60%,#9A7B1A 100%);
+  box-shadow:0 0 8px rgba(244,208,63,.7),inset 0 1px 3px rgba(255,255,200,.6),inset 0 -1px 3px rgba(0,0,0,.3);
 }
 @keyframes coinBob { from{transform:scale(.85)} to{transform:scale(1.1)} }
 
@@ -247,7 +259,7 @@ body {
 <!-- STAGE PILLS -->
 <div class="stages-wrap">
   <div class="stage-pill s1">שלב 1 — אחד שתיים הצידה ♞</div>
-  <div class="stage-pill s2">שלב 2 — אוספים מטבעות 🪙</div>
+  <div class="stage-pill s2">שלב 2 — אוספים מטבעות <span class="coin-inline"></span></div>
   <div class="stage-pill s3">שלב 3 — מרוץ הלבבות ⏱️</div>
   <div class="stage-pill s4">שלב 4 — הפרש שאוהב גזר! 🥕</div>
   <div class="stage-pill s5">שלב 5 — מבחן מסכם 🏆</div>
@@ -318,12 +330,15 @@ const MOVES=[
   {r:5,c:1},{r:5,c:5}, // B3, F3
   {r:6,c:2},{r:6,c:4}  // C2, E2
 ];
+function coinSVG(i){
+  return `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="goldG${i}" cx="36%" cy="30%" r="72%"><stop offset="0%" stop-color="#FFF6C2"/><stop offset="32%" stop-color="#F4D03F"/><stop offset="68%" stop-color="#C9A227"/><stop offset="100%" stop-color="#8A6B16"/></radialGradient></defs><circle cx="20" cy="20" r="17" fill="url(#goldG${i})" stroke="#7A5E12" stroke-width="1"/><ellipse cx="14" cy="12.5" rx="5.5" ry="3.8" fill="#FFFDEA" opacity=".7"/></svg>`;
+}
 MOVES.forEach((m,i)=>{
   const sq=getSq(m.r,m.c); if(!sq) return;
   const coin=document.createElement('div');
   coin.className='sq-coin';
-  coin.textContent='🪙';
   coin.style.animationDelay=(i*0.18)+'s';
+  coin.innerHTML=coinSVG(i);
   sq.appendChild(coin);
 });
 

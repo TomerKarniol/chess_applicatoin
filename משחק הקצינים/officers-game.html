@@ -136,16 +136,16 @@ body{
 .sq img{width:90%;height:90%;object-fit:contain;pointer-events:none;display:block;position:relative;z-index:2;}
 
 /* Highlights */
-.sq.last-move-from::after{
+.sq.ai-move-from::after{
   content:'';position:absolute;inset:0;
-  box-shadow:inset 0 0 0 1.5px rgba(126,200,227,.45);
-  background:rgba(126,200,227,.06);
+  box-shadow:inset 0 0 0 2px rgba(255,107,53,.6);
+  background:rgba(255,107,53,.14);
   z-index:1;pointer-events:none;
 }
-.sq.last-move-to::after{
+.sq.ai-move-to::after{
   content:'';position:absolute;inset:0;
-  box-shadow:inset 0 0 0 2.5px rgba(126,200,227,.75),inset 0 0 8px rgba(126,200,227,.15);
-  background:rgba(126,200,227,.11);
+  box-shadow:inset 0 0 0 3px rgba(255,107,53,.9),inset 0 0 10px rgba(255,107,53,.3);
+  background:rgba(255,107,53,.22);
   z-index:1;pointer-events:none;
 }
 .sq.selected-sq::before{
@@ -696,9 +696,9 @@ let sel=null;
 let legalMvs=[];
 let gameOver=false;
 let difficulty=1;
-let lastMv=null;
 let aiLastMv=null; // AI's own previous move — used by easy AI to avoid back-and-forth shuffle
-let noCaptureCount=0; const NO_CAPTURE_LIMIT=12; const DRAW_PIECE_GATE=6; // 12 plies (6 per side) with no capture, but only once few pieces remain (endgame) — opening never false-draws
+let aiLastWasCapture=false; // when the AI's last move was a capture, skip the destination ring (the explosion marks it)
+let noCaptureCount=0; const NO_CAPTURE_LIMIT=16; const DRAW_PIECE_GATE=6; // 16 plies (8 per side) with no capture, but only once few pieces remain (endgame) — opening never false-draws
 let thinking=false;
 let animating=false;
 let muted=false;
@@ -736,7 +736,7 @@ function playWinAudio(){
     }catch(e){}
   });
 }
-let aiMoveCount=0; // tracks AI move number (for easy difficulty)
+// (aiMoveCount הוסר — הקדנציה כל-3 בוטלה)
 let pendingCardDiff=0; // card to reveal when user goes to menu
 
 // ════════════════════════════════════════
@@ -752,7 +752,7 @@ function initBoard(){
 
 function startGame(diff){
   difficulty=diff; gameOver=false; turn='white';
-  sel=null; legalMvs=[]; lastMv=null; aiLastMv=null; thinking=false; animating=false; aiMoveCount=0; pendingCardDiff=0; noCaptureCount=0;
+  sel=null; legalMvs=[]; aiLastMv=null; aiLastWasCapture=false; thinking=false; animating=false; pendingCardDiff=0; noCaptureCount=0;
   initBoard();
   document.getElementById('diffScreen').style.display='none';
   const gs=document.getElementById('gameScreen');
@@ -918,8 +918,8 @@ function renderBoard(){
     for(let c=0;c<8;c++){
       const sq=document.createElement('div');
       let cls='sq '+((r+c)%2===0?'l':'d');
-      if(lastMv&&r===lastMv.fr&&c===lastMv.fc) cls+=' last-move-from';
-      if(lastMv&&r===lastMv.tr&&c===lastMv.tc) cls+=' last-move-to';
+      if(aiLastMv&&r===aiLastMv.fr&&c===aiLastMv.fc) cls+=' ai-move-from';
+      if(aiLastMv&&!aiLastWasCapture&&r===aiLastMv.tr&&c===aiLastMv.tc) cls+=' ai-move-to';
       if(sel&&sel.r===r&&sel.c===c) cls+=' selected-sq';
       sq.className=cls;
       sq.dataset.r=r; sq.dataset.c=c;
@@ -1057,9 +1057,18 @@ function playUpgrade(){
 // ════════════════════════════════════════
 //  AI — EVALUATION & SEARCH
 // ════════════════════════════════════════
+// משבצות מרכז (d4,d5,e4,e5) ועיגול קרוב — תוספת קטנה בלבד; חומר תמיד גובר
+const CENTER_SQ=new Set(['3,3','3,4','4,3','4,4']);
+const NEARC_SQ =new Set(['2,3','2,4','3,2','4,2','3,5','4,5','5,3','5,4']);
 function evaluate(b,color){
   let s=0;
-  b.forEach(row=>row.forEach(sq=>{if(!sq)return;const v=VAL[sq.type];if(sq.color===color)s+=v;else s-=v;}));
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    const sq=b[r][c]; if(!sq) continue;
+    let v=VAL[sq.type];
+    const k=r+','+c;
+    if(CENTER_SQ.has(k)) v+=0.15; else if(NEARC_SQ.has(k)) v+=0.07; // נדנוד עמדתי זעיר
+    s += sq.color===color ? v : -v;
+  }
   return s;
 }
 
@@ -1100,56 +1109,48 @@ function destAttacked(b,mv){
   return getAllMoves(after,'white').some(w=>w.tr===mv.tr&&w.tc===mv.tc);
 }
 
+// ── עומק חיפוש לפי רמה (קנוני: 1=הגנתי, 2=תכנוני, 3=רציני) ──
+const AI_DEPTH={1:1,2:2,3:3};
+function pickRandom(a){return a[Math.floor(Math.random()*a.length)];}
+// מנקד כל מהלך שחור ע"י minimax לעומק נתון, ממוין מהטוב לפחות-טוב
+function scoreMoves(mvs,depth){
+  return mvs.map(mv=>({mv,v:minimax(applyMove(board,mv),depth-1,-Infinity,Infinity,false,'black')}))
+            .sort((a,b)=>b.v-a.v);
+}
+
 function getAIMove(){
   const mvs=getAllMoves(board,'black');
   if(!mvs.length) return null;
+
+  // ── קל (מוחלש): נותן סיכוי אמיתי לנצח — מציע כלים, ובפיגור-כלים מפסיק להתחמק ──
   if(difficulty===1){
-    // Easy: may capture ONLY on AI move #3, 6, 9... (every 3rd move).
-    // Non-capture turns: purposeful but harmless — never volunteer a piece (option B),
-    // keep the king back, spread moves across pieces, prefer central/developing squares.
-    aiMoveCount++;
-    const capMvs=mvs.filter(m=>board[m.tr][m.tc]);
-    if((aiMoveCount%3===0)&&capMvs.length){
-      return capMvs[Math.floor(Math.random()*capMvs.length)];
-    }
-    let pool=mvs.filter(m=>!board[m.tr][m.tc]);
-    if(!pool.length) pool=mvs;
-    // helper: narrow pool by a filter, but only if it leaves something
-    const refine=fn=>{const f=pool.filter(fn); if(f.length) pool=f;};
-    // option B — don't voluntarily move a piece onto a square the player can take
-    refine(m=>!destAttacked(board,m));
-    // king discipline — keep the king back unless it's the only option
-    refine(m=>board[m.fr][m.fc].type!=='K');
-    // anti-shuffle — don't reverse the AI's own previous move
-    if(aiLastMv){
-      refine(m=>!(m.fr===aiLastMv.tr&&m.fc===aiLastMv.tc&&m.tr===aiLastMv.fr&&m.tc===aiLastMv.fc));
-      // anti-repetition — prefer developing a different piece than last turn
-      refine(m=>!(m.fr===aiLastMv.tr&&m.fc===aiLastMv.tc));
-    }
-    // among the rest: prefer central destinations, keep a near-best window for variety
-    const score=m=>-(Math.abs(m.tr-3.5)+Math.abs(m.tc-3.5));
-    const maxS=Math.max(...pool.map(score));
-    const top=pool.filter(m=>score(m)>=maxS-1);
-    return top[Math.floor(Math.random()*top.length)];
+    const my=countColor(board,'black'), opp=countColor(board,'white');
+    // רחמים: כשהמחשב מפגר בכלים — מפסיק להתחמק, כדי שהילד יתפוס ויסגור ניצחון
+    if(my<opp) return pickRandom(mvs);
+    // אחרת: חצי מהזמן מהלך אקראי לגמרי (עלול לתלות כלי → ניתן לתפיסה), חצי מהלך עדין שלא תולה
+    if(Math.random()<0.50) return pickRandom(mvs);
+    let pool=mvs.filter(m=>!destAttacked(board,m)); if(!pool.length) pool=mvs;
+    if(aiLastMv){const f=pool.filter(m=>!(m.fr===aiLastMv.tr&&m.fc===aiLastMv.tc&&m.tr===aiLastMv.fr&&m.tc===aiLastMv.fc)); if(f.length) pool=f;}
+    return pickRandom(pool);
   }
+
+  // ── בינוני (depth 2): ביניים אמיתי — צופה חילוף קדימה. רחמים מדורגים: מרפה רק כשמפגר ב-2+ כלים ──
   if(difficulty===2){
-    // Greedy: best capture, else random
-    const caps=mvs.filter(m=>board[m.tr][m.tc]);
-    if(caps.length){
-      caps.sort((a,b_)=>VAL[board[b_.tr][b_.tc].type]-VAL[board[a.tr][a.tc].type]);
-      return caps[0];
-    }
-    return mvs[Math.floor(Math.random()*mvs.length)];
+    const my=countColor(board,'black'), opp=countColor(board,'white');
+    const deficit=opp-my;
+    // שווה/מוביל → עוצמה מלאה. ככל שמפגר יותר → יותר מהלכים אקראיים (מאפשר לילד לתפוס ולסגור ניצחון)
+    if(deficit>=2 && Math.random()<Math.min(0.80,(deficit-1)*0.30)) return pickRandom(mvs);
+    if(Math.random()<0.10){ const safe=mvs.filter(m=>!destAttacked(board,m)); return pickRandom(safe.length?safe:mvs); } // אי-דיוק קל → חציון ≈50%
+    const sc=scoreMoves(mvs,2);
+    const window=sc.filter(s=>s.v>=sc[0].v-1.5);        // בטווח 1.5 מהטוב (כלי מינ'=3 → לא תולה כלי)
+    return pickRandom(window).mv;
   }
-  // Difficulty 3: minimax depth 1 + 10% random move
-  const shuffled=[...mvs].sort(()=>Math.random()-.5);
-  if(Math.random()<0.10) return shuffled[0]; // 10% — מהלך רנדומלי
-  let best=null, bestV=-Infinity;
-  for(const mv of shuffled){
-    const v=minimax(applyMove(board,mv),1,-Infinity,Infinity,false,'black');
-    if(v>bestV){bestV=v;best=mv;}
-  }
-  return best||mvs[0];
+
+  // ── קשה (depth 3, מכויל): חזק — אך 15% מהלך אקראי כדי שרק ~20% העליונים יקבלו סיכוי ריאלי לנצח ──
+  if(Math.random()<0.15) return pickRandom(mvs);        // החלשה מכוילת; מתמצעת על פני המשחק → עקביות בין-משחקית נשמרת
+  const sc=scoreMoves(mvs,3);
+  const best=sc.filter(s=>s.v>=sc[0].v-1e-6);            // אחרת: מהלך הטוב-ביותר (שובר-שוויון אקראי בין שווים)
+  return pickRandom(best).mv;
 }
 
 // ════════════════════════════════════════
@@ -1178,7 +1179,7 @@ function execPlayerMove(mv){
   animatePlayerMove(mv,()=>{
     const isCapture=!!board[mv.tr][mv.tc];
     board=applyMove(board,mv);
-    lastMv=mv; sel=null; legalMvs=[];
+    sel=null; legalMvs=[];
     noCaptureCount=isCapture?0:noCaptureCount+1;
     if(isCapture){
       playCapture();
@@ -1326,8 +1327,9 @@ function animateAIMove(mv,onComplete){
   setTimeout(()=>{
     clone.remove();
     const isCapture=!!board[mv.tr][mv.tc];
-    board=applyMove(board,mv);lastMv=mv;
+    board=applyMove(board,mv);
     noCaptureCount=isCapture?0:noCaptureCount+1;
+    aiLastWasCapture=isCapture; // capture → explosion marks the destination, so skip the to-ring
     if(isCapture){
       playCapture();
       renderBoard();updateTurn();
