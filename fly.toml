@@ -22,7 +22,7 @@
 # Logs:            fly logs
 # Open:            fly open
 
-app = "chess-monster"          # ← must be globally unique; change if taken
+app = "chess-karniol"          # ← must be globally unique; change if taken
 primary_region = "fra"         # Frankfurt — closest Fly region to Israel
 
 [build]
@@ -42,12 +42,12 @@ primary_region = "fra"         # Frankfurt — closest Fly region to Israel
 [http_service]
   internal_port = 3000
   force_https = true
-  # Cost-saver: the single machine sleeps when idle and wakes on the next request
-  # (~1s cold start). For zero cold starts (~$2/mo always-on) set
-  # min_machines_running = 1.
-  auto_stop_machines = "stop"
+  # Always-on: one machine stays up so there are no cold starts (~$2/mo).
+  # To save money by letting it sleep when idle, set auto_stop_machines = "stop"
+  # and min_machines_running = 0 (adds ~1s cold start on the next request).
+  auto_stop_machines = "off"
   auto_start_machines = true
-  min_machines_running = 0
+  min_machines_running = 1
 
   [[http_service.checks]]
     interval = "30s"
@@ -58,4 +58,4 @@ primary_region = "fra"         # Frankfurt — closest Fly region to Israel
 
 [[vm]]
   size = "shared-cpu-1x"
-  memory = "256mb"             # bump to "512mb" only if it OOMs on boot
+  memory = "512mb"             # headroom for argon2 login bursts (19 MiB/hash)
