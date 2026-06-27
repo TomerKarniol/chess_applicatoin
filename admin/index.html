@@ -20,7 +20,7 @@ header{position:sticky;top:0;z-index:20;display:flex;justify-content:space-betwe
 .btn-ghost{font-family:'Fredoka One',cursive;font-size:1rem;color:#F4D03F;background:transparent;border:2px solid #F4D03F;border-radius:50px;padding:7px 18px;min-height:42px;cursor:pointer;box-shadow:0 0 10px rgba(244,208,63,.25);transition:all .2s}
 .btn-ghost:hover{box-shadow:0 0 22px rgba(244,208,63,.55);transform:scale(1.04)}
 
-main{max-width:980px;margin:0 auto;padding:24px}
+main{max-width:1160px;margin:0 auto;padding:24px}
 .panel{background:linear-gradient(160deg, rgba(16,30,52,.85) 0%, rgba(6,14,26,.85) 100%);border:1.5px solid rgba(244,208,63,.3);border-radius:22px;padding:22px 22px 18px;margin-bottom:22px;box-shadow:0 12px 30px rgba(0,0,0,.4)}
 .panel h2{font-family:'Fredoka One',cursive;color:#F4D03F;font-size:1.3rem;margin-bottom:14px}
 
@@ -44,8 +44,20 @@ tbody tr:last-child td{border-bottom:none}
 .badge-setup{background:rgba(231,76,60,.16);color:#ffb6ad;border:1px solid rgba(231,76,60,.4)}
 .badge-ok{background:rgba(82,183,136,.16);color:#a4f0c8;border:1px solid rgba(82,183,136,.4)}
 
-.row-btn{font-size:.8rem;font-family:'Fredoka One',cursive;background:transparent;color:#7EC8E3;border:1.5px solid rgba(126,200,227,.45);border-radius:50px;padding:4px 12px;cursor:pointer;transition:all .15s}
-.row-btn:hover{background:rgba(126,200,227,.1);border-color:#7EC8E3}
+.row-btn{font-size:.8rem;font-family:'Fredoka One',cursive;background:transparent;color:#7EC8E3;border:1.5px solid rgba(126,200,227,.45);border-radius:50px;padding:5px 13px;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:5px;line-height:1}
+.row-btn:hover{background:rgba(126,200,227,.1);border-color:#7EC8E3;transform:translateY(-1px)}
+.row-btn:active{transform:translateY(0)}
+.row-btn:focus-visible{outline:2px solid #7EC8E3;outline-offset:2px}
+/* Edit (email) — uses the royal gold accent. */
+.row-btn--edit{color:#F4D03F;border-color:rgba(244,208,63,.45)}
+.row-btn--edit:hover{background:rgba(244,208,63,.12);border-color:#F4D03F}
+.row-btn--edit:focus-visible{outline-color:#F4D03F}
+/* Danger (delete) — warm red, glows on hover so it can't be hit by accident. */
+.row-btn--danger{color:#ff9b8f;border-color:rgba(231,76,60,.5)}
+.row-btn--danger:hover{background:rgba(231,76,60,.14);border-color:#E74C3C;box-shadow:0 0 14px rgba(231,76,60,.35)}
+.row-btn--danger:focus-visible{outline-color:#E74C3C}
+/* Keep the three row actions (password · email · delete) on one line. */
+.actions-cell{white-space:nowrap;text-align:left}
 
 .alert-pill{margin-top:14px;border-radius:12px;padding:10px 14px;font-weight:800;font-size:.95rem;opacity:0;transform:translateY(-4px);transition:opacity .25s, transform .25s;min-height:1px}
 .alert-pill.show{opacity:1;transform:translateY(0)}
@@ -62,6 +74,14 @@ tbody tr:last-child td{border-bottom:none}
 .modal-actions{display:flex;gap:10px;justify-content:center}
 .copy-btn{font-family:'Fredoka One',cursive;font-size:1rem;background:linear-gradient(160deg,#F4D03F,#C9A227 60%,#9A7B1A);color:#060E1A;border:none;border-radius:12px;padding:10px 22px;cursor:pointer;box-shadow:0 6px 18px rgba(244,208,63,.4)}
 .close-btn{font-family:'Fredoka One',cursive;font-size:1rem;background:transparent;color:#aac1de;border:2px solid rgba(170,193,222,.5);border-radius:12px;padding:10px 22px;cursor:pointer}
+.modal-input{width:100%;background:rgba(5,12,22,.85);border:2px solid rgba(244,208,63,.4);border-radius:12px;padding:12px 14px;color:#f4f7fb;font-family:'Nunito',sans-serif;font-weight:700;font-size:1.05rem;direction:ltr;text-align:right;outline:0;margin-bottom:12px;transition:border-color .2s,box-shadow .2s}
+.modal-input:focus{border-color:#F4D03F;box-shadow:0 0 0 4px rgba(244,208,63,.18)}
+.modal-input::placeholder{color:rgba(220,230,242,.45);font-weight:700}
+.btn-danger{font-family:'Fredoka One',cursive;font-size:1rem;background:linear-gradient(160deg,#E74C3C,#B83227);color:#fff;border:none;border-radius:12px;padding:10px 22px;cursor:pointer;box-shadow:0 6px 18px rgba(231,76,60,.4);transition:transform .15s, box-shadow .15s}
+.btn-danger:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(231,76,60,.6)}
+.btn-danger[disabled]{filter:grayscale(.4) brightness(.85);cursor:not-allowed}
+.modal .alert-pill{margin-top:0;margin-bottom:12px;text-align:right}
+@media(prefers-reduced-motion:reduce){.row-btn,.row-btn:hover,.btn-danger,.btn-danger:hover{transition:none;transform:none}}
 
 @media(max-width:560px){
   .header-actions .greeting{display:none}
@@ -97,6 +117,11 @@ tbody tr:last-child td{border-bottom:none}
 
   <section class="panel">
     <h2>תלמידים רשומים</h2>
+    <div class="create-row" style="margin-bottom:14px">
+      <label class="field" for="searchInput">
+        <input id="searchInput" type="text" placeholder="🔍 חיפוש לפי שם משתמש" dir="ltr">
+      </label>
+    </div>
     <table>
       <thead>
         <tr>
@@ -123,6 +148,31 @@ tbody tr:last-child td{border-bottom:none}
     <div class="modal-actions">
       <button class="copy-btn" id="copyBtn">📋 העתק</button>
       <button class="close-btn" id="closeBtn">סגור</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="emailModal">
+  <div class="modal">
+    <h3>✉️ עדכון אימייל</h3>
+    <p id="emailModalIntro">כתובת האימייל של התלמיד</p>
+    <input class="modal-input" id="emailInput" type="email" dir="ltr" placeholder="name@example.com" autocomplete="off" inputmode="email">
+    <div class="alert-pill" id="emailModalErr" role="alert" aria-live="polite"></div>
+    <div class="modal-actions">
+      <button class="copy-btn" id="emailSaveBtn">💾 שמירה</button>
+      <button class="close-btn" id="emailCancelBtn">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="confirmModal">
+  <div class="modal">
+    <h3 id="confirmTitle">אישור פעולה</h3>
+    <p id="confirmMessage"></p>
+    <div class="warn" id="confirmWarn" hidden></div>
+    <div class="modal-actions">
+      <button class="copy-btn" id="confirmOkBtn">אישור</button>
+      <button class="close-btn" id="confirmCancelBtn">ביטול</button>
     </div>
   </div>
 </div>
@@ -192,11 +242,12 @@ tbody tr:last-child td{border-bottom:none}
     return d.toLocaleDateString('he-IL') + ' ' + d.toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'});
   }
 
-  function makeRegenButton(user){
+  function makeRowButton(label, onClick, variant){
     var btn = document.createElement('button');
-    btn.className = 'row-btn';
-    btn.textContent = 'סיסמה חדשה';
-    btn.addEventListener('click', function(){ regenerate(user.id, user.username); });
+    btn.className = 'row-btn' + (variant ? ' ' + variant : '');
+    btn.textContent = label;
+    btn.style.marginInlineStart = '6px';
+    btn.addEventListener('click', onClick);
     return btn;
   }
 
@@ -211,17 +262,35 @@ tbody tr:last-child td{border-bottom:none}
       addCell(tr, 'סטטוס', makeBadge(u));
       addCell(tr, 'נוצר', shortDate(u.createdAt));
       var actions = document.createElement('td');
+      actions.className = 'actions-cell';
       actions.setAttribute('data-label', 'פעולות');
-      if (!u.isAdmin) actions.appendChild(makeRegenButton(u));
+      if (!u.isAdmin) {
+        actions.appendChild(makeRowButton('🔑 סיסמה', function(){ regenerate(u.id, u.username); }));
+        actions.appendChild(makeRowButton('✉️ אימייל', function(){ editEmail(u.id, u.username, u.email); }, 'row-btn--edit'));
+        actions.appendChild(makeRowButton('🗑️ מחק', function(){ deleteUser(u.id, u.username); }, 'row-btn--danger'));
+      }
       tr.appendChild(actions);
       usersBody.appendChild(tr);
     });
   }
 
+  // Keep the full list so the search box can filter client-side.
+  var allUsers = [];
+  var searchInput = document.getElementById('searchInput');
+
+  function applyFilter(){
+    var q = (searchInput.value || '').trim().toLowerCase();
+    renderRows(!q ? allUsers : allUsers.filter(function(u){
+      return u.username.toLowerCase().indexOf(q) !== -1;
+    }));
+  }
+  searchInput.addEventListener('input', applyFilter);
+
   async function loadUsers(){
     try {
       var r = await window.ChessApi.get('/admin/users');
-      renderRows((r.data && r.data.users) || []);
+      allUsers = (r.data && r.data.users) || [];
+      applyFilter();
     } catch (err) {
       listAlert.className = 'alert-pill error show';
       listAlert.textContent = (err && err.message) || 'שגיאה בטעינת רשימת המשתמשים.';
@@ -263,17 +332,113 @@ tbody tr:last-child td{border-bottom:none}
     }
   });
 
-  // ── Regenerate temp password ──
-  async function regenerate(userId, username){
-    if (!confirm('להחליף את הסיסמה הזמנית של '+username+'? הסיסמה הקודמת לא תהיה תקפה יותר.')) return;
+  // ── Regenerate temp password (themed confirm) ──
+  function regenerate(userId, username){
+    openConfirm({
+      title: '🔑 סיסמה זמנית חדשה',
+      message: 'להחליף את הסיסמה הזמנית של ' + username + '? הסיסמה הקודמת לא תהיה תקפה יותר.',
+      okLabel: 'צור סיסמה חדשה',
+      onConfirm: async function(){
+        var r = await window.ChessApi.post('/admin/users/'+userId+'/regenerate-password');
+        openModal('סיסמה זמנית חדשה עבור '+username, r.data.temporaryPassword);
+      }
+    });
+  }
+
+  // ── Update email (themed modal) ──
+  var emailModal = document.getElementById('emailModal');
+  var emailInput = document.getElementById('emailInput');
+  var emailModalIntro = document.getElementById('emailModalIntro');
+  var emailModalErr = document.getElementById('emailModalErr');
+  var emailSaveBtn = document.getElementById('emailSaveBtn');
+  var pendingEmailId = null;
+
+  function editEmail(userId, username, current){
+    pendingEmailId = userId;
+    emailModalIntro.textContent = 'כתובת האימייל של ' + username;
+    emailInput.value = current || '';
+    emailModalErr.classList.remove('show','error');
+    emailModal.classList.add('open');
+    setTimeout(function(){ emailInput.focus(); emailInput.select(); }, 60);
+  }
+  function closeEmailModal(){ emailModal.classList.remove('open'); pendingEmailId = null; }
+
+  async function saveEmail(){
+    var email = (emailInput.value||'').trim();
+    if (!email) { emailModalErr.className = 'alert-pill error show'; emailModalErr.textContent = 'יש להזין כתובת אימייל.'; return; }
+    emailSaveBtn.disabled = true; emailSaveBtn.textContent = 'שומר…';
     try {
-      var r = await window.ChessApi.post('/admin/users/'+userId+'/regenerate-password');
-      openModal('סיסמה זמנית חדשה עבור '+username, r.data.temporaryPassword);
+      await window.ChessApi.put('/admin/users/'+pendingEmailId+'/email', { email: email });
+      closeEmailModal();
       await loadUsers();
     } catch (err) {
-      alert((err && err.message) || 'שגיאה בעת איפוס הסיסמה.');
+      emailModalErr.className = 'alert-pill error show';
+      emailModalErr.textContent = (err && err.message) || 'שגיאה בעדכון האימייל.';
+    } finally {
+      emailSaveBtn.disabled = false; emailSaveBtn.textContent = '💾 שמירה';
     }
   }
+  emailSaveBtn.addEventListener('click', saveEmail);
+  document.getElementById('emailCancelBtn').addEventListener('click', closeEmailModal);
+  emailInput.addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); saveEmail(); } });
+
+  // ── Delete user (themed confirm modal) ──
+  function deleteUser(userId, username){
+    openConfirm({
+      title: '🗑️ מחיקת תלמיד',
+      message: 'למחוק את התלמיד ' + username + '?',
+      warn: '⚠️ כל ההתקדמות של התלמיד תימחק לצמיתות ולא ניתן יהיה לשחזר.',
+      okLabel: 'מחק לצמיתות',
+      danger: true,
+      onConfirm: async function(){
+        await window.ChessApi.del('/admin/users/'+userId);
+      }
+    });
+  }
+
+  // ── Shared confirm modal (delete · regenerate password) ──
+  var confirmModal = document.getElementById('confirmModal');
+  var confirmTitle = document.getElementById('confirmTitle');
+  var confirmMessage = document.getElementById('confirmMessage');
+  var confirmWarn = document.getElementById('confirmWarn');
+  var confirmOkBtn = document.getElementById('confirmOkBtn');
+  var confirmAction = null;
+
+  function openConfirm(opts){
+    confirmTitle.textContent = opts.title;
+    confirmMessage.textContent = opts.message;
+    if (opts.warn){ confirmWarn.textContent = opts.warn; confirmWarn.hidden = false; }
+    else { confirmWarn.hidden = true; }
+    confirmOkBtn.textContent = opts.okLabel || 'אישור';
+    confirmOkBtn.className = opts.danger ? 'btn-danger' : 'copy-btn';
+    confirmAction = opts.onConfirm;
+    confirmModal.classList.add('open');
+    setTimeout(function(){ confirmOkBtn.focus(); }, 60);
+  }
+  function closeConfirm(){ confirmModal.classList.remove('open'); confirmAction = null; }
+  document.getElementById('confirmCancelBtn').addEventListener('click', closeConfirm);
+  confirmOkBtn.addEventListener('click', async function(){
+    if (!confirmAction) return;
+    var label = confirmOkBtn.textContent;
+    confirmOkBtn.disabled = true; confirmOkBtn.textContent = 'רגע…';
+    try {
+      await confirmAction();
+      closeConfirm();
+      await loadUsers();
+    } catch (err) {
+      alert((err && err.message) || 'אירעה שגיאה. נסו שוב.');
+    } finally {
+      confirmOkBtn.disabled = false; confirmOkBtn.textContent = label;
+    }
+  });
+
+  // Backdrop click + Escape close the email/confirm dialogs.
+  [emailModal, confirmModal].forEach(function(m){
+    m.addEventListener('click', function(e){ if (e.target === m) m.classList.remove('open'); });
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape'){ closeEmailModal(); closeConfirm(); }
+  });
 
   // ── Modal ──
   var modal = document.getElementById('modal');

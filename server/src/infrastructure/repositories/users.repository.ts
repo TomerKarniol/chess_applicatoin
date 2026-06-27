@@ -178,6 +178,11 @@ export class UsersRepository {
       .run(email, userId);
   }
 
+  /** Delete a user. Related sessions/progress/reset-codes cascade (FKs are ON). */
+  deleteById(userId: number): void {
+    this.db.prepare('DELETE FROM users WHERE id = ?').run(userId);
+  }
+
   listAll(): User[] {
     return this.db
       .prepare<[], UserRow>(

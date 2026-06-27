@@ -72,6 +72,50 @@ describe('admin routes', () => {
     expect(anon.status).toBe(401);
   });
 
+  it('admin can update a student email', async () => {
+    const admin = await loginAs(stack, 'admin', 'admin123');
+    const create = await request(stack.app)
+      .post('/api/v1/admin/users')
+      .set('Cookie', admin.cookies)
+      .set('X-CSRF-Token', admin.token)
+      .send({ username: 'mailme' });
+    const id = create.body.user.id as number;
+
+    const res = await request(stack.app)
+      .put(`/api/v1/admin/users/${id}/email`)
+      .set('Cookie', admin.cookies)
+      .set('X-CSRF-Token', admin.token)
+      .send({ email: 'new@example.com' });
+    expect(res.status).toBe(200);
+    expect(res.body.user.email).toBe('new@example.com');
+  });
+
+  it('admin can delete a student; deleting an unknown id is rejected', async () => {
+    const admin = await loginAs(stack, 'admin', 'admin123');
+    const create = await request(stack.app)
+      .post('/api/v1/admin/users')
+      .set('Cookie', admin.cookies)
+      .set('X-CSRF-Token', admin.token)
+      .send({ username: 'goner' });
+    const id = create.body.user.id as number;
+
+    const del = await request(stack.app)
+      .delete(`/api/v1/admin/users/${id}`)
+      .set('Cookie', admin.cookies)
+      .set('X-CSRF-Token', admin.token);
+    expect(del.status).toBe(204);
+
+    const list = await request(stack.app).get('/api/v1/admin/users').set('Cookie', admin.cookies);
+    expect((list.body.users as Array<{ id: number }>).some((u) => u.id === id)).toBe(false);
+
+    // Deleting a non-existent user is a validation error, not a silent success.
+    const missing = await request(stack.app)
+      .delete(`/api/v1/admin/users/${id}`)
+      .set('Cookie', admin.cookies)
+      .set('X-CSRF-Token', admin.token);
+    expect(missing.status).toBe(400);
+  });
+
   it('regenerate-password kills existing sessions and re-flags the user', async () => {
     const admin = await loginAs(stack, 'admin', 'admin123');
     const create = await request(stack.app)

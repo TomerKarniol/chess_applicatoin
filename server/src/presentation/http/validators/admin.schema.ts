@@ -10,3 +10,8 @@ export const userIdParamSchema = z.object({
   id: z.coerce.number().int().positive(),
 });
 export type UserIdParam = z.infer<typeof userIdParamSchema>;
+
+export const updateEmailBodySchema = z.object({
+  email: z.string().trim().min(3).max(254),
+});
+export type UpdateEmailBody = z.infer<typeof updateEmailBodySchema>;

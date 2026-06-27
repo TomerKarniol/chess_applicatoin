@@ -78,4 +78,24 @@ export class AdminService {
     if (!refreshed) throw new Error('User vanished after regenerate.');
     return { user: refreshed, temporaryPassword };
   }
+
+  /** Permanently delete a student account (and its cascaded sessions/progress). */
+  deleteStudent(userId: number): void {
+    const user = this.deps.usersRepo.findById(userId);
+    if (!user) throw new ValidationError({ field: 'userId' }, 'User not found.');
+    if (user.isAdmin) {
+      throw new ValidationError({ field: 'userId' }, 'Cannot delete an admin account.');
+    }
+    this.deps.usersRepo.deleteById(userId);
+  }
+
+  /** Update a student's email address. */
+  updateStudentEmail(userId: number, email: string): User {
+    const user = this.deps.usersRepo.findById(userId);
+    if (!user) throw new ValidationError({ field: 'userId' }, 'User not found.');
+    this.deps.usersRepo.updateEmail(userId, email.trim());
+    const refreshed = this.deps.usersRepo.findById(userId);
+    if (!refreshed) throw new Error('User vanished after email update.');
+    return refreshed;
+  }
 }

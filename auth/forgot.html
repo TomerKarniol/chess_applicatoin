@@ -33,7 +33,9 @@ button{-webkit-appearance:none;cursor:pointer;font-family:inherit}
 .crown{position:absolute;top:-46px;left:50%;transform:translateX(-50%);z-index:3;font-size:60px;line-height:1;filter: drop-shadow(0 0 12px rgba(244,208,63,.6));animation: crownBob 4s ease-in-out infinite}
 @keyframes crownBob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)}}
 
-.card{position:relative;z-index:2;width:min(94vw, 460px);background:linear-gradient(160deg, rgba(16,30,52,.96) 0%, rgba(6,14,26,.96) 100%);border:2px solid rgba(244,208,63,.5);border-radius:28px;padding:50px 32px 28px;box-shadow:0 0 0 1px rgba(244,208,63,.15) inset,0 28px 60px rgba(0,0,0,.55),0 0 60px rgba(244,208,63,.18);text-align:center;animation: cardIn .8s cubic-bezier(.16,.84,.32,1.18) both;max-height:96vh;overflow:auto}
+/* Wrapper keeps the floating crown outside the card's scroll box so it isn't clipped. */
+.card-wrap{position:relative;z-index:2;width:min(94vw, 460px)}
+.card{position:relative;z-index:2;width:100%;background:linear-gradient(160deg, rgba(16,30,52,.96) 0%, rgba(6,14,26,.96) 100%);border:2px solid rgba(244,208,63,.5);border-radius:28px;padding:50px 32px 28px;box-shadow:0 0 0 1px rgba(244,208,63,.15) inset,0 28px 60px rgba(0,0,0,.55),0 0 60px rgba(244,208,63,.18);text-align:center;animation: cardIn .8s cubic-bezier(.16,.84,.32,1.18) both;max-height:88vh;overflow-y:auto;overflow-x:hidden}
 @keyframes cardIn{from{opacity:0;transform:translateY(20px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
 
 .title{font-family:'Fredoka One',cursive;font-size:clamp(1.5rem,3.6vw,2rem);color:#F4D03F;text-shadow:0 0 16px rgba(244,208,63,.65), 0 0 36px rgba(244,208,63,.25);margin-bottom:2px}
@@ -47,8 +49,9 @@ button{-webkit-appearance:none;cursor:pointer;font-family:inherit}
 .field{display:flex;align-items:center;gap:10px;background:rgba(5,12,22,.85);border:2px solid rgba(244,208,63,.35);border-radius:14px;padding:11px 14px;transition:border-color .2s, box-shadow .2s, transform .15s;margin-bottom:14px}
 .field:focus-within{border-color:#F4D03F;box-shadow:0 0 0 4px rgba(244,208,63,.18), 0 0 22px rgba(244,208,63,.25);transform:translateY(-1px)}
 .field-ico{font-size:1.3rem;line-height:1;color:#F4D03F}
-.field input{flex:1;background:transparent;border:0;outline:0;color:#f4f7fb;font-family:inherit;font-size:1.05rem;font-weight:700;direction:rtl}
-.field input.code{letter-spacing:.6em;font-size:1.4rem;text-align:center;direction:ltr;font-family:'Fredoka One',cursive}
+.field input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:#f4f7fb;font-family:inherit;font-size:1.05rem;font-weight:700;direction:rtl}
+/* text-indent matches letter-spacing so the leading gap equals the trailing one → digits truly centered. */
+.field input.code{letter-spacing:.6em;text-indent:.6em;font-size:1.4rem;text-align:center;direction:ltr;font-family:'Fredoka One',cursive}
 .field input::placeholder{color:rgba(220,230,242,.45);font-weight:700}
 
 .primary-btn{width:100%;font-family:'Fredoka One',cursive;font-size:1.2rem;background:linear-gradient(160deg,#F4D03F,#C9A227 60%,#9A7B1A);color:#060E1A;border:none;border-radius:18px;padding:14px 16px;cursor:pointer;box-shadow:0 8px 22px rgba(244,208,63,.45), 0 0 30px rgba(244,208,63,.2) inset;transition:transform .15s, box-shadow .15s, filter .15s;margin-top:6px;touch-action:manipulation}
@@ -78,8 +81,9 @@ button{-webkit-appearance:none;cursor:pointer;font-family:inherit}
 <div id="stars"></div>
 <div id="boardFloor"></div>
 
-<div class="card" id="card">
+<div class="card-wrap">
   <div class="crown" aria-hidden="true">🔑</div>
+  <div class="card" id="card">
   <h1 class="title">איפוס סיסמה</h1>
   <div class="subtitle" id="subtitle">נתחיל בלזהות אותך</div>
 
@@ -131,6 +135,7 @@ button{-webkit-appearance:none;cursor:pointer;font-family:inherit}
   <div class="alert-pill" id="alertPill" role="alert" aria-live="polite"></div>
 
   <button type="button" id="backToLogin" class="secondary-link">חזרה למסך הכניסה</button>
+  </div>
 </div>
 
 <script src="/auth/js/api.js"></script>
