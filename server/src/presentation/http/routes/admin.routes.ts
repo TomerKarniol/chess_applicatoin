@@ -1,6 +1,7 @@
 import { Router, type RequestHandler } from 'express';
 import type { AdminService } from '../../../application/services/admin.service.js';
 import {
+  bulkStudentsBodySchema,
   createStudentBodySchema,
   updateEmailBodySchema,
   userIdParamSchema,
@@ -31,6 +32,14 @@ export function buildAdminRouter(deps: AdminRouterDeps): Router {
       const parsed = createStudentBodySchema.parse(req.body);
       const result = await deps.adminService.createStudent(parsed.username);
       res.status(201).json(result);
+    })().catch(next);
+  });
+
+  router.post('/admin/users/bulk', (req, res, next) => {
+    (async () => {
+      const parsed = bulkStudentsBodySchema.parse(req.body);
+      const result = await deps.adminService.createStudentsBulk(parsed.students);
+      res.status(200).json(result);
     })().catch(next);
   });
 

@@ -1,4 +1,5 @@
-import { publicUser, type User } from '../../domain/user.js';
+import { randomInt } from 'node:crypto';
+import { publicUser, USERNAME_MAX, type User } from '../../domain/user.js';
 import { ConflictError, ValidationError } from '../../shared/errors.js';
 import type { UsersRepository } from '../../infrastructure/repositories/users.repository.js';
 import type { SessionsRepository } from '../../infrastructure/repositories/sessions.repository.js';
@@ -17,7 +18,39 @@ export interface CreateStudentResult {
   temporaryPassword: string;
 }
 
+export interface BulkStudentInput {
+  firstName: string;
+  lastName: string;
+}
+export interface BulkCreatedRow {
+  firstName: string;
+  lastName: string;
+  username: string;
+  temporaryPassword: string;
+}
+export interface BulkErrorRow {
+  row: number;
+  firstName: string;
+  lastName: string;
+  reason: string;
+}
+export interface BulkCreateResult {
+  created: BulkCreatedRow[];
+  errors: BulkErrorRow[];
+}
+
 const USERNAME_RE = /^[A-Za-z0-9_.-]{1,64}$/;
+
+/** Per-name-part cap so first_last_NNNN always fits USERNAME_MAX (64). */
+const NAME_PART_MAX = 28;
+
+/**
+ * Reduce a raw name to the characters allowed inside a username slug: any
+ * Unicode letter or digit (so Hebrew names survive), everything else dropped.
+ */
+function slugifyNamePart(raw: string): string {
+  return raw.normalize('NFC').replace(/[^\p{L}\p{N}]/gu, '').slice(0, NAME_PART_MAX);
+}
 
 export class AdminService {
   constructor(private readonly deps: AdminServiceDeps) {}
@@ -52,6 +85,70 @@ export class AdminService {
       temporaryPasswordCreatedAt: nowIso(),
     });
     return { user: publicUser(created), temporaryPassword };
+  }
+
+  /**
+   * Bulk-create students from (firstName, lastName) pairs — e.g. a CSV import.
+   * Each gets a generated username of the form `first_last_<4 digits>` and a
+   * fresh one-time temporary password (returned so the caller can hand them
+   * out). Rows that can't be created (empty name, unresolvable collision) are
+   * collected in `errors` rather than aborting the whole batch.
+   */
+  async createStudentsBulk(students: BulkStudentInput[]): Promise<BulkCreateResult> {
+    const created: BulkCreatedRow[] = [];
+    const errors: BulkErrorRow[] = [];
+    const takenInBatch = new Set<string>(); // lowercased usernames minted this run
+
+    for (let i = 0; i < students.length; i++) {
+      const row = i + 1;
+      const firstName = (students[i]!.firstName ?? '').trim();
+      const lastName = (students[i]!.lastName ?? '').trim();
+      const first = slugifyNamePart(firstName);
+      const last = slugifyNamePart(lastName);
+      if (!first && !last) {
+        errors.push({ row, firstName, lastName, reason: 'Row has no usable name.' });
+        continue;
+      }
+
+      const username = this.mintUniqueUsername(first, last, takenInBatch);
+      if (!username) {
+        errors.push({ row, firstName, lastName, reason: 'Could not generate a unique username.' });
+        continue;
+      }
+
+      const temporaryPassword = generateTempPassword();
+      const passwordHash = await this.deps.passwordService.hash(temporaryPassword);
+      try {
+        this.deps.usersRepo.create({
+          username,
+          passwordHash,
+          isAdmin: false,
+          mustChangePassword: true,
+          temporaryPasswordCreatedAt: nowIso(),
+        });
+        takenInBatch.add(username.toLowerCase());
+        created.push({ firstName, lastName, username, temporaryPassword });
+      } catch {
+        errors.push({ row, firstName, lastName, reason: 'Username already exists.' });
+      }
+    }
+    return { created, errors };
+  }
+
+  /**
+   * Try a handful of `first_last_NNNN` candidates until one is free both in the
+   * DB and within this batch. Returns null if every attempt collided.
+   */
+  private mintUniqueUsername(first: string, last: string, takenInBatch: Set<string>): string | null {
+    for (let attempt = 0; attempt < 25; attempt++) {
+      const digits = String(randomInt(0, 10000)).padStart(4, '0');
+      const username = `${first}_${last}_${digits}`;
+      if (username.length > USERNAME_MAX) return null;
+      if (takenInBatch.has(username.toLowerCase())) continue;
+      if (this.deps.usersRepo.findByUsername(username)) continue;
+      return username;
+    }
+    return null;
   }
 
   /**

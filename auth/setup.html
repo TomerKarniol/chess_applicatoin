@@ -43,9 +43,11 @@ button{-webkit-appearance:none;cursor:pointer;font-family:inherit}
 }
 @keyframes crownBob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)}}
 
+/* Wrapper keeps the floating crown outside the card's scroll box so it isn't clipped. */
+.card-wrap{position:relative;z-index:2;width:min(94vw, 460px)}
 .card{
   position:relative;z-index:2;
-  width:min(94vw, 460px);
+  width:100%;
   background:linear-gradient(160deg, rgba(16,30,52,.96) 0%, rgba(6,14,26,.96) 100%);
   border:2px solid rgba(244,208,63,.5);
   border-radius:28px;
@@ -53,7 +55,7 @@ button{-webkit-appearance:none;cursor:pointer;font-family:inherit}
   box-shadow:0 0 0 1px rgba(244,208,63,.15) inset,0 28px 60px rgba(0,0,0,.55),0 0 60px rgba(244,208,63,.18);
   text-align:center;
   animation: cardIn .8s cubic-bezier(.16,.84,.32,1.18) both;
-  max-height:96vh;overflow:auto;
+  max-height:88vh;overflow:auto;
 }
 @keyframes cardIn{from{opacity:0;transform:translateY(20px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
 
@@ -113,8 +115,9 @@ button{-webkit-appearance:none;cursor:pointer;font-family:inherit}
 <div id="stars"></div>
 <div id="boardFloor"></div>
 
-<form class="card" id="setupForm" novalidate>
+<div class="card-wrap">
   <div class="crown" aria-hidden="true">🛡️</div>
+  <form class="card" id="setupForm" novalidate>
   <h1 class="title">הקמת חשבון</h1>
   <div class="subtitle">תהליך חד-פעמי לפני שמתחילים לשחק</div>
 
@@ -142,7 +145,8 @@ button{-webkit-appearance:none;cursor:pointer;font-family:inherit}
   <div class="alert-pill" id="alertPill" role="alert" aria-live="polite"></div>
 
   <button type="button" id="logoutLink" class="logout-link">לא אני? התנתקות</button>
-</form>
+  </form>
+</div>
 
 <script src="/auth/js/api.js"></script>
 <script>

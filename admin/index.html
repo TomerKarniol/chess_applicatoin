@@ -32,6 +32,11 @@ main{max-width:1160px;margin:0 auto;padding:24px}
 .create-btn{font-family:'Fredoka One',cursive;font-size:1.05rem;background:linear-gradient(160deg,#F4D03F,#C9A227 60%,#9A7B1A);color:#060E1A;border:none;border-radius:12px;padding:10px 22px;cursor:pointer;box-shadow:0 6px 18px rgba(244,208,63,.4);transition:transform .15s, box-shadow .15s}
 .create-btn:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(244,208,63,.6)}
 .create-btn[disabled]{filter:grayscale(.4) brightness(.85);cursor:not-allowed}
+.bulk-hint{font-size:.85rem;color:#aac1de;line-height:1.55;margin-bottom:14px}
+.bulk-hint code{background:rgba(244,208,63,.12);color:#F4D03F;border-radius:6px;padding:1px 6px;font-family:monospace;direction:ltr;display:inline-block}
+.create-row .field-ico{font-size:1.2rem;line-height:1;color:#F4D03F}
+.create-row input[type=file]{color:#cdd9e8;font-weight:700;direction:ltr;min-width:0}
+.create-row input[type=file]::file-selector-button{font-family:'Fredoka One',cursive;background:rgba(244,208,63,.14);color:#F4D03F;border:1.5px solid rgba(244,208,63,.4);border-radius:8px;padding:6px 12px;margin-inline-end:10px;cursor:pointer}
 
 table{width:100%;border-collapse:separate;border-spacing:0;background:rgba(8,16,28,.55);border-radius:12px;overflow:hidden}
 thead th{font-family:'Fredoka One',cursive;font-size:.85rem;color:#aac1de;background:rgba(244,208,63,.06);text-align:right;padding:10px 14px;letter-spacing:.02em;border-bottom:1px solid rgba(244,208,63,.2)}
@@ -63,6 +68,7 @@ tbody tr:last-child td{border-bottom:none}
 .alert-pill.show{opacity:1;transform:translateY(0)}
 .alert-pill.error{background:rgba(231,76,60,.13);border:1.5px solid rgba(231,76,60,.55);color:#ffb6ad}
 .alert-pill.success{background:rgba(82,183,136,.12);border:1.5px solid rgba(82,183,136,.55);color:#a4f0c8}
+.alert-pill.info{background:rgba(126,200,227,.12);border:1.5px solid rgba(126,200,227,.55);color:#bfe7f5}
 
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:60;align-items:center;justify-content:center;padding:16px}
 .modal-bg.open{display:flex}
@@ -113,6 +119,19 @@ tbody tr:last-child td{border-bottom:none}
       <button class="create-btn" type="submit" id="createBtn">➕ צור תלמיד</button>
     </form>
     <div class="alert-pill" id="createAlert" role="alert" aria-live="polite"></div>
+  </section>
+
+  <section class="panel">
+    <h2>הוספת תלמידים מקובץ CSV</h2>
+    <p class="bulk-hint">קובץ CSV עם שתי עמודות: <b>שם פרטי</b> בעמודה הראשונה ו<b>שם משפחה</b> בשנייה. לכל שורה ייווצר תלמיד עם שם משתמש בפורמט <code>שם_משפחה_1234</code>, וקובץ עם שמות המשתמש והסיסמאות הזמניות יירד אוטומטית.</p>
+    <form class="create-row" id="bulkForm">
+      <label class="field" for="csvFile" style="cursor:pointer">
+        <span class="field-ico">📄</span>
+        <input id="csvFile" type="file" accept=".csv,text/csv" required>
+      </label>
+      <button class="create-btn" type="submit" id="bulkBtn">⬆️ העלאה ויצירה</button>
+    </form>
+    <div class="alert-pill" id="bulkAlert" role="alert" aria-live="polite"></div>
   </section>
 
   <section class="panel">
@@ -329,6 +348,139 @@ tbody tr:last-child td{border-bottom:none}
       else showCreateAlert('error','אירעה שגיאה. נסו שוב.');
     } finally {
       createBtn.disabled = false; createBtn.textContent = '➕ צור תלמיד';
+    }
+  });
+
+  // ── Bulk create from CSV ──
+  var bulkForm = document.getElementById('bulkForm');
+  var csvFile = document.getElementById('csvFile');
+  var bulkBtn = document.getElementById('bulkBtn');
+  var bulkAlert = document.getElementById('bulkAlert');
+
+  function showBulkAlert(kind, msg){
+    bulkAlert.classList.remove('error','success','info');
+    bulkAlert.classList.add(kind);
+    bulkAlert.textContent = msg;
+    bulkAlert.classList.add('show');
+  }
+
+  // Minimal RFC-4180-ish CSV parser: handles quoted fields, escaped quotes ("")
+  // commas inside quotes, and both \n and \r\n line endings.
+  function parseCsv(text){
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1); // strip BOM
+    var rows = [], field = '', row = [], inQuotes = false;
+    for (var i = 0; i < text.length; i++){
+      var c = text[i];
+      if (inQuotes){
+        if (c === '"'){
+          if (text[i+1] === '"'){ field += '"'; i++; }
+          else inQuotes = false;
+        } else field += c;
+      } else if (c === '"'){ inQuotes = true; }
+      else if (c === ','){ row.push(field); field = ''; }
+      else if (c === '\n' || c === '\r'){
+        if (c === '\r' && text[i+1] === '\n') i++;
+        row.push(field); rows.push(row); field = ''; row = [];
+      } else field += c;
+    }
+    if (field !== '' || row.length){ row.push(field); rows.push(row); }
+    return rows;
+  }
+
+  function looksLikeHeader(cells){
+    var a = (cells[0]||'').trim().toLowerCase();
+    var b = (cells[1]||'').trim().toLowerCase();
+    var keys = ['first_name','firstname','first name','שם פרטי','last_name','lastname','last name','שם משפחה'];
+    return keys.indexOf(a) !== -1 || keys.indexOf(b) !== -1;
+  }
+
+  function rowsToStudents(rows){
+    var out = [];
+    rows.forEach(function(cells, idx){
+      if (idx === 0 && looksLikeHeader(cells)) return;       // skip a header line
+      var first = (cells[0]||'').trim(), last = (cells[1]||'').trim();
+      if (!first && !last) return;                            // skip blank lines
+      out.push({ firstName: first, lastName: last });
+    });
+    return out;
+  }
+
+  function downloadCsv(filename, createdRows){
+    var header = ['first_name','last_name','username','password'];
+    var lines = [header].concat(createdRows.map(function(r){
+      return [r.firstName, r.lastName, r.username, r.temporaryPassword];
+    }));
+    var csv = lines.map(function(cols){
+      return cols.map(function(v){
+        v = v == null ? '' : String(v);
+        return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g,'""') + '"' : v;
+      }).join(',');
+    }).join('\r\n');
+    var blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' }); // BOM → Excel reads Hebrew
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+  }
+
+  function readFileText(file){
+    return new Promise(function(resolve, reject){
+      var reader = new FileReader();
+      reader.onload = function(){ resolve(String(reader.result || '')); };
+      reader.onerror = function(){ reject(new Error('לא ניתן לקרוא את הקובץ.')); };
+      reader.readAsText(file, 'utf-8');
+    });
+  }
+
+  bulkForm.addEventListener('submit', async function(ev){
+    ev.preventDefault();
+    bulkAlert.classList.remove('show');
+    var file = csvFile.files && csvFile.files[0];
+    if (!file) { showBulkAlert('error','יש לבחור קובץ CSV.'); return; }
+    if (!/\.csv$/i.test(file.name)) {
+      showBulkAlert('error','יש להעלות קובץ CSV בלבד. ב-Excel: קובץ → שמירה בשם → CSV UTF-8.');
+      return;
+    }
+    if (file.size > 1024 * 1024) {
+      showBulkAlert('error','הקובץ גדול מדי (עד ~1MB). ודאו שזהו CSV ולא קובץ Excel.');
+      return;
+    }
+
+    var students;
+    try {
+      var text = await readFileText(file);
+      // A .csv that's really binary (renamed .xls/.xlsx) decodes to garbage:
+      // .xlsx(zip)->"PK", .xls(OLE)->byte 0xD0, binary->NUL bytes or many replacement chars.
+      var replacementCount = (text.match(/\uFFFD/g) || []).length;
+      if (/^PK/.test(text) || text.charCodeAt(0) === 0xD0 || text.indexOf('\u0000') !== -1 || replacementCount > 3) {
+        showBulkAlert('error','הקובץ אינו CSV תקין (נראה כמו Excel). שמרו אותו כ-CSV ונסו שוב.');
+        return;
+      }
+      students = rowsToStudents(parseCsv(text));
+    } catch (err) {
+      showBulkAlert('error', (err && err.message) || 'שגיאה בקריאת הקובץ.');
+      return;
+    }
+    if (!students.length) { showBulkAlert('error','לא נמצאו שורות עם שמות בקובץ.'); return; }
+
+    bulkBtn.disabled = true; bulkBtn.textContent = 'יוצר…';
+    try {
+      var r = await window.ChessApi.post('/admin/users/bulk', { students: students });
+      var created = (r.data && r.data.created) || [];
+      var errors = (r.data && r.data.errors) || [];
+      if (created.length) downloadCsv('chess-users-' + created.length + '.csv', created);
+      var msg = 'נוצרו ' + created.length + ' תלמידים.' +
+        (errors.length ? ' ' + errors.length + ' שורות נכשלו.' : '') +
+        (created.length ? ' קובץ הסיסמאות יורד כעת.' : '');
+      showBulkAlert(errors.length ? 'info' : 'success', msg);
+      bulkForm.reset();
+      await loadUsers();
+    } catch (err) {
+      if (err && err.code === 'validation_failed') showBulkAlert('error', err.message || 'הקובץ אינו תקין.');
+      else showBulkAlert('error','אירעה שגיאה ביצירת התלמידים.');
+    } finally {
+      bulkBtn.disabled = false; bulkBtn.textContent = '⬆️ העלאה ויצירה';
     }
   });
 

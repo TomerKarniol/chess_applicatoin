@@ -15,3 +15,18 @@ export const updateEmailBodySchema = z.object({
   email: z.string().trim().min(3).max(254),
 });
 export type UpdateEmailBody = z.infer<typeof updateEmailBodySchema>;
+
+export const BULK_STUDENTS_MAX = 1000;
+
+export const bulkStudentsBodySchema = z.object({
+  students: z
+    .array(
+      z.object({
+        firstName: z.string().trim().max(100).default(''),
+        lastName: z.string().trim().max(100).default(''),
+      }),
+    )
+    .min(1, 'CSV has no rows.')
+    .max(BULK_STUDENTS_MAX, `At most ${BULK_STUDENTS_MAX} rows per upload.`),
+});
+export type BulkStudentsBody = z.infer<typeof bulkStudentsBodySchema>;

@@ -85,7 +85,14 @@ export function createApp(deps: AppDeps): Express {
     ),
   );
   app.use(asHandler(cookieParser(env.COOKIE_SECRET)));
-  app.use(asHandler(express.json({ limit: '16kb' })));
+  // Bodies are tiny everywhere except the admin CSV bulk-import, which can carry
+  // up to BULK_STUDENTS_MAX rows — give just that route a larger JSON limit and
+  // keep the strict 16kb default for everything else.
+  const smallJson = asHandler(express.json({ limit: '16kb' }));
+  const bulkJson = asHandler(express.json({ limit: '1mb' }));
+  app.use((req: Request, res: Response, next: NextFunction) =>
+    req.path === '/api/v1/admin/users/bulk' ? bulkJson(req, res, next) : smallJson(req, res, next),
+  );
   app.use(asHandler(express.urlencoded({ extended: false, limit: '16kb' })));
 
   const cookieOptions = {

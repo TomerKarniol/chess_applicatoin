@@ -72,6 +72,56 @@ describe('admin routes', () => {
     expect(anon.status).toBe(401);
   });
 
+  it('admin can bulk-create students; usernames follow first_last_NNNN and each gets a temp password', async () => {
+    const admin = await loginAs(stack, 'admin', 'admin123');
+    const res = await request(stack.app)
+      .post('/api/v1/admin/users/bulk')
+      .set('Cookie', admin.cookies)
+      .set('X-CSRF-Token', admin.token)
+      .send({
+        students: [
+          { firstName: 'דנה', lastName: 'כהן' }, // Hebrew names survive slugification
+          { firstName: 'Sam', lastName: 'Lee' },
+          { firstName: '', lastName: '' }, // empty row → reported as an error, not created
+        ],
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.created).toHaveLength(2);
+    expect(res.body.errors).toHaveLength(1);
+    expect(res.body.errors[0].row).toBe(3);
+
+    const sam = res.body.created.find((r: { lastName: string }) => r.lastName === 'Lee');
+    expect(sam.username).toMatch(/^Sam_Lee_\d{4}$/);
+    expect(sam.temporaryPassword).toMatch(/^[A-Za-z0-9]{12}$/);
+    expect(res.body.created[0].username).toMatch(/^דנה_כהן_\d{4}$/u);
+
+    // Created students show up in the list and require first-time setup.
+    const list = await request(stack.app).get('/api/v1/admin/users').set('Cookie', admin.cookies);
+    const samRow = (list.body.users as Array<{ username: string; mustChangePassword: boolean }>).find(
+      (u) => u.username === sam.username,
+    )!;
+    expect(samRow.mustChangePassword).toBe(true);
+  });
+
+  it('bulk import accepts a payload larger than the default 16kb body limit', async () => {
+    const admin = await loginAs(stack, 'admin', 'admin123');
+    // 100 rows of 100-char names → ~23kb body (over the global 16kb json limit).
+    // Punctuation-only names slugify to empty, so they take the cheap error path
+    // (no argon2 hashing) — this asserts the route's raised limit, fast.
+    const students = Array.from({ length: 100 }, () => ({
+      firstName: '.'.repeat(100),
+      lastName: '.'.repeat(100),
+    }));
+    const res = await request(stack.app)
+      .post('/api/v1/admin/users/bulk')
+      .set('Cookie', admin.cookies)
+      .set('X-CSRF-Token', admin.token)
+      .send({ students });
+    expect(res.status).toBe(200); // would be 413 PayloadTooLargeError without the per-route limit
+    expect(res.body.created).toHaveLength(0);
+    expect(res.body.errors).toHaveLength(100);
+  });
+
   it('admin can update a student email', async () => {
     const admin = await loginAs(stack, 'admin', 'admin123');
     const create = await request(stack.app)
